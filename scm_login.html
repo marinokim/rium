@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCM Login - RIUM Partner System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&family=Open+Sans:wght@400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body.scm-login-body {
+            background-color: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-image: linear-gradient(rgba(0, 137, 123, 0.05), rgba(0, 137, 123, 0.05)), url('https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2069&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .scm-login-card {
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .scm-logo {
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .scm-subtitle {
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        .scm-form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .scm-form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .scm-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .scm-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .scm-btn {
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 1rem;
+        }
+
+        .scm-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .scm-links {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+        }
+
+        .scm-links a {
+            color: #666;
+            text-decoration: none;
+        }
+
+        .scm-links a:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body class="scm-login-body">
+
+    <div class="scm-login-card">
+        <a href="index.html" class="scm-logo">RIUM</a>
+        <p class="scm-subtitle">SCM Partner System</p>
+
+        <form id="loginForm">
+            <div class="scm-form-group">
+                <label for="username">아이디 (ID)</label>
+                <input type="text" id="username" class="scm-input" placeholder="아이디를 입력하세요" required>
+            </div>
+            <div class="scm-form-group">
+                <label for="password">비밀번호 (Password)</label>
+                <input type="password" id="password" class="scm-input" placeholder="비밀번호를 입력하세요" required>
+            </div>
+            <div style="text-align: left; margin-bottom: 1.5rem;">
+                <label
+                    style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: #666; cursor: pointer;">
+                    <input type="checkbox" style="accent-color: var(--primary-color);"> 아이디 저장
+                </label>
+            </div>
+            <button type="submit" class="scm-btn">로그인 (Login)</button>
+        </form>
+
+        <script>
+            document.getElementById('loginForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const username = document.getElementById('username').value;
+
+                if (username === 'admin') {
+                    window.location.href = 'scm_admin.html';
+                } else {
+                    window.location.href = 'scm_dashboard.html';
+                }
+            });
+        </script>
+
+        <div class="scm-links">
+            <a href="#">아이디/비밀번호 찾기</a>
+            <a href="contact.html">파트너 입점 문의</a>
+        </div>
+    </div>
+
+</body>
+
+</html>

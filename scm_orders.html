@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주문 관리 - RIUM SCM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&family=Open+Sans:wght@400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* SCM Specific Styles (Copied from Dashboard) */
+        body.scm-body {
+            background-color: #f5f7fa;
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar */
+        .scm-sidebar {
+            width: 250px;
+            background-color: #1a1a1a;
+            color: white;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s;
+        }
+
+        .scm-logo-area {
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .scm-logo-area a {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+            text-decoration: none;
+            letter-spacing: 1px;
+        }
+
+        .scm-menu {
+            padding: 1rem 0;
+            flex: 1;
+        }
+
+        .scm-menu-item {
+            display: block;
+            padding: 0.8rem 1.5rem;
+            color: #aaa;
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .scm-menu-item:hover,
+        .scm-menu-item.active {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: white;
+            border-left-color: var(--primary-color);
+        }
+
+        .scm-menu-item i {
+            width: 25px;
+            text-align: center;
+            margin-right: 10px;
+        }
+
+        .scm-user-profile {
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .scm-user-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .scm-user-info h4 {
+            font-size: 0.9rem;
+            margin: 0;
+            color: white;
+        }
+
+        .scm-user-info p {
+            font-size: 0.75rem;
+            margin: 0;
+            color: #888;
+        }
+
+        /* Main Content */
+        .scm-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: calc(100% - 250px);
+        }
+
+        .scm-header {
+            height: 70px;
+            background-color: white;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+        }
+
+        .scm-breadcrumb {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .scm-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .scm-icon-btn {
+            color: #666;
+            font-size: 1.2rem;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .scm-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--secondary-color);
+            color: white;
+            font-size: 0.6rem;
+            padding: 2px 5px;
+            border-radius: 10px;
+        }
+
+        .scm-content {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        /* Filter Bar */
+        .scm-filter-bar {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+        }
+
+        .scm-input-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .scm-input-group label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .scm-select,
+        .scm-input {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .scm-btn {
+            padding: 0.5rem 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .scm-btn-outline {
+            background-color: white;
+            border: 1px solid #ddd;
+            color: #555;
+        }
+
+        /* Tables */
+        .scm-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            border: 1px solid #eee;
+        }
+
+        .scm-table-container {
+            overflow-x: auto;
+        }
+
+        .scm-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .scm-table th {
+            text-align: left;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            color: #666;
+            font-weight: 600;
+            border-bottom: 2px solid #eee;
+            white-space: nowrap;
+        }
+
+        .scm-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            color: #333;
+            vertical-align: middle;
+        }
+
+        .scm-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-new {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-processing {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+
+        .status-shipped {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .status-cancelled {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+            gap: 0.5rem;
+        }
+
+        .page-item {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #666;
+            text-decoration: none;
+        }
+
+        .page-item.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .scm-sidebar {
+                position: fixed;
+                left: -250px;
+                height: 100%;
+                z-index: 1000;
+            }
+
+            .scm-sidebar.active {
+                left: 0;
+            }
+
+            .scm-main {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body class="scm-body">
+
+    <!-- Sidebar -->
+    <aside class="scm-sidebar">
+        <div class="scm-logo-area">
+            <a href="index.html">RIUM SCM</a>
+        </div>
+        <nav class="scm-menu">
+            <a href="scm_dashboard.html" class="scm-menu-item"><i class="fas fa-home"></i> 대시보드</a>
+            <a href="scm_products.html" class="scm-menu-item"><i class="fas fa-box"></i> 상품 관리</a>
+            <a href="scm_orders.html" class="scm-menu-item active"><i class="fas fa-shopping-cart"></i> 주문 관리</a>
+            <a href="#" class="scm-menu-item"><i class="fas fa-exchange-alt"></i> 반품/교환</a>
+            <a href="#" class="scm-menu-item"><i class="fas fa-calculator"></i> 정산 관리</a>
+            <a href="#" class="scm-menu-item"><i class="fas fa-bullhorn"></i> 공지사항</a>
+            <a href="#" class="scm-menu-item"><i class="fas fa-cog"></i> 설정</a>
+        </nav>
+        <div class="scm-user-profile">
+            <div class="scm-user-avatar">P</div>
+            <div class="scm-user-info">
+                <h4>Partner User</h4>
+                <p>Wizard Co.</p>
+            </div>
+            <a href="index.html" style="color: #888; margin-left: auto;"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="scm-main">
+        <!-- Header -->
+        <header class="scm-header">
+            <div class="scm-breadcrumb">
+                <i class="fas fa-home"></i> Home > 주문 관리
+            </div>
+            <div class="scm-header-actions">
+                <div class="scm-icon-btn">
+                    <i class="fas fa-bell"></i>
+                    <span class="scm-badge">3</span>
+                </div>
+                <div class="scm-icon-btn">
+                    <i class="fas fa-envelope"></i>
+                    <span class="scm-badge">5</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="scm-content">
+            <h2 style="margin-bottom: 1.5rem; font-size: 1.5rem;">주문 관리 (Order Management)</h2>
+
+            <!-- Filter Bar -->
+            <div class="scm-filter-bar">
+                <div class="scm-input-group">
+                    <label>기간</label>
+                    <input type="date" class="scm-input" value="2023-12-01">
+                    <span>~</span>
+                    <input type="date" class="scm-input" value="2023-12-06">
+                </div>
+                <div class="scm-input-group">
+                    <label>상태</label>
+                    <select class="scm-select">
+                        <option value="all">전체</option>
+                        <option value="new">신규주문</option>
+                        <option value="processing">배송준비</option>
+                        <option value="shipped">배송중</option>
+                        <option value="completed">배송완료</option>
+                    </select>
+                </div>
+                <div class="scm-input-group" style="margin-left: auto;">
+                    <input type="text" class="scm-input" placeholder="주문번호/주문자명 검색">
+                    <button class="scm-btn">검색</button>
+                </div>
+            </div>
+
+            <!-- Order Table -->
+            <div class="scm-card">
+                <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem;">
+                    <button class="scm-btn scm-btn-outline">발주확인</button>
+                    <button class="scm-btn scm-btn-outline">송장출력</button>
+                    <button class="scm-btn scm-btn-outline">발송처리</button>
+                    <button class="scm-btn scm-btn-outline" style="color: #d32f2f; border-color: #d32f2f;">주문취소</button>
+                </div>
+                <div class="scm-table-container">
+                    <table class="scm-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox"></th>
+                                <th>주문번호</th>
+                                <th>주문일시</th>
+                                <th>상품정보</th>
+                                <th>수량</th>
+                                <th>주문자</th>
+                                <th>결제금액</th>
+                                <th>상태</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>20231206-0001</td>
+                                <td>2023-12-06 14:30</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <img src="https://images.unsplash.com/photo-1614630687884-699709d22445?q=80&w=100&auto=format&fit=crop"
+                                            style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                        <span>Smart Air Conditioner</span>
+                                    </div>
+                                </td>
+                                <td>1</td>
+                                <td>김철수</td>
+                                <td>450,000원</td>
+                                <td><span class="scm-status status-new">신규주문</span></td>
+                                <td><button class="scm-btn scm-btn-outline"
+                                        style="padding: 2px 8px; font-size: 0.8rem;">상세</button></td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>20231206-0002</td>
+                                <td>2023-12-06 13:15</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <img src="https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?q=80&w=100&auto=format&fit=crop"
+                                            style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                        <span>Glass Food Container Set</span>
+                                    </div>
+                                </td>
+                                <td>2</td>
+                                <td>이영희</td>
+                                <td>70,000원</td>
+                                <td><span class="scm-status status-processing">배송준비</span></td>
+                                <td><button class="scm-btn scm-btn-outline"
+                                        style="padding: 2px 8px; font-size: 0.8rem;">상세</button></td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>20231205-0045</td>
+                                <td>2023-12-05 18:20</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <img src="https://images.unsplash.com/photo-1545459720-aacaf5090834?q=80&w=100&auto=format&fit=crop"
+                                            style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                        <span>Premium Bluetooth Speaker</span>
+                                    </div>
+                                </td>
+                                <td>1</td>
+                                <td>박지성</td>
+                                <td>120,000원</td>
+                                <td><span class="scm-status status-shipped">배송중</span></td>
+                                <td><button class="scm-btn scm-btn-outline"
+                                        style="padding: 2px 8px; font-size: 0.8rem;">상세</button></td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>20231205-0032</td>
+                                <td>2023-12-05 15:40</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <img src="https://images.unsplash.com/photo-1618941716939-553df9c62e23?q=80&w=100&auto=format&fit=crop"
+                                            style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                        <span>Portable Mini Fan</span>
+                                    </div>
+                                </td>
+                                <td>3</td>
+                                <td>손흥민</td>
+                                <td>45,000원</td>
+                                <td><span class="scm-status status-completed">배송완료</span></td>
+                                <td><button class="scm-btn scm-btn-outline"
+                                        style="padding: 2px 8px; font-size: 0.8rem;">상세</button></td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>20231204-0112</td>
+                                <td>2023-12-04 09:10</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <img src="https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?q=80&w=100&auto=format&fit=crop"
+                                            style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                        <span>Ergonomic Office Chair</span>
+                                    </div>
+                                </td>
+                                <td>1</td>
+                                <td>김민재</td>
+                                <td>280,000원</td>
+                                <td><span class="scm-status status-cancelled">취소완료</span></td>
+                                <td><button class="scm-btn scm-btn-outline"
+                                        style="padding: 2px 8px; font-size: 0.8rem;">상세</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination">
+                    <a href="#" class="page-item"><i class="fas fa-chevron-left"></i></a>
+                    <a href="#" class="page-item active">1</a>
+                    <a href="#" class="page-item">2</a>
+                    <a href="#" class="page-item">3</a>
+                    <a href="#" class="page-item"><i class="fas fa-chevron-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+</body>
+
+</html>
