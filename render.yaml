@@ -16,7 +16,7 @@ services:
     autoDeploy: true
 
   # Frontend Service (React Static Site)
-  - type: static
+  - type: web
     name: rium-scm-frontend
     env: static
     rootDir: scm-frontend
