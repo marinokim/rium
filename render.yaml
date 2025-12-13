@@ -27,5 +27,5 @@ services:
         fromService:
           type: web
           name: rium-scm-backend
-          property: url
+          property: host
     autoDeploy: true

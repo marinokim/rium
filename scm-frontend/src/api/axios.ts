@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_API_URL
-    ? `${import.meta.env.VITE_API_URL}/api`
+// Handle Render providing just the hostname
+const rawUrl = import.meta.env.VITE_API_URL;
+const baseURL = rawUrl
+    ? (rawUrl.startsWith('http') ? `${rawUrl}/api` : `https://${rawUrl}/api`)
     : 'http://localhost:5000/api';
 
 const api = axios.create({
