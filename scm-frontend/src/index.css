@@ -73,3 +73,354 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* --- RIUM SCM Styles --- */
+
+:root {
+  --scm-sidebar-width: 100px;
+  --scm-header-height: 60px;
+  --scm-bg-color: #f5f7fa;
+  --scm-sidebar-bg: #fff;
+  --scm-primary: #1a2b49;
+  /* RIUM Navy */
+  --scm-accent: #c5a47e;
+  /* RIUM Gold */
+}
+
+.scm-body {
+  background-color: var(--scm-bg-color);
+  font-family: 'Noto Sans KR', sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  min-height: 100vh;
+  color: #333;
+  /* Force dark text for light theme default */
+}
+
+/* Sidebar (Dark Theme) */
+.scm-sidebar {
+  width: var(--scm-sidebar-width);
+  background-color: #1a1a1a;
+  color: white;
+  border-right: none;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  z-index: 100;
+  transition: left 0.3s ease;
+}
+
+.scm-logo-area {
+  height: var(--scm-header-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: white;
+  text-align: center;
+  line-height: 1.2;
+  padding: 1rem 0;
+}
+
+.scm-logo-area a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.scm-menu {
+  flex: 1;
+  padding: 1rem 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.scm-menu-item {
+  display: flex;
+  flex-direction: column !important;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0.5rem;
+  color: #aaa;
+  text-decoration: none;
+  transition: all 0.2s;
+  text-align: center;
+  border-left: 3px solid transparent;
+  border-right: none;
+  cursor: pointer;
+}
+
+.scm-menu-item:hover,
+.scm-menu-item.active {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: white;
+  border-left: 3px solid var(--scm-primary);
+}
+
+.scm-menu-item i {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  margin-right: 0 !important;
+  width: auto;
+}
+
+.scm-menu-item span {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+  display: block;
+  word-break: keep-all;
+}
+
+.scm-user-profile {
+  padding: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.scm-user-avatar {
+  width: 36px;
+  height: 36px;
+  background-color: var(--scm-primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.scm-user-info {
+  display: none;
+}
+
+/* Main Content */
+.scm-main {
+  flex: 1;
+  margin-left: var(--scm-sidebar-width);
+  display: flex;
+  flex-direction: column;
+  width: calc(100% - var(--scm-sidebar-width));
+  transition: width 0.3s ease;
+  background-color: var(--scm-bg-color);
+}
+
+/* Header */
+.scm-header {
+  height: var(--scm-header-height);
+  background-color: #fff;
+  border-bottom: 1px solid #e1e4e8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  color: #333;
+}
+
+.scm-breadcrumb {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.scm-header-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.scm-icon-btn {
+  position: relative;
+  cursor: pointer;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.scm-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #e74c3c;
+  color: white;
+  font-size: 0.6rem;
+  padding: 2px 5px;
+  border-radius: 10px;
+}
+
+/* Content Area */
+.scm-content {
+  padding: 2rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Cards */
+.scm-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+/* Grid System */
+.scm-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.scm-stat-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.scm-stat-info h3 {
+  font-size: 0.9rem;
+  color: #888;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.scm-stat-info p {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+}
+
+.scm-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.bg-primary-light {
+  background-color: rgba(26, 43, 73, 0.1);
+  color: var(--scm-primary);
+}
+
+.bg-secondary-light {
+  background-color: rgba(197, 164, 126, 0.1);
+  color: var(--scm-accent);
+}
+
+.bg-green-light {
+  background-color: rgba(46, 204, 113, 0.1);
+  color: #2ecc71;
+}
+
+.bg-red-light {
+  background-color: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+}
+
+/* Tables */
+.scm-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.scm-table th {
+  text-align: left;
+  padding: 1rem;
+  border-bottom: 2px solid #f0f0f0;
+  color: #666;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.scm-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.status-pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-approved {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-shipping {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-completed {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-rejected {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.status-new {
+  background-color: #cce5ff;
+  color: #004085;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .scm-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .scm-sidebar {
+    position: fixed;
+    left: -100px;
+    height: 100%;
+    z-index: 1000;
+  }
+
+  .scm-sidebar.active {
+    left: 0;
+  }
+
+  .scm-main {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .scm-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .scm-header {
+    padding: 0 1rem;
+  }
+}
