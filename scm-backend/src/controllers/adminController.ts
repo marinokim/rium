@@ -1,8 +1,6 @@
 import { Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/prisma.js';
 import { AuthRequest } from '../middleware/auth.js';
-
-const prisma = new PrismaClient();
 
 // Update Quote Status (Shipping Info)
 export const updateQuoteStatus = async (req: AuthRequest, res: Response) => {

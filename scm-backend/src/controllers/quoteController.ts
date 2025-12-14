@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/prisma.js';
 import { AuthRequest } from '../middleware/auth.js';
-
-const prisma = new PrismaClient();
 
 // Create Quote Request
 export const createQuote = async (req: AuthRequest, res: Response) => {

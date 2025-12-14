@@ -1,5 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma.js';
 // Update Quote Status (Shipping Info)
 export const updateQuoteStatus = async (req, res) => {
     try {
@@ -11,7 +10,7 @@ export const updateQuoteStatus = async (req, res) => {
             return res.status(400).json({ error: 'Invalid status' });
         }
         const updatedQuote = await prisma.quote.update({
-            where: { id },
+            where: { id: Number(id) },
             data: {
                 status,
                 message
