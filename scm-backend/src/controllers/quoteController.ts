@@ -21,23 +21,47 @@ export const createQuote = async (req: AuthRequest, res: Response) => {
 
         // 2. Create Quote and Items in Transaction
         const quote = await prisma.$transaction(async (tx) => {
-            // Create the Quote
+            let totalAmount = 0;
+            const quoteItemsData = [];
+
+            // 1. Calculate Total & Prepare Items
+            for (const item of items) {
+                const product = await tx.product.findUnique({
+                    where: { id: Number(item.productId) }
+                });
+
+                if (!product) {
+                    throw new Error(`Product ID ${item.productId} not found`);
+                }
+
+                const quantity = Number(item.quantity);
+                const price = product.price;
+                totalAmount += price * quantity;
+
+                quoteItemsData.push({
+                    productId: product.id,
+                    quantity,
+                    price
+                });
+            }
+
+            // 2. Create Quote
             const newQuote = await tx.quote.create({
                 data: {
                     quoteNumber,
-                    userId,
+                    userId: Number(userId),
                     message,
-                    status: 'PENDING'
+                    status: 'PENDING',
+                    totalAmount
                 }
             });
 
-            // Create Quote Items
-            for (const item of items) {
+            // 3. Create Quote Items
+            for (const itemData of quoteItemsData) {
                 await tx.quoteItem.create({
                     data: {
                         quoteId: newQuote.id,
-                        productId: item.productId,
-                        quantity: item.quantity
+                        ...itemData
                     }
                 });
             }
@@ -59,7 +83,7 @@ export const getMyQuotes = async (req: AuthRequest, res: Response) => {
         if (!userId) return res.status(401).json({ error: 'User ID missing' });
 
         const quotes = await prisma.quote.findMany({
-            where: { userId },
+            where: { userId: Number(userId) },
             include: {
                 items: {
                     include: { product: true }

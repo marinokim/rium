@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export const getProducts = async (req: Request, res: Response) => {
     try {
         const products = await prisma.product.findMany({
-            where: { isActive: true },
+            where: { isAvailable: true },
             orderBy: { name: 'asc' }
         });
         res.json({ products });
@@ -22,7 +22,7 @@ export const getProductById = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const product = await prisma.product.findUnique({
-            where: { id }
+            where: { id: Number(id) }
         });
 
         if (!product) {

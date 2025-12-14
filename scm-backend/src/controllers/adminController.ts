@@ -17,7 +17,7 @@ export const updateQuoteStatus = async (req: AuthRequest, res: Response) => {
         }
 
         const updatedQuote = await prisma.quote.update({
-            where: { id },
+            where: { id: Number(id) },
             data: {
                 status,
                 message
