@@ -29,3 +29,11 @@ services:
           name: rium-scm-backend
           property: host
     autoDeploy: true
+
+  # Homepage Service (Static HTML)
+  - type: web
+    name: rium-homepage
+    env: static
+    rootDir: .
+    staticPublishPath: ./
+    autoDeploy: true
