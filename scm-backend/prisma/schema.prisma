@@ -8,3 +8,89 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  company   String?
+  role      Role     @default(PARTNER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isApproved Boolean @default(false)
+  quotes    Quote[]
+  carts     Cart[]
+}
+
+enum Role {
+  ADMIN
+  PARTNER
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  category    Category @relation(fields: [categoryId], references: [id])
+  categoryId  Int
+  imageUrl    String?
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  cartItems   Cart[]
+  quoteItems  QuoteItem[]
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String
+  slug      String    @unique
+  products  Product[]
+}
+
+model Cart {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  product   Product  @relation(fields: [productId], references: [id])
+  productId Int
+  quantity  Int
+  option    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId, option])
+}
+
+model Quote {
+  id          Int         @id @default(autoincrement())
+  quoteNumber String      @unique
+  user        User        @relation(fields: [userId], references: [id])
+  userId      Int
+  status      QuoteStatus @default(PENDING)
+  totalAmount Float
+  validUntil  DateTime?
+  message     String?     // Admin message
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  items       QuoteItem[]
+}
+
+enum QuoteStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+model QuoteItem {
+  id        Int     @id @default(autoincrement())
+  quote     Quote   @relation(fields: [quoteId], references: [id])
+  quoteId   Int
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int
+  quantity  Int
+  price     Float   // Price at the time of quote
+}
