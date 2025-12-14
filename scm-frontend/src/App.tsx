@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
+import Admin from './pages/Admin';
 
 function App() {
   return (
@@ -9,7 +10,7 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         {/* Placeholders for future routes */}
         <Route path="/dashboard" element={<div>Dashboard (Coming Soon)</div>} />
-        <Route path="/admin" element={<div>Admin (Coming Soon)</div>} />
+        <Route path="/admin" element={<Admin />} />
       </Routes>
     </Router>
   );
