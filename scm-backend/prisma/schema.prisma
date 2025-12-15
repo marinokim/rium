@@ -31,7 +31,7 @@ enum Role {
 model Product {
   id          Int      @id @default(autoincrement())
   name        String
-  modelName   String?   // Mapped to model_name in Arontec if needed, or alias for name?
+  // modelName removed (redundant with name)
   // Arontec: model_name -> name in Rium?
   // Let's assume name = model_name.
 
