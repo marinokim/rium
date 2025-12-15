@@ -6,6 +6,9 @@ export const getProducts = async (req: Request, res: Response) => {
     try {
         const products = await prisma.product.findMany({
             where: { isAvailable: true },
+            include: {
+                category: true
+            },
             orderBy: { name: 'asc' }
         });
         res.json({ products });

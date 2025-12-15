@@ -23,8 +23,8 @@ const Products = () => {
 
     const fetchProducts = async () => {
         try {
-            const response = await api.get('/products'); // Use public endpoint for now
-            setProducts(response.data);
+            const response = await api.get('/products');
+            setProducts(response.data.products);
         } catch (error) {
             console.error("Failed to fetch products", error);
         } finally {
