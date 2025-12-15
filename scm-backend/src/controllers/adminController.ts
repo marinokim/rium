@@ -46,7 +46,10 @@ export const getAllQuotes = async (req: AuthRequest, res: Response) => {
         res.json({ quotes });
     } catch (error) {
         console.error('Get all quotes error:', error);
-        res.status(500).json({ error: 'Failed to fetch quotes' });
+        res.status(500).json({
+            error: 'Failed to fetch quotes',
+            details: error instanceof Error ? error.message : String(error)
+        });
     }
 };
 
