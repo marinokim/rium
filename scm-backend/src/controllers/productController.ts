@@ -4,12 +4,19 @@ import prisma from '../lib/prisma.js';
 // Get all products (Catalog)
 export const getProducts = async (req: Request, res: Response) => {
     try {
+        const { isNew, limit } = req.query;
+
+        // Build filter
+        const where: any = { isAvailable: true };
+        // If isNew is requested, we could filter by createdAt, but usually we just sort.
+
         const products = await prisma.product.findMany({
-            where: { isAvailable: true },
+            where,
             include: {
                 category: true
             },
-            orderBy: { name: 'asc' }
+            orderBy: isNew === 'true' ? { createdAt: 'desc' } : { name: 'asc' },
+            take: limit ? Number(limit) : undefined
         });
         res.json({ products });
     } catch (error) {
