@@ -1,11 +1,16 @@
 import express from 'express';
-import { getProducts, getProductById } from '../controllers/productController.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { getProducts, getProductById, createProduct, updateProduct, deleteProduct } from '../controllers/productController.js';
+import { authenticateToken, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Protected routes (Partners only)
+// Public/Partner Routes
 router.get('/', authenticateToken, getProducts);
 router.get('/:id', authenticateToken, getProductById);
+
+// Admin Routes
+router.post('/', authenticateToken, requireAdmin, createProduct);
+router.put('/:id', authenticateToken, requireAdmin, updateProduct);
+router.delete('/:id', authenticateToken, requireAdmin, deleteProduct);
 
 export default router;

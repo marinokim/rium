@@ -31,14 +31,44 @@ enum Role {
 model Product {
   id          Int      @id @default(autoincrement())
   name        String
-  description String?
-  price       Float
+  modelName   String?   // Mapped to model_name in Arontec if needed, or alias for name?
+  // Arontec: model_name -> name in Rium?
+  // Let's assume name = model_name.
+
   category    Category @relation(fields: [categoryId], references: [id])
   categoryId  Int
-  imageUrl    String?
+  
+  // Basic Info
+  brand       String?
+  modelNo     String?   @map("model_no")
+  manufacturer String?
+  origin      String?
+  
+  // Prices
+  price       Float     // Selling Price (B2B Price)
+  consumerPrice Float?  @map("consumer_price")
+  supplyPrice Float?    @map("supply_price")
+  
+  // Stock & Shipping
+  stockQuantity Int?    @map("stock_quantity")
+  quantityPerCarton Int? @map("quantity_per_carton")
+  shippingFee Float?    @map("shipping_fee") 
+  shippingFeeIndividual Float? @map("shipping_fee_individual")
+  shippingFeeCarton Float? @map("shipping_fee_carton")
+  isTaxFree   Boolean?  @map("is_tax_free") @default(false)
+  
+  // Details
+  imageUrl    String?   @map("image_url") // existing
+  detailUrl   String?   @map("detail_url")
+  description String?
+  productSpec String?   @map("product_spec")
+  productOptions String? @map("product_options")
+  remarks     String?
+  
   isAvailable Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  
   cartItems   Cart[]
   quoteItems  QuoteItem[]
 }
