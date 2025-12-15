@@ -49,3 +49,40 @@ export const getAllQuotes = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: 'Failed to fetch quotes' });
     }
 };
+
+// Get All Partners
+export const getPartners = async (req: AuthRequest, res: Response) => {
+    try {
+        const partners = await prisma.user.findMany({
+            where: { role: 'PARTNER' },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                company: true,
+                createdAt: true,
+                isApproved: true
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json({ partners });
+    } catch (error) {
+        console.error('Get partners error:', error);
+        res.status(500).json({ error: 'Failed to fetch partners' });
+    }
+};
+
+// Approve Partner
+export const approvePartner = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        await prisma.user.update({
+            where: { id: Number(id) },
+            data: { isApproved: true }
+        });
+        res.json({ message: 'Partner approved successfully' });
+    } catch (error) {
+        console.error('Approve partner error:', error);
+        res.status(500).json({ error: 'Failed to approve partner' });
+    }
+};

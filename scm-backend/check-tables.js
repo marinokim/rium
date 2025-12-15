@@ -1,22 +1,34 @@
 
 import pg from 'pg';
-import dotenv from 'dotenv';
-dotenv.config();
-
 const { Pool } = pg;
+
+// Using the RIUM connection string provided by user.
+const connectionString = "postgresql://postgres.zgqnhbaztgpekerhxwbc:gmlrhks0528%26%2A@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres";
+
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString,
     ssl: { rejectUnauthorized: false }
 });
 
-async function main() {
+async function run() {
     try {
-        const res = await pool.query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'");
-        console.log('Tables in public schema:', res.rows.map(r => r.table_name));
+        const client = await pool.connect();
+        console.log("Connected. Fetching tables...");
+
+        const res = await client.query(`
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public'
+            ORDER BY table_name;
+        `);
+
+        console.log("Tables in DB:", res.rows.map(r => r.table_name));
+        client.release();
     } catch (err) {
-        console.error(err);
+        console.error("Error:", err);
     } finally {
-        pool.end();
+        await pool.end();
     }
 }
-main();
+
+run();
