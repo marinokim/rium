@@ -34,6 +34,7 @@ interface Product {
 
 const Products = () => {
     const [products, setProducts] = useState<Product[]>([]);
+    const [categories, setCategories] = useState<{ id: number, name: string, color?: string }[]>([]); // New state
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -41,7 +42,7 @@ const Products = () => {
 
     // Form State with empty strings for numbers to avoid "0"
     const [formData, setFormData] = useState<Partial<any>>({
-        categoryId: 1, // Default
+        categoryId: '', // Change default to empty or first category after fetch
         isTaxFree: false,
         quantityPerCarton: 1,
         stockQuantity: 999,
@@ -51,18 +52,32 @@ const Products = () => {
     });
 
     useEffect(() => {
-        fetchProducts();
+        fetchData();
     }, []);
 
-    const fetchProducts = async () => {
+    const fetchData = async () => {
         try {
-            const response = await api.get('/products');
-            setProducts(response.data.products);
+            const [prodRes, catRes] = await Promise.all([
+                api.get('/products'),
+                api.get('/categories')
+            ]);
+            setProducts(prodRes.data.products);
+            setCategories(catRes.data.categories);
+
+            // Set default category if available
+            if (catRes.data.categories.length > 0) {
+                setFormData(prev => ({ ...prev, categoryId: catRes.data.categories[0].id }));
+            }
         } catch (error) {
-            console.error("Failed to fetch products", error);
+            console.error("Failed to fetch data", error);
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchProducts = async () => { // Keep for refresh
+        const response = await api.get('/products');
+        setProducts(response.data.products);
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -81,7 +96,7 @@ const Products = () => {
 
     const openCreateModal = () => {
         setFormData({
-            categoryId: 1,
+            categoryId: categories.length > 0 ? categories[0].id : '',
             isTaxFree: false,
             quantityPerCarton: 1,
             stockQuantity: 999,
@@ -200,7 +215,21 @@ const Products = () => {
                                 </td>
                                 <td>
                                     <div>{product.name}</div>
-                                    <div style={{ fontSize: '0.8rem', color: '#666' }}>{product.category?.name}</div>
+                                    <div style={{ fontSize: '0.8rem', color: '#666', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                        {product.category?.name}
+                                        {/* Find category color from list if needed, or backend should include it. 
+                                            Assuming backend include: { category: true } in prisma. 
+                                            Let's check if product.category has color. 
+                                            Current Interface says { id, name }. 
+                                            Let's blindly check or lookup map */}
+                                        {categories.find(c => c.id === product.categoryId)?.color && (
+                                            <span style={{
+                                                width: '10px', height: '10px', borderRadius: '50%',
+                                                backgroundColor: categories.find(c => c.id === product.categoryId)?.color,
+                                                display: 'inline-block'
+                                            }}></span>
+                                        )}
+                                    </div>
                                 </td>
                                 <td>
                                     <div style={{ fontSize: '0.85rem' }}>공급: ₩{(product.supplyPrice || 0).toLocaleString()}</div>
@@ -254,10 +283,11 @@ const Products = () => {
                                         onChange={handleInputChange}
                                         style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
                                     >
-                                        <option value={1}>Gift Set (1)</option>
-                                        <option value={2}>Living (2)</option>
-                                        <option value={3}>Food (3)</option>
-                                        <option value={4}>Other (4)</option>
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.id}>
+                                                {cat.name}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div className="form-group" style={{ marginBottom: '1rem' }}>
