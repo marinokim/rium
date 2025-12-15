@@ -6,6 +6,7 @@ interface Category {
     name: string;
     slug: string;
     description?: string;
+    color?: string;
     _count?: {
         products: number;
     }
@@ -20,8 +21,21 @@ const Categories = () => {
 
     const [formData, setFormData] = useState({
         name: '',
-        slug: ''
+        slug: '',
+        color: '#e0e0e0'
     });
+
+    const PRESET_COLORS = [
+        { label: 'Gray', value: '#e0e0e0' },
+        { label: 'Blue', value: '#2196f3' },
+        { label: 'Green', value: '#4caf50' },
+        { label: 'Red', value: '#f44336' },
+        { label: 'Yellow', value: '#ffeb3b' },
+        { label: 'Purple', value: '#9c27b0' },
+        { label: 'Orange', value: '#ff9800' },
+        { label: 'Teal', value: '#009688' },
+        { label: 'Pink', value: '#e91e63' }
+    ];
 
     useEffect(() => {
         fetchCategories();
@@ -38,20 +52,24 @@ const Categories = () => {
         }
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleColorSelect = (color: string) => {
+        setFormData(prev => ({ ...prev, color }));
+    };
+
     const openCreateModal = () => {
-        setFormData({ name: '', slug: '' });
+        setFormData({ name: '', slug: '', color: '#e0e0e0' });
         setIsEditing(false);
         setEditId(null);
         setShowModal(true);
     };
 
     const openEditModal = (cat: Category) => {
-        setFormData({ name: cat.name, slug: cat.slug });
+        setFormData({ name: cat.name, slug: cat.slug, color: cat.color || '#e0e0e0' });
         setIsEditing(true);
         setEditId(cat.id);
         setShowModal(true);
@@ -107,6 +125,7 @@ const Categories = () => {
                             <th>ID</th>
                             <th>카테고리명</th>
                             <th>Slug (고유값)</th>
+                            <th>색상</th>
                             <th>상품 수</th>
                             <th>관리</th>
                         </tr>
@@ -117,6 +136,16 @@ const Categories = () => {
                                 <td>{cat.id}</td>
                                 <td style={{ fontWeight: 600 }}>{cat.name}</td>
                                 <td style={{ color: '#666' }}>{cat.slug}</td>
+                                <td>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <div style={{
+                                            width: '20px', height: '20px', borderRadius: '50%',
+                                            backgroundColor: cat.color || '#e0e0e0',
+                                            border: '1px solid #ddd'
+                                        }}></div>
+                                        <span style={{ fontSize: '0.8rem', color: '#888' }}>{cat.color}</span>
+                                    </div>
+                                </td>
                                 <td>
                                     <span style={{
                                         backgroundColor: '#e3f2fd', color: '#1976d2',
@@ -180,6 +209,33 @@ const Categories = () => {
                                     style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
                                 />
                             </div>
+                            <div className="form-group" style={{ marginBottom: '1rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>색상 선택</label>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                    {PRESET_COLORS.map(c => (
+                                        <div
+                                            key={c.value}
+                                            onClick={() => handleColorSelect(c.value)}
+                                            style={{
+                                                width: '30px', height: '30px', borderRadius: '50%',
+                                                backgroundColor: c.value, cursor: 'pointer',
+                                                border: formData.color === c.value ? '2px solid #333' : '1px solid #ddd',
+                                                transform: formData.color === c.value ? 'scale(1.1)' : 'scale(1)'
+                                            }}
+                                            title={c.label}
+                                        />
+                                    ))}
+                                </div>
+                                <input
+                                    type="text"
+                                    name="color"
+                                    value={formData.color}
+                                    onChange={handleInputChange}
+                                    style={{ marginTop: '8px', width: '100%', padding: '6px', border: '1px solid #eee', borderRadius: '4px', fontSize: '0.8rem', color: '#666' }}
+                                    placeholder="직접 입력 (예: #123456)"
+                                />
+                            </div>
+
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
                                 <button type="button" onClick={() => setShowModal(false)} style={{ padding: '8px 16px', borderRadius: '4px', border: '1px solid #ddd', background: 'white', cursor: 'pointer' }}>
                                     취소

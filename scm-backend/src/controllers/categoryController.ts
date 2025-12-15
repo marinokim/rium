@@ -22,13 +22,17 @@ export const getCategories = async (req: Request, res: Response) => {
 // Create Category
 export const createCategory = async (req: Request, res: Response) => {
     try {
-        const { name, slug } = req.body;
+        const { name, slug, color } = req.body;
         if (!name || !slug) {
             return res.status(400).json({ error: 'Name and slug are required' });
         }
 
         const category = await prisma.category.create({
-            data: { name, slug }
+            data: {
+                name,
+                slug,
+                color: color || '#e0e0e0'
+            }
         });
         res.status(201).json({ message: 'Category created', category });
     } catch (error) {
@@ -41,11 +45,11 @@ export const createCategory = async (req: Request, res: Response) => {
 export const updateCategory = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { name, slug } = req.body;
+        const { name, slug, color } = req.body;
 
         const category = await prisma.category.update({
             where: { id: Number(id) },
-            data: { name, slug }
+            data: { name, slug, color }
         });
         res.json({ message: 'Category updated', category });
     } catch (error) {
