@@ -21,7 +21,10 @@ export const getProducts = async (req: Request, res: Response) => {
         res.json({ products });
     } catch (error) {
         console.error('Get products error:', error);
-        res.status(500).json({ error: 'Failed to fetch products' });
+        res.status(500).json({
+            error: 'Failed to fetch products',
+            details: error instanceof Error ? error.message : String(error)
+        });
     }
 };
 
@@ -87,7 +90,10 @@ export const createProduct = async (req: Request, res: Response) => {
         res.status(201).json({ message: "Product created", product: newProduct });
     } catch (error) {
         console.error("Create product error:", error);
-        res.status(500).json({ error: "Failed to create product" });
+        res.status(500).json({
+            error: "Failed to create product",
+            details: error instanceof Error ? error.message : String(error)
+        });
     }
 };
 
@@ -136,7 +142,10 @@ export const updateProduct = async (req: Request, res: Response) => {
         res.json({ message: "Product updated", product: updatedProduct });
     } catch (error) {
         console.error("Update product error:", error);
-        res.status(500).json({ error: "Failed to update product" });
+        res.status(500).json({
+            error: "Failed to update product",
+            details: error instanceof Error ? error.message : String(error)
+        });
     }
 };
 
@@ -150,6 +159,9 @@ export const deleteProduct = async (req: Request, res: Response) => {
         res.json({ message: "Product deleted" });
     } catch (error) {
         console.error("Delete product error:", error);
-        res.status(500).json({ error: "Failed to delete product" });
+        res.status(500).json({
+            error: "Failed to delete product",
+            details: error instanceof Error ? error.message : String(error)
+        });
     }
 };
