@@ -4,6 +4,7 @@ import AdminLayout from './components/AdminLayout';
 import Dashboard from './pages/admin/Dashboard';
 import Partners from './pages/admin/Partners';
 import Products from './pages/admin/Products';
+import Categories from './pages/admin/Categories';
 import Quotes from './pages/admin/Quotes';
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="partners" element={<Partners />} />
           <Route path="products" element={<Products />} />
+          <Route path="categories" element={<Categories />} />
           <Route path="quotes" element={<Quotes />} />
 
           {/* Placeholders */}

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 
 const AdminLayout = () => {
@@ -15,6 +16,11 @@ const AdminLayout = () => {
         if (path !== '/admin' && location.pathname.startsWith(path)) return 'scm-menu-item active';
         return 'scm-menu-item';
     };
+
+    const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+
+    // Close menu when clicking outside (simple version checking target, or just toggle)
+    // For simplicity, just toggle on click.
 
     return (
         <div className="scm-body">
@@ -78,8 +84,25 @@ const AdminLayout = () => {
                             <i className="fas fa-bell"></i>
                             <span className="scm-badge">5</span>
                         </div>
-                        <div className="scm-icon-btn">
+
+                        {/* Settings Dropdown */}
+                        <div className="scm-icon-btn" style={{ position: 'relative' }} onClick={() => setShowSettingsMenu(!showSettingsMenu)}>
                             <i className="fas fa-cog"></i>
+                            {showSettingsMenu && (
+                                <div style={{
+                                    position: 'absolute', top: '100%', right: 0, marginTop: '10px',
+                                    backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '4px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)', width: '150px', zIndex: 100
+                                }}>
+                                    <div style={{ padding: '8px 12px', borderBottom: '1px solid #eee', fontSize: '0.8rem', color: '#888' }}>
+                                        시스템 설정
+                                    </div>
+                                    <Link to="/admin/categories" style={{ display: 'block', padding: '10px 12px', textDecoration: 'none', color: '#333', fontSize: '0.9rem' }}>
+                                        <i className="fas fa-tags" style={{ marginRight: '8px', color: 'var(--scm-primary)' }}></i>
+                                        카테고리 관리
+                                    </Link>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </header>
