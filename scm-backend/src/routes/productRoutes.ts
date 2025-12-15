@@ -5,12 +5,16 @@ import { authenticateToken, requireAdmin } from '../middleware/auth.js';
 const router = express.Router();
 
 // Public/Partner Routes
-router.get('/', authenticateToken, getProducts);
-router.get('/:id', authenticateToken, getProductById);
+// Public Routes
+router.get('/', getProducts);
+router.get('/:id', getProductById);
 
-// Admin Routes
-router.post('/', authenticateToken, requireAdmin, createProduct);
-router.put('/:id', authenticateToken, requireAdmin, updateProduct);
-router.delete('/:id', authenticateToken, requireAdmin, deleteProduct);
+// Protected Routes (Admin only)
+router.use(authenticateToken);
+router.use(requireAdmin);
+
+router.post('/', createProduct);
+router.put('/:id', updateProduct);
+router.delete('/:id', deleteProduct);
 
 export default router;
