@@ -40,21 +40,41 @@ export const getProductById = async (req: Request, res: Response) => {
 // Create Product
 export const createProduct = async (req: Request, res: Response) => {
     try {
-        const productData = req.body;
+        const {
+            name, modelName, brand, modelNo, description,
+            price, consumerPrice, supplyPrice,
+            stockQuantity, quantityPerCarton,
+            shippingFee, shippingFeeIndividual, shippingFeeCarton,
+            manufacturer, origin, isTaxFree,
+            imageUrl, detailUrl, productSpec, productOptions, remarks,
+            categoryId, isAvailable
+        } = req.body;
+
         const newProduct = await prisma.product.create({
             data: {
-                ...productData,
-                categoryId: Number(productData.categoryId),
-                price: Number(productData.price),
-                consumerPrice: productData.consumerPrice ? Number(productData.consumerPrice) : 0,
-                supplyPrice: productData.supplyPrice ? Number(productData.supplyPrice) : 0,
-                stockQuantity: productData.stockQuantity ? Number(productData.stockQuantity) : 0,
-                quantityPerCarton: productData.quantityPerCarton ? Number(productData.quantityPerCarton) : 1,
-                shippingFee: productData.shippingFee ? Number(productData.shippingFee) : 0,
-                shippingFeeIndividual: productData.shippingFeeIndividual ? Number(productData.shippingFeeIndividual) : 0,
-                shippingFeeCarton: productData.shippingFeeCarton ? Number(productData.shippingFeeCarton) : 0,
-                isTaxFree: productData.isTaxFree === true || productData.isTaxFree === 'true',
-                isAvailable: true
+                name,
+                modelName,
+                brand,
+                modelNo,
+                description,
+                price: Number(price),
+                consumerPrice: consumerPrice ? Number(consumerPrice) : 0,
+                supplyPrice: supplyPrice ? Number(supplyPrice) : 0,
+                stockQuantity: stockQuantity ? Number(stockQuantity) : 0,
+                quantityPerCarton: quantityPerCarton ? Number(quantityPerCarton) : 1,
+                shippingFee: shippingFee ? Number(shippingFee) : 0,
+                shippingFeeIndividual: shippingFeeIndividual ? Number(shippingFeeIndividual) : 0,
+                shippingFeeCarton: shippingFeeCarton ? Number(shippingFeeCarton) : 0,
+                manufacturer,
+                origin,
+                isTaxFree: isTaxFree === true || isTaxFree === 'true',
+                imageUrl,
+                detailUrl,
+                productSpec,
+                productOptions,
+                remarks,
+                categoryId: Number(categoryId),
+                isAvailable: isAvailable !== undefined ? isAvailable : true
             }
         });
         res.status(201).json({ message: "Product created", product: newProduct });
@@ -68,22 +88,42 @@ export const createProduct = async (req: Request, res: Response) => {
 export const updateProduct = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const productData = req.body;
+        const {
+            name, modelName, brand, modelNo, description,
+            price, consumerPrice, supplyPrice,
+            stockQuantity, quantityPerCarton,
+            shippingFee, shippingFeeIndividual, shippingFeeCarton,
+            manufacturer, origin, isTaxFree,
+            imageUrl, detailUrl, productSpec, productOptions, remarks,
+            categoryId, isAvailable
+        } = req.body;
 
         const updatedProduct = await prisma.product.update({
             where: { id: Number(id) },
             data: {
-                ...productData,
-                categoryId: productData.categoryId ? Number(productData.categoryId) : undefined,
-                price: productData.price ? Number(productData.price) : undefined,
-                consumerPrice: productData.consumerPrice !== undefined ? Number(productData.consumerPrice) : undefined,
-                supplyPrice: productData.supplyPrice !== undefined ? Number(productData.supplyPrice) : undefined,
-                stockQuantity: productData.stockQuantity !== undefined ? Number(productData.stockQuantity) : undefined,
-                quantityPerCarton: productData.quantityPerCarton !== undefined ? Number(productData.quantityPerCarton) : undefined,
-                shippingFee: productData.shippingFee !== undefined ? Number(productData.shippingFee) : undefined,
-                shippingFeeIndividual: productData.shippingFeeIndividual !== undefined ? Number(productData.shippingFeeIndividual) : undefined,
-                shippingFeeCarton: productData.shippingFeeCarton !== undefined ? Number(productData.shippingFeeCarton) : undefined,
-                isTaxFree: productData.isTaxFree !== undefined ? (productData.isTaxFree === true || productData.isTaxFree === 'true') : undefined
+                name,
+                modelName,
+                brand,
+                modelNo,
+                description,
+                price: price !== undefined ? Number(price) : undefined,
+                consumerPrice: consumerPrice !== undefined ? Number(consumerPrice) : undefined,
+                supplyPrice: supplyPrice !== undefined ? Number(supplyPrice) : undefined,
+                stockQuantity: stockQuantity !== undefined ? Number(stockQuantity) : undefined,
+                quantityPerCarton: quantityPerCarton !== undefined ? Number(quantityPerCarton) : undefined,
+                shippingFee: shippingFee !== undefined ? Number(shippingFee) : undefined,
+                shippingFeeIndividual: shippingFeeIndividual !== undefined ? Number(shippingFeeIndividual) : undefined,
+                shippingFeeCarton: shippingFeeCarton !== undefined ? Number(shippingFeeCarton) : undefined,
+                manufacturer,
+                origin,
+                isTaxFree: isTaxFree !== undefined ? (isTaxFree === true || isTaxFree === 'true') : undefined,
+                imageUrl,
+                detailUrl,
+                productSpec,
+                productOptions,
+                remarks,
+                categoryId: categoryId ? Number(categoryId) : undefined,
+                isAvailable
             }
         });
         res.json({ message: "Product updated", product: updatedProduct });
