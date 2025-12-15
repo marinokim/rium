@@ -58,7 +58,7 @@ model Product {
   isTaxFree   Boolean?  @map("is_tax_free") @default(false)
   
   // Details
-  imageUrl    String?   @map("image_url") // existing
+  imageUrl    String?   // matches DB column "imageUrl"
   detailUrl   String?   @map("detail_url")
   description String?
   productSpec String?   @map("product_spec")
