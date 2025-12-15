@@ -39,15 +39,15 @@ const Products = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<number | null>(null);
 
-    // Form State
-    const [formData, setFormData] = useState<Partial<Product>>({
+    // Form State with empty strings for numbers to avoid "0"
+    const [formData, setFormData] = useState<Partial<any>>({
         categoryId: 1, // Default
         isTaxFree: false,
         quantityPerCarton: 1,
         stockQuantity: 999,
-        shippingFee: 0,
-        shippingFeeIndividual: 0,
-        shippingFeeCarton: 0
+        shippingFee: '',
+        shippingFeeIndividual: '',
+        shippingFeeCarton: ''
     });
 
     useEffect(() => {
@@ -68,8 +68,10 @@ const Products = () => {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
         let finalValue: any = value;
+
         if (type === 'number') {
-            finalValue = Number(value);
+            // Allow empty string for better UX, convert only on submit
+            finalValue = value;
         } else if (type === 'checkbox') {
             finalValue = (e.target as HTMLInputElement).checked;
         }
@@ -83,9 +85,12 @@ const Products = () => {
             isTaxFree: false,
             quantityPerCarton: 1,
             stockQuantity: 999,
-            shippingFee: 0,
-            shippingFeeIndividual: 0,
-            shippingFeeCarton: 0
+            shippingFee: '',
+            shippingFeeIndividual: '',
+            shippingFeeCarton: '',
+            supplyPrice: '',
+            consumerPrice: '',
+            price: ''
         });
         setIsEditing(false);
         setEditId(null);
@@ -102,16 +107,10 @@ const Products = () => {
     const handleDelete = async (id: number) => {
         if (!confirm('정말로 삭제하시겠습니까?')) return;
         try {
-            await api.delete(`/api/products/${id}`); // Note: Using api.delete logic
-            // Actually my api wrapper uses base URL, so paths should be /products if backend route is mounted there relative to v1?
-            // Existing endpoints use /products. Let's consistency check.
-            // Backend mounts at /api/products
-            // Frontend api axios baseURL is likely /api ? Or localhost:5000/api
-            // Let's assume standard behavior. calls to /admin used /admin/...
-            // calls to /products used /products
-            await api.delete(`/admin/products/${id}`); // Wait, my route is DELETE /api/products/:id but protected by admin. 
-            // productRoutes.ts: router.delete('/:id'...) mounted at /api/products
-            // So url is /products/:id
+            // Note: api base url includes /api usually? 
+            // Based on other calls like /products, let's assume relative path works if baseURL is set.
+            // If previous calls worked (GET), DELETE should work too.
+            // Correct path: /products/:id (relative to baseURL)
             await api.delete(`/products/${id}`);
             setProducts(products.filter(p => p.id !== id));
             alert('삭제되었습니다.');
@@ -123,18 +122,33 @@ const Products = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Prepare data for submission: Convert empty strings to 0 or null
+        const submitData = {
+            ...formData,
+            categoryId: Number(formData.categoryId),
+            price: Number(formData.price) || 0,
+            consumerPrice: formData.consumerPrice ? Number(formData.consumerPrice) : 0,
+            supplyPrice: formData.supplyPrice ? Number(formData.supplyPrice) : 0,
+            stockQuantity: formData.stockQuantity ? Number(formData.stockQuantity) : 0,
+            quantityPerCarton: formData.quantityPerCarton ? Number(formData.quantityPerCarton) : 1,
+            shippingFee: formData.shippingFee ? Number(formData.shippingFee) : 0,
+            shippingFeeIndividual: formData.shippingFeeIndividual ? Number(formData.shippingFeeIndividual) : 0,
+            shippingFeeCarton: formData.shippingFeeCarton ? Number(formData.shippingFeeCarton) : 0,
+        };
+
         try {
             if (isEditing && editId) {
-                const res = await api.put(`/products/${editId}`, formData);
+                const res = await api.put(`/products/${editId}`, submitData);
                 setProducts(products.map(p => p.id === editId ? res.data.product : p));
                 alert('수정되었습니다.');
             } else {
-                const res = await api.post('/products', formData);
+                const res = await api.post('/products', submitData);
                 setProducts([...products, res.data.product]);
                 alert('등록되었습니다.');
             }
             setShowModal(false);
-            fetchProducts(); // Refresh to be safe
+            fetchProducts();
         } catch (error) {
             console.error("Submit failed", error);
             alert("저장 실패. 입력값을 확인해주세요.");
@@ -275,15 +289,15 @@ const Products = () => {
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                                     <div className="form-group">
                                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>공급가</label>
-                                        <input type="number" name="supplyPrice" value={formData.supplyPrice || 0} onChange={handleInputChange} style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }} />
+                                        <input type="number" name="supplyPrice" value={formData.supplyPrice === undefined ? '' : formData.supplyPrice} onChange={handleInputChange} placeholder="0" style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }} />
                                     </div>
                                     <div className="form-group">
                                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>소비자가</label>
-                                        <input type="number" name="consumerPrice" value={formData.consumerPrice || 0} onChange={handleInputChange} style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }} />
+                                        <input type="number" name="consumerPrice" value={formData.consumerPrice === undefined ? '' : formData.consumerPrice} onChange={handleInputChange} placeholder="0" style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }} />
                                     </div>
                                     <div className="form-group">
                                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>B2B판매가 (필수)</label>
-                                        <input type="number" name="price" value={formData.price || 0} onChange={handleInputChange} required style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#e8f0fe' }} />
+                                        <input type="number" name="price" value={formData.price === undefined ? '' : formData.price} onChange={handleInputChange} required placeholder="0" style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#e8f0fe' }} />
                                     </div>
                                 </div>
                             </div>
@@ -294,25 +308,25 @@ const Products = () => {
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                     <div className="form-group" style={{ marginBottom: '1rem' }}>
                                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>재고수량</label>
-                                        <input type="number" name="stockQuantity" value={formData.stockQuantity || 0} onChange={handleInputChange} style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }} />
+                                        <input type="number" name="stockQuantity" value={formData.stockQuantity === undefined ? '' : formData.stockQuantity} onChange={handleInputChange} placeholder="0" style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }} />
                                     </div>
                                     <div className="form-group" style={{ marginBottom: '1rem' }}>
                                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>박스입수량(Carton)</label>
-                                        <input type="number" name="quantityPerCarton" value={formData.quantityPerCarton || 1} onChange={handleInputChange} style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }} />
+                                        <input type="number" name="quantityPerCarton" value={formData.quantityPerCarton === undefined ? '' : formData.quantityPerCarton} onChange={handleInputChange} placeholder="1" style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }} />
                                     </div>
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
                                     <div className="form-group">
                                         <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem' }}>기본배송비</label>
-                                        <input type="number" name="shippingFee" value={formData.shippingFee || 0} onChange={handleInputChange} style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }} />
+                                        <input type="number" name="shippingFee" value={formData.shippingFee === undefined ? '' : formData.shippingFee} onChange={handleInputChange} placeholder="0" style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }} />
                                     </div>
                                     <div className="form-group">
                                         <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem' }}>개별비</label>
-                                        <input type="number" name="shippingFeeIndividual" value={formData.shippingFeeIndividual || 0} onChange={handleInputChange} style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }} />
+                                        <input type="number" name="shippingFeeIndividual" value={formData.shippingFeeIndividual === undefined ? '' : formData.shippingFeeIndividual} onChange={handleInputChange} placeholder="0" style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }} />
                                     </div>
                                     <div className="form-group">
                                         <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem' }}>카톤비</label>
-                                        <input type="number" name="shippingFeeCarton" value={formData.shippingFeeCarton || 0} onChange={handleInputChange} style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }} />
+                                        <input type="number" name="shippingFeeCarton" value={formData.shippingFeeCarton === undefined ? '' : formData.shippingFeeCarton} onChange={handleInputChange} placeholder="0" style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }} />
                                     </div>
                                 </div>
 
