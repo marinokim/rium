@@ -865,9 +865,15 @@
                         const statusClass = p.isAvailable ? 'status-active' : 'status-inactive';
                         const imgSrc = p.imageUrl || 'https://via.placeholder.com/60?text=No+Img';
 
+
                         tr.innerHTML = `
                             <td style="text-align: center;"><strong>${p.id}</strong></td>
-                            <td style="text-align: center;"><img src="${imgSrc}" style="width: 60px; height: 60px; object-fit: cover; border: 1px solid #ddd;" onerror="this.src='https://via.placeholder.com/60?text=Error'"></td>
+                            <td style="text-align: center;">
+                                <div class="product-img-thumb" style="cursor: pointer;" onclick="openImageModal('${p.detailUrl || p.imageUrl || ''}', '${p.name}')">
+                                    <img src="${imgSrc}" style="width: 60px; height: 60px; object-fit: cover; border: 1px solid #ddd;" onerror="this.src='https://via.placeholder.com/60?text=Error'">
+                                    <div style="font-size: 0.7rem; color: #007bff; margin-top: 2px;">상세보기</div>
+                                </div>
+                            </td>
                             <td><strong>${p.brand || '-'}</strong><br><small style="color:#007bff">${p.category?.name || '-'}</small></td>
                             <td><strong>${p.name}</strong><br><small style="color:#666">${p.modelNo || ''}</small></td>
                             <td style="text-align: right;"><strong style="color:#007bff">${(p.price || 0).toLocaleString()}</strong><br><span class="scm-status">${p.isTaxFree ? '면세' : '과세'}</span></td>
@@ -999,6 +1005,42 @@
                 paginationContainer.appendChild(nextBtn);
             };
 
+            // Global Image Modal Function
+            window.openImageModal = (url, name) => {
+                const modal = document.getElementById('imageModal');
+                const content = document.getElementById('imageModalContent');
+                const title = document.getElementById('imageModalTitle');
+
+                if (!url || url === 'null' || url === 'undefined') {
+                    return alert('상세 이미지가 없습니다.');
+                }
+
+                title.innerText = name || '상세 이미지';
+                content.innerHTML = '';
+                modal.style.display = 'flex';
+
+                // Check if HTML or URL
+                if (url.trim().startsWith('<')) {
+                    content.innerHTML = url; // Render HTML directly
+                } else {
+                    // Assume URL
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.style.maxWidth = '100%';
+                    img.style.height = 'auto';
+                    img.onerror = () => { img.src = 'https://via.placeholder.com/400?text=Image+Load+Error'; };
+                    content.appendChild(img);
+                }
+            };
+
+            const closeImageModal = () => {
+                document.getElementById('imageModal').style.display = 'none';
+            };
+            document.getElementById('btnCloseImageModal').onclick = closeImageModal;
+            document.getElementById('imageModal').onclick = (e) => {
+                if (e.target === document.getElementById('imageModal')) closeImageModal();
+            };
+
             // Init
             loadProducts();
         });
@@ -1006,3 +1048,4 @@
 </body>
 
 </html>
+```
