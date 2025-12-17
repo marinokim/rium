@@ -67,11 +67,24 @@ const processExcelData = async (data: any[], startRow: number = 0, endRow: numbe
             const extractUrl = (raw: any) => {
                 const str = sanitize(raw);
                 if (!str) return '';
-                const imgMatch = str.match(/<img[^>]+src\s*=\s*(?:['"]([^'"]+)['"]|(\S+))/i);
-                if (imgMatch) {
-                    let url = imgMatch[1] || imgMatch[2];
-                    return url ? url.replace(/[\/>]+$/, '') : str;
+
+                // Check for HTML img tag
+                if (str.toLowerCase().includes('<img')) {
+                    // Try to extract src="URL" or src='URL'
+                    const srcMatch = str.match(/src\s*=\s*(["'])(.*?)\1/i);
+                    if (srcMatch && srcMatch[2]) return srcMatch[2];
+
+                    // Fallback for unquoted src=URL (rare but possible)
+                    const unquoted = str.match(/src\s*=\s*([^\s>]+)/i);
+                    if (unquoted && unquoted[1]) return unquoted[1];
                 }
+
+                // If no img tag or extraction failed, assume it's a direct URL 
+                // but clean up any surrounding HTML if present (e.g. <div>URL</div>)
+                // However, user likely provides either raw URL or <img src="...">.
+                // If it starts with http, return as is.
+                if (str.startsWith('http')) return str;
+
                 return str;
             };
             const imageUrl = extractUrl(r['ImageURL'] || r['이미지URL']);
