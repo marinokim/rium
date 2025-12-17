@@ -369,6 +369,27 @@ export const deleteRange = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Invalid ID range' });
         }
 
+        // 1. Delete related Cart items first
+        await prisma.cart.deleteMany({
+            where: {
+                productId: {
+                    gte: startId,
+                    lte: endId
+                }
+            }
+        });
+
+        // 2. Delete related Quote items
+        await prisma.quoteItem.deleteMany({
+            where: {
+                productId: {
+                    gte: startId,
+                    lte: endId
+                }
+            }
+        });
+
+        // 3. Delete Products
         const result = await prisma.product.deleteMany({
             where: {
                 id: {
