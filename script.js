@@ -292,17 +292,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch(`${API_BASE_URL}/api/products?sort=display_order`);
             if (res.ok) {
                 const data = await res.json();
-                // Map SCM data to Homepage format
+                // Map SCM data to Homepage format (Backend returns camelCase via Prisma)
                 fetchedProducts = data.products.map(p => {
                     return {
                         id: p.id,
                         brand: p.brand,
-                        model: p.model_name,
+                        model: p.modelNo || p.name, // Prisma uses modelNo or name
                         description: p.description,
-                        price: Number(p.b2b_price),
-                        category: p.category_name || 'Other',
-                        image: p.image_url,
-                        detailUrl: p.detail_url
+                        price: Number(p.price), // Prisma uses price
+                        category: p.category?.name || 'Other', // Prisma returns category object
+                        image: p.imageUrl, // Prisma uses imageUrl
+                        detailUrl: p.detailUrl // Prisma uses detailUrl
                     };
                 });
             } else {
