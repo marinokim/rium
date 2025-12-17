@@ -850,45 +850,48 @@
                     productModal.style.display = 'none';
                     loadProducts(currentPage); // Reload current page
                 } catch (e) { alert(e.message); }
-            };
+            } catch (e) { alert(e.message); }
+        };
 
-            // --- PAGINATION STATE ---
-            let currentPage = 1;
-            const itemsPerPage = 20;
+        // --- GLOBAL STATE ---
+        let currentProducts = [];
+        let currentPage = 1;
+        const itemsPerPage = 20;
 
-            // --- LOAD LIST ---
-            const loadProducts = async (page = 1) => {
-                currentPage = page;
-                try {
-                    // Fetch with pagination
-                    const data = await apiFetch(`/api/products?limit=${itemsPerPage}&page=${page}&isNew=true`);
-                    const products = data.products;
-                    const pagination = data.pagination;
+        // --- LOAD LIST ---
+        const loadProducts = async (page = 1) => {
+            currentPage = page;
+            try {
+                // Fetch with pagination
+                const data = await apiFetch(`/api/products?limit=${itemsPerPage}&page=${page}&isNew=true`);
+                currentProducts = data.products || []; // Store globally for safe access
+                const products = currentProducts;
+                const pagination = data.pagination;
 
-                    productTableBody.innerHTML = '';
+                productTableBody.innerHTML = '';
 
-                    if (!products.length) {
-                        productTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 2rem;">등록된 상품이 없습니다.</td></tr>';
-                        renderPagination(0, 0);
-                        return;
-                    }
+                if (!products.length) {
+                    productTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 2rem;">등록된 상품이 없습니다.</td></tr>';
+                    renderPagination(0, 0);
+                    return;
+                }
 
-                    products.forEach(p => {
-                        const tr = document.createElement('tr');
-                        const date = new Date(p.createdAt).toLocaleDateString();
-                        const statusClass = p.isAvailable ? 'status-active' : 'status-inactive';
-                        const imgSrc = p.imageUrl || 'https://via.placeholder.com/60?text=No+Img';
+                products.forEach((p, index) => {
+                    const tr = document.createElement('tr');
+                    const date = new Date(p.createdAt).toLocaleDateString();
+                    const statusClass = p.isAvailable ? 'status-active' : 'status-inactive';
+                    const imgSrc = p.imageUrl || 'https://via.placeholder.com/60?text=No+Img';
+                    const categoryName = p.category ? p.category.name : '-'; // Handle potentially missing category object
 
-
-                        tr.innerHTML = `
+                    tr.innerHTML = `
                             <td style="text-align: center;"><strong>${p.id}</strong></td>
                             <td style="text-align: center;">
-                                <div class="product-img-thumb" style="cursor: pointer;" onclick="openImageModal('${p.detailUrl || p.imageUrl || ''}', '${p.name}')">
+                                <div class="product-img-thumb" style="cursor: pointer;" onclick="openImageModalByIndex(${index})">
                                     <img src="${imgSrc}" style="width: 60px; height: 60px; object-fit: cover; border: 1px solid #ddd;" onerror="this.src='https://via.placeholder.com/60?text=Error'">
                                     <div style="font-size: 0.7rem; color: #007bff; margin-top: 2px;">상세보기</div>
                                 </div>
                             </td>
-                            <td><strong>${p.brand || '-'}</strong><br><small style="color:#007bff">${p.category?.name || '-'}</small></td>
+                            <td><strong>${p.brand || '-'}</strong><br><small style="color:#007bff">${categoryName}</small></td>
                             <td><strong>${p.name}</strong><br><small style="color:#666">${p.modelNo || ''}</small></td>
                             <td style="text-align: right;"><strong style="color:#007bff">${(p.price || 0).toLocaleString()}</strong><br><span class="scm-status">${p.isTaxFree ? '면세' : '과세'}</span></td>
                             <td><div style="display:grid;grid-template-columns:40px 1fr;gap:5px;font-size:0.85rem"><span style="color:#888">소가</span><span>${(p.consumerPrice || 0).toLocaleString()}</span><span style="color:#888">공급</span><strong>${(p.supplyPrice || 0).toLocaleString()}</strong></div></td>
@@ -903,160 +906,169 @@
                                 </div>
                             </td>
                         `;
-                        productTableBody.appendChild(tr);
-                    });
-
-                    // Render Pagination
-                    renderPagination(pagination.totalPages, currentPage);
-
-                    // List Buttons wiring
-                    attachRowListeners();
-
-                } catch (e) {
-                    console.error(e);
-                    alert('데이터 로드 실패: ' + e.message);
-                }
-            };
-
-            const attachRowListeners = () => {
-                document.querySelectorAll('.btn-edit').forEach(btn => {
-                    btn.onclick = async (e) => {
-                        e.preventDefault();
-                        const id = e.target.dataset.id;
-                        pTitle.innerText = '상품 수정';
-                        loadCategories();
-                        try {
-                            const data = await apiFetch(`/api/products/${id}`);
-                            const p = data.product;
-                            document.getElementById('p_id').value = p.id;
-                            document.getElementById('p_name').value = p.name;
-                            document.getElementById('p_modelNo').value = p.modelNo || '';
-                            document.getElementById('p_brand').value = p.brand || '';
-                            document.getElementById('p_categoryId').value = p.categoryId;
-                            document.getElementById('p_price').value = p.price;
-                            document.getElementById('p_consumerPrice').value = p.consumerPrice || '';
-                            document.getElementById('p_supplyPrice').value = p.supplyPrice || '';
-                            document.getElementById('p_stockQuantity').value = p.stockQuantity || '';
-                            document.getElementById('p_imageUrl').value = p.imageUrl || '';
-                            document.getElementById('p_detailUrl').value = p.detailUrl || '';
-                            document.getElementById('p_isTaxFree').checked = p.isTaxFree;
-                            document.getElementById('p_isAvailable').checked = p.isAvailable;
-                            productModal.style.display = 'flex';
-                        } catch (e) { alert(e.message); }
-                    };
+                    productTableBody.appendChild(tr);
                 });
 
-                document.querySelectorAll('.btn-delete').forEach(btn => {
-                    btn.onclick = async (e) => {
-                        if (!confirm('정말 삭제하시겠습니까?')) return;
-                        try {
-                            await apiFetch(`/api/products/${e.target.dataset.id}`, { method: 'DELETE' });
-                            alert('삭제되었습니다.');
-                            loadProducts(currentPage);
-                        }
-                        catch (e) { alert(e.message); }
-                    };
-                });
-            };
+                // Render Pagination
+                renderPagination(pagination.totalPages, currentPage);
 
-            // Render Pagination Logic
-            const renderPagination = (totalPages, current) => {
-                const paginationContainer = document.querySelector('.scm-pagination');
-                if (!paginationContainer) return;
+                // List Buttons wiring
+                attachRowListeners();
 
-                paginationContainer.innerHTML = '';
+            } catch (e) {
+                console.error(e);
+                alert('데이터 로드 실패: ' + e.message);
+            }
+        };
 
-                if (totalPages <= 1) return;
+        const attachRowListeners = () => {
+            document.querySelectorAll('.btn-edit').forEach(btn => {
+                btn.onclick = async (e) => {
+                    e.preventDefault();
+                    const id = e.target.dataset.id;
+                    pTitle.innerText = '상품 수정';
+                    loadCategories();
+                    try {
+                        const data = await apiFetch(`/api/products/${id}`);
+                        const p = data.product;
+                        document.getElementById('p_id').value = p.id;
+                        document.getElementById('p_name').value = p.name;
+                        document.getElementById('p_modelNo').value = p.modelNo || '';
+                        document.getElementById('p_brand').value = p.brand || '';
+                        document.getElementById('p_categoryId').value = p.categoryId;
+                        document.getElementById('p_price').value = p.price;
+                        document.getElementById('p_consumerPrice').value = p.consumerPrice || '';
+                        document.getElementById('p_supplyPrice').value = p.supplyPrice || '';
+                        document.getElementById('p_stockQuantity').value = p.stockQuantity || '';
+                        document.getElementById('p_imageUrl').value = p.imageUrl || '';
+                        document.getElementById('p_detailUrl').value = p.detailUrl || '';
+                        document.getElementById('p_isTaxFree').checked = p.isTaxFree;
+                        document.getElementById('p_isAvailable').checked = p.isAvailable;
+                        productModal.style.display = 'flex';
+                    } catch (e) { alert(e.message); }
+                };
+            });
 
-                // Prev Button
-                const prevBtn = document.createElement('button');
-                prevBtn.innerText = '<';
-                prevBtn.disabled = current === 1;
-                prevBtn.onclick = () => loadProducts(current - 1);
-                paginationContainer.appendChild(prevBtn);
-
-                // Page Numbers
-                let startPage = Math.max(1, current - 2);
-                let endPage = Math.min(totalPages, current + 2);
-
-                if (startPage > 1) {
-                    const firstBtn = document.createElement('button');
-                    firstBtn.innerText = '1';
-                    firstBtn.onclick = () => loadProducts(1);
-                    paginationContainer.appendChild(firstBtn);
-                    if (startPage > 2) {
-                        const span = document.createElement('span');
-                        span.innerText = '...';
-                        paginationContainer.appendChild(span);
+            document.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.onclick = async (e) => {
+                    if (!confirm('정말 삭제하시겠습니까?')) return;
+                    try {
+                        await apiFetch(`/api/products/${e.target.dataset.id}`, { method: 'DELETE' });
+                        alert('삭제되었습니다.');
+                        loadProducts(currentPage);
                     }
+                    catch (e) { alert(e.message); }
+                };
+            });
+        };
+
+        // Render Pagination Logic
+        const renderPagination = (totalPages, current) => {
+            const paginationContainer = document.querySelector('.scm-pagination');
+            if (!paginationContainer) return;
+
+            paginationContainer.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            // Prev Button
+            const prevBtn = document.createElement('button');
+            prevBtn.innerText = '<';
+            prevBtn.disabled = current === 1;
+            prevBtn.onclick = () => loadProducts(current - 1);
+            paginationContainer.appendChild(prevBtn);
+
+            // Page Numbers
+            let startPage = Math.max(1, current - 2);
+            let endPage = Math.min(totalPages, current + 2);
+
+            if (startPage > 1) {
+                const firstBtn = document.createElement('button');
+                firstBtn.innerText = '1';
+                firstBtn.onclick = () => loadProducts(1);
+                paginationContainer.appendChild(firstBtn);
+                if (startPage > 2) {
+                    const span = document.createElement('span');
+                    span.innerText = '...';
+                    paginationContainer.appendChild(span);
                 }
+            }
 
-                for (let i = startPage; i <= endPage; i++) {
-                    const btn = document.createElement('button');
-                    btn.innerText = i;
-                    if (i === current) btn.classList.add('active');
-                    btn.onclick = () => loadProducts(i);
-                    paginationContainer.appendChild(btn);
+            for (let i = startPage; i <= endPage; i++) {
+                const btn = document.createElement('button');
+                btn.innerText = i;
+                if (i === current) btn.classList.add('active');
+                btn.onclick = () => loadProducts(i);
+                paginationContainer.appendChild(btn);
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const span = document.createElement('span');
+                    span.innerText = '...';
+                    paginationContainer.appendChild(span);
                 }
+                const lastBtn = document.createElement('button');
+                lastBtn.innerText = totalPages;
+                lastBtn.onclick = () => loadProducts(totalPages);
+                paginationContainer.appendChild(lastBtn);
+            }
 
-                if (endPage < totalPages) {
-                    if (endPage < totalPages - 1) {
-                        const span = document.createElement('span');
-                        span.innerText = '...';
-                        paginationContainer.appendChild(span);
-                    }
-                    const lastBtn = document.createElement('button');
-                    lastBtn.innerText = totalPages;
-                    lastBtn.onclick = () => loadProducts(totalPages);
-                    paginationContainer.appendChild(lastBtn);
-                }
+            // Next Button
+            const nextBtn = document.createElement('button');
+            nextBtn.innerText = '>';
+            nextBtn.disabled = current === totalPages;
+            nextBtn.onclick = () => loadProducts(current + 1);
+            paginationContainer.appendChild(nextBtn);
+        };
 
-                // Next Button
-                const nextBtn = document.createElement('button');
-                nextBtn.innerText = '>';
-                nextBtn.disabled = current === totalPages;
-                nextBtn.onclick = () => loadProducts(current + 1);
-                paginationContainer.appendChild(nextBtn);
-            };
+        // Global Image Modal Function
+        window.openImageModal = (url, name) => {
+            const modal = document.getElementById('imageModal');
+            const content = document.getElementById('imageModalContent');
+            const title = document.getElementById('imageModalTitle');
 
-            // Global Image Modal Function
-            window.openImageModal = (url, name) => {
-                const modal = document.getElementById('imageModal');
-                const content = document.getElementById('imageModalContent');
-                const title = document.getElementById('imageModalTitle');
+            title.innerText = name || '상세 이미지';
+            content.innerHTML = '';
+            modal.style.display = 'flex';
 
-                if (!url || url === 'null' || url === 'undefined') {
-                    return alert('상세 이미지가 없습니다.');
-                }
+            if (!url || url === 'null' || url === 'undefined') {
+                content.innerText = '등록된 상세 이미지가 없습니다.';
+                return;
+            }
 
-                title.innerText = name || '상세 이미지';
-                content.innerHTML = '';
-                modal.style.display = 'flex';
+            // Check if HTML or URL
+            if (url.trim().startsWith('<')) {
+                content.innerHTML = url; // Render HTML directly
+            } else {
+                // Assume URL
+                const img = document.createElement('img');
+                img.src = url;
+                img.style.maxWidth = '100%';
+                img.style.height = 'auto';
+                img.onerror = () => { img.src = 'https://via.placeholder.com/400?text=Image+Load+Error'; };
+                content.appendChild(img);
+            }
+        };
 
-                // Check if HTML or URL
-                if (url.trim().startsWith('<')) {
-                    content.innerHTML = url; // Render HTML directly
-                } else {
-                    // Assume URL
-                    const img = document.createElement('img');
-                    img.src = url;
-                    img.style.maxWidth = '100%';
-                    img.style.height = 'auto';
-                    img.onerror = () => { img.src = 'https://via.placeholder.com/400?text=Image+Load+Error'; };
-                    content.appendChild(img);
-                }
-            };
+        // Safe wrapper using index
+        window.openImageModalByIndex = (index) => {
+            if (currentProducts && currentProducts[index]) {
+                const p = currentProducts[index];
+                window.openImageModal(p.detailUrl || p.imageUrl, p.name);
+            }
+        };
 
-            const closeImageModal = () => {
-                document.getElementById('imageModal').style.display = 'none';
-            };
-            document.getElementById('btnCloseImageModal').onclick = closeImageModal;
-            document.getElementById('imageModal').onclick = (e) => {
-                if (e.target === document.getElementById('imageModal')) closeImageModal();
-            };
+        const closeImageModal = () => {
+            document.getElementById('imageModal').style.display = 'none';
+        };
+        document.getElementById('btnCloseImageModal').onclick = closeImageModal;
+        document.getElementById('imageModal').onclick = (e) => {
+            if (e.target === document.getElementById('imageModal')) closeImageModal();
+        };
 
-            // Init
-            loadProducts();
+        // Init
+        loadProducts();
         });
     </script>
 </body>
