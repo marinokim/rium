@@ -876,8 +876,7 @@
                 // Render Pagination
                 renderPagination(pagination.totalPages, currentPage);
 
-                // List Buttons wiring (Edit/Delete)
-                // (Re-attach listeners for newly added rows)
+                // List Buttons wiring
                 attachRowListeners();
 
             } catch (e) {
@@ -917,12 +916,12 @@
             document.querySelectorAll('.btn-delete').forEach(btn => {
                 btn.onclick = async (e) => {
                     if (!confirm('정말 삭제하시겠습니까?')) return;
-                    const id = e.target.dataset.id;
                     try {
-                        await apiFetch(`/api/products/${id}`, { method: 'DELETE' });
+                        await apiFetch(`/api/products/${e.target.dataset.id}`, { method: 'DELETE' });
                         alert('삭제되었습니다.');
                         loadProducts(currentPage);
-                    } catch (e) { alert(e.message); }
+                    }
+                    catch (e) { alert(e.message); }
                 };
             });
         };
@@ -944,8 +943,6 @@
             paginationContainer.appendChild(prevBtn);
 
             // Page Numbers
-            // Simple logic: Show all if small, or current window if large. 
-            // For simplicity, let's show range around current.
             let startPage = Math.max(1, current - 2);
             let endPage = Math.min(totalPages, current + 2);
 
@@ -987,20 +984,7 @@
             nextBtn.disabled = current === totalPages;
             nextBtn.onclick = () => loadProducts(current + 1);
             paginationContainer.appendChild(nextBtn);
-        };                            } catch (e) { alert(e.message); }
-                        };
-                    });
-
-        document.querySelectorAll('.btn-delete').forEach(btn => {
-            btn.onclick = async (e) => {
-                if (!confirm('정말 삭제하시겠습니까?')) return;
-                try { await apiFetch(`/api/products/${e.target.dataset.id}`, { method: 'DELETE' }); loadProducts(); }
-                catch (e) { alert(e.message); }
-            };
-        });
-
-                } catch (e) { console.error(e); }
-            };
+        };
 
         // Init
         loadProducts();
