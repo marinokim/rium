@@ -463,220 +463,295 @@
                     <a href="#" class="page-item">3</a>
                     <a href="#" class="page-item"><i class="fas fa-chevron-right"></i></a>
                 </div>
+    </main>
+
+    <!-- --------------------------------------------------- -->
+    <!-- MODALS -->
+    <!-- --------------------------------------------------- -->
+
+    <!-- Category Manager Modal -->
+    <div id="categoryModal" class="scm-modal-overlay"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="scm-modal"
+            style="background: white; padding: 2rem; border-radius: 8px; width: 500px; max-width: 90%;">
+            <h3 style="margin-top: 0;">카테고리 관리</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+                <input type="text" id="newCatName" class="scm-input" placeholder="카테고리명" style="flex: 1;">
+                <input type="text" id="newCatSlug" class="scm-input" placeholder="슬러그 (영문)" style="flex: 1;">
+                <button id="btnAddCat" class="scm-btn btn-blue">추가</button>
+            </div>
+            <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd;">
+                <table class="scm-table" style="margin: 0;">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>이름</th>
+                            <th>슬러그</th>
+                            <th>삭제</th>
+                        </tr>
+                    </thead>
+                    <tbody id="categoryListBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top: 1rem; text-align: right;">
+                <button id="btnCloseCatModal" class="scm-btn btn-gray">닫기</button>
             </div>
         </div>
-    </main>
+    </div>
+
+    <!-- Product Editor Modal -->
+    <div id="productModal" class="scm-modal-overlay"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="scm-modal"
+            style="background: white; padding: 2rem; border-radius: 8px; width: 800px; max-width: 95%; max-height: 90vh; overflow-y: auto;">
+            <h3 id="productModalTitle" style="margin-top: 0;">신규 등록</h3>
+            <form id="productForm">
+                <input type="hidden" id="p_id">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label>상품명 (필수)</label>
+                        <input type="text" id="p_name" class="scm-input" style="width: 100%;" required>
+                    </div>
+                    <div>
+                        <label>모델번호</label>
+                        <input type="text" id="p_modelNo" class="scm-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>브랜드</label>
+                        <input type="text" id="p_brand" class="scm-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>카테고리 (필수)</label>
+                        <select id="p_categoryId" class="scm-select" style="width: 100%;" required>
+                            <!-- Populated -->
+                        </select>
+                    </div>
+                    <div>
+                        <label>B2B 판매가 (필수)</label>
+                        <input type="number" id="p_price" class="scm-input" style="width: 100%;" required>
+                    </div>
+                    <div>
+                        <label>소비자가</label>
+                        <input type="number" id="p_consumerPrice" class="scm-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>공급가</label>
+                        <input type="number" id="p_supplyPrice" class="scm-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>재고</label>
+                        <input type="number" id="p_stockQuantity" class="scm-input" style="width: 100%;">
+                    </div>
+                </div>
+                <!-- More Fields -->
+                <div style="margin-top: 1rem;">
+                    <label>이미지 URL</label>
+                    <input type="text" id="p_imageUrl" class="scm-input" style="width: 100%;">
+                </div>
+                <div style="margin-top: 1rem;">
+                    <label>상세페이지 URL</label>
+                    <input type="text" id="p_detailUrl" class="scm-input" style="width: 100%;">
+                    <!-- Or textarea -->
+                </div>
+                <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                    <label><input type="checkbox" id="p_isTaxFree"> 면세상품</label>
+                    <label><input type="checkbox" id="p_isAvailable" checked> 판매중</label>
+                </div>
+
+                <div style="margin-top: 2rem; text-align: right;">
+                    <button type="button" id="btnCloseProductModal" class="scm-btn btn-gray">취소</button>
+                    <button type="submit" class="scm-btn btn-blue">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Excel Upload Logic
-            const uploadBtn = document.getElementById('excelUploadBtn');
-            const fileInput = document.getElementById('excelUploadInput');
-
-            // Generic handler for other buttons
-            const otherButtons = document.querySelectorAll('.scm-btn:not(#excelUploadBtn)');
-            otherButtons.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const btnText = btn.innerText.trim();
-                    alert(`[${btnText}] 기능은 아직 구현되지 않았습니다.\n현재 '엑셀 업로드' 기능만 사용 가능합니다.`);
-                });
-            });
-
             // API Base URL (Dynamic)
             const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
                 ? 'http://localhost:5000'
                 : 'https://rium-scm-backend.onrender.com';
 
-            // -----------------------------------------------------
-            // Server Source Replace & Range Register Logic
-            // -----------------------------------------------------
-            const serverSourceFile = document.getElementById('serverSourceFile');
-            const serverSourceFileName = document.getElementById('serverSourceFileName');
-            const replaceSourceBtn = document.getElementById('replaceSourceBtn');
-            const rangeStart = document.getElementById('rangeStart');
-            const rangeEnd = document.getElementById('rangeEnd');
-            const registerRangeBtn = document.getElementById('registerRangeBtn');
-
-            // 1. Handle File Selection for Source Replace
-            if (serverSourceFile) {
-                serverSourceFile.addEventListener('change', (e) => {
-                    if (e.target.files[0]) {
-                        serverSourceFileName.textContent = e.target.files[0].name;
-                    }
-                });
-            }
+            serverSourceFile.addEventListener('change', (e) => {
+                if (e.target.files[0]) {
+                    serverSourceFileName.textContent = e.target.files[0].name;
+                }
+            });
+        }
 
             // 2. Handle 'Replace File' Button
             if (replaceSourceBtn) {
-                replaceSourceBtn.addEventListener('click', async (e) => {
-                    e.preventDefault(); // Prevent 'feature not implemented' alert
-                    e.stopPropagation();
+            replaceSourceBtn.addEventListener('click', async (e) => {
+                e.preventDefault(); // Prevent 'feature not implemented' alert
+                e.stopPropagation();
 
-                    if (!serverSourceFile || !serverSourceFile.files[0]) {
-                        alert('교체할 파일을 먼저 선택해주세요.');
-                        return;
-                    }
+                if (!serverSourceFile || !serverSourceFile.files[0]) {
+                    alert('교체할 파일을 먼저 선택해주세요.');
+                    return;
+                }
 
-                    const formData = new FormData();
-                    formData.append('file', serverSourceFile.files[0]);
+                const formData = new FormData();
+                formData.append('file', serverSourceFile.files[0]);
 
-                    replaceSourceBtn.textContent = '교체 중...';
-                    replaceSourceBtn.disabled = true;
+                replaceSourceBtn.textContent = '교체 중...';
+                replaceSourceBtn.disabled = true;
 
-                    try {
-                        const response = await fetch(`${API_BASE}/api/excel/replace-source`, {
-                            method: 'POST',
-                            body: formData
-                        });
-
-                        if (!response.ok) throw new Error('Source update failed');
-
-                        const result = await response.json();
-                        alert('서버 원본 파일이 교체되었습니다.');
-                    } catch (err) {
-                        console.error(err);
-                        alert('파일 교체 실패: ' + err.message);
-                    } finally {
-                        replaceSourceBtn.textContent = '파일 교체';
-                        replaceSourceBtn.disabled = false;
-                    }
-                });
-            }
-
-            // 3. Handle 'Register Range' Button
-            if (registerRangeBtn) {
-                registerRangeBtn.addEventListener('click', async (e) => {
-                    e.preventDefault(); // Prevent 'feature not implemented' alert
-                    e.stopPropagation();
-
-                    const start = rangeStart.value;
-                    const end = rangeEnd.value;
-
-                    if (!start || !end) {
-                        alert('시작과 종료 범위를 모두 입력해주세요.');
-                        return;
-                    }
-
-                    registerRangeBtn.textContent = '등록 중...';
-                    registerRangeBtn.disabled = true;
-
-                    try {
-                        const response = await fetch(`${API_BASE}/api/excel/register-range`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ start, end })
-                        });
-
-                        if (!response.ok) {
-                            const errData = await response.json().catch(() => ({}));
-                            if (response.status === 404) throw new Error('서버에 원본 파일이 없습니다. 먼저 파일을 교체해주세요.');
-                            throw new Error(errData.error || 'Range registration failed');
-                        }
-
-                        const result = await response.json();
-                        alert(`범위 등록 완료!\n성공: ${result.success}건\n실패: ${result.failed}건\n\n${result.errors.length > 0 ? '에러 로그:\n' + result.errors.slice(0, 5).join('\n') : ''}`);
-
-                        window.location.reload();
-                    } catch (err) {
-                        console.error(err);
-                        alert('범위 등록 실패: ' + err.message);
-                    } finally {
-                        registerRangeBtn.textContent = '범위 등록';
-                        registerRangeBtn.disabled = false;
-                    }
-                });
-            }
-            // -----------------------------------------------------
-
-            // 4. Handle 'Download All'
-            const btnDownloadAll = document.getElementById('btnDownloadAll');
-            if (btnDownloadAll) {
-                btnDownloadAll.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    window.location.href = `${API_BASE}/api/excel/download`;
-                });
-            }
-
-            // 5. Handle 'Template'
-            const btnTemplate = document.getElementById('btnTemplate');
-            if (btnTemplate) {
-                btnTemplate.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    window.location.href = `${API_BASE}/api/excel/template`;
-                });
-            }
-
-            // 6. Handle 'Delete Range'
-            const btnDeleteRange = document.getElementById('btnDeleteRange');
-            if (btnDeleteRange) {
-                btnDeleteRange.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    const input = prompt("삭제할 상품 ID 범위를 입력하세요 (예: 100-200)");
-                    if (!input) return;
-
-                    const [start, end] = input.split('-').map(s => s.trim());
-                    if (!start || !end || isNaN(start) || isNaN(end)) {
-                        alert('올바른 범위를 입력해주세요. (예: 100-200)');
-                        return;
-                    }
-
-                    if (!confirm(`정말로 ID ${start}번부터 ${end}번까지 상품을 삭제하시겠습니까?`)) return;
-
-                    try {
-                        const response = await fetch(`${API_BASE}/api/excel/delete-range`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ start, end })
-                        });
-
-                        if (!response.ok) throw new Error('Delete failed');
-                        const result = await response.json();
-                        alert(`${result.count}개의 상품이 삭제되었습니다.`);
-                        window.location.reload();
-                    } catch (err) {
-                        alert('삭제 실패: ' + err.message);
-                    }
-                });
-            }
-
-            // -----------------------------------------------------
-
-            // -----------------------------------------------------
-
-            const loadProducts = async () => {
-                const tbody = document.getElementById('productTableBody');
                 try {
-                    const response = await fetch(`${API_BASE}/api/products`);
-                    if (!response.ok) throw new Error('Failed to fetch products');
-                    const products = await response.json();
+                    const response = await fetch(`${API_BASE}/api/excel/replace-source`, {
+                        method: 'POST',
+                        body: formData
+                    });
 
-                    tbody.innerHTML = '';
-                    if (products.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 2rem;">등록된 상품이 없습니다.</td></tr>';
-                        return;
+                    if (!response.ok) throw new Error('Source update failed');
+
+                    const result = await response.json();
+                    alert('서버 원본 파일이 교체되었습니다.');
+                } catch (err) {
+                    console.error(err);
+                    alert('파일 교체 실패: ' + err.message);
+                } finally {
+                    replaceSourceBtn.textContent = '파일 교체';
+                    replaceSourceBtn.disabled = false;
+                }
+            });
+        }
+
+        // 3. Handle 'Register Range' Button
+        if (registerRangeBtn) {
+            registerRangeBtn.addEventListener('click', async (e) => {
+                e.preventDefault(); // Prevent 'feature not implemented' alert
+                e.stopPropagation();
+
+                const start = rangeStart.value;
+                const end = rangeEnd.value;
+
+                if (!start || !end) {
+                    alert('시작과 종료 범위를 모두 입력해주세요.');
+                    return;
+                }
+
+                registerRangeBtn.textContent = '등록 중...';
+                registerRangeBtn.disabled = true;
+
+                try {
+                    const response = await fetch(`${API_BASE}/api/excel/register-range`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ start, end })
+                    });
+
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({}));
+                        if (response.status === 404) throw new Error('서버에 원본 파일이 없습니다. 먼저 파일을 교체해주세요.');
+                        throw new Error(errData.error || 'Range registration failed');
                     }
 
-                    // Sort by ID desc (newest first)
-                    products.sort((a, b) => b.id - a.id);
+                    const result = await response.json();
+                    alert(`범위 등록 완료!\n성공: ${result.success}건\n실패: ${result.failed}건\n\n${result.errors.length > 0 ? '에러 로그:\n' + result.errors.slice(0, 5).join('\n') : ''}`);
 
-                    products.forEach(p => {
-                        const tr = document.createElement('tr');
+                    window.location.reload();
+                } catch (err) {
+                    console.error(err);
+                    alert('범위 등록 실패: ' + err.message);
+                } finally {
+                    registerRangeBtn.textContent = '범위 등록';
+                    registerRangeBtn.disabled = false;
+                }
+            });
+        }
+        // -----------------------------------------------------
 
-                        // Format Date
-                        const date = new Date(p.createdAt);
-                        const dateStr = `${date.getFullYear()}. ${String(date.getMonth() + 1).padStart(2, '0')}. ${String(date.getDate()).padStart(2, '0')}.`;
+        // 4. Handle 'Download All'
+        const btnDownloadAll = document.getElementById('btnDownloadAll');
+        if (btnDownloadAll) {
+            btnDownloadAll.addEventListener('click', (e) => {
+                e.stopPropagation();
+                window.location.href = `${API_BASE}/api/excel/download`;
+            });
+        }
 
-                        // Status Logic
-                        const statusClass = p.isAvailable ? 'status-active' : 'status-inactive';
-                        const statusText = p.isAvailable ? '판매중' : '판매중지'; // Or based on stock
+        // 5. Handle 'Template'
+        const btnTemplate = document.getElementById('btnTemplate');
+        if (btnTemplate) {
+            btnTemplate.addEventListener('click', (e) => {
+                e.stopPropagation();
+                window.location.href = `${API_BASE}/api/excel/template`;
+            });
+        }
 
-                        // Image (Handle full URL or relative)
-                        const imgSrc = p.imageUrl || 'https://via.placeholder.com/60?text=No+Img';
+        // 6. Handle 'Delete Range'
+        const btnDeleteRange = document.getElementById('btnDeleteRange');
+        if (btnDeleteRange) {
+            btnDeleteRange.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const input = prompt("삭제할 상품 ID 범위를 입력하세요 (예: 100-200)");
+                if (!input) return;
 
-                        tr.innerHTML = `
+                const [start, end] = input.split('-').map(s => s.trim());
+                if (!start || !end || isNaN(start) || isNaN(end)) {
+                    alert('올바른 범위를 입력해주세요. (예: 100-200)');
+                    return;
+                }
+
+                if (!confirm(`정말로 ID ${start}번부터 ${end}번까지 상품을 삭제하시겠습니까?`)) return;
+
+                try {
+                    const response = await fetch(`${API_BASE}/api/excel/delete-range`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ start, end })
+                    });
+
+                    if (!response.ok) throw new Error('Delete failed');
+                    const result = await response.json();
+                    alert(`${result.count}개의 상품이 삭제되었습니다.`);
+                    window.location.reload();
+                } catch (err) {
+                    alert('삭제 실패: ' + err.message);
+                }
+            });
+        }
+
+        // -----------------------------------------------------
+
+        // -----------------------------------------------------
+
+        const loadProducts = async () => {
+            const tbody = document.getElementById('productTableBody');
+            try {
+                const response = await fetch(`${API_BASE}/api/products`);
+                if (!response.ok) throw new Error('Failed to fetch products');
+                const products = await response.json();
+
+                tbody.innerHTML = '';
+                if (products.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 2rem;">등록된 상품이 없습니다.</td></tr>';
+                    return;
+                }
+
+                // Sort by ID desc (newest first)
+                products.sort((a, b) => b.id - a.id);
+
+                products.forEach(p => {
+                    const tr = document.createElement('tr');
+
+                    // Format Date
+                    const date = new Date(p.createdAt);
+                    const dateStr = `${date.getFullYear()}. ${String(date.getMonth() + 1).padStart(2, '0')}. ${String(date.getDate()).padStart(2, '0')}.`;
+
+                    // Status Logic
+                    const statusClass = p.isAvailable ? 'status-active' : 'status-inactive';
+                    const statusText = p.isAvailable ? '판매중' : '판매중지'; // Or based on stock
+
+                    // Image (Handle full URL or relative)
+                    const imgSrc = p.imageUrl || 'https://via.placeholder.com/60?text=No+Img';
+
+                    tr.innerHTML = `
                             <td style="text-align: center;">
                                 <strong>${p.id}</strong><br>
                                 ${p.createdAt > new Date(Date.now() - 86400000 * 3).toISOString() ? '<span class="badge-new">NEW</span>' : ''}
@@ -723,90 +798,90 @@
                                 </div>
                             </td>
                         `;
-                        tbody.appendChild(tr);
+                    tbody.appendChild(tr);
+                });
+
+                // Re-attach generic listeners to new buttons if needed or use delegation.
+                // Since I used a generic listener on .scm-btn:not(#excelUploadBtn) earlier, it won't apply to these dynamically created ones unless I re-run logic or use delegation on a parent.
+                // The generic listener was: "Feature not implemented".
+                // I'll leave them working (no alert) for now, or users expect "Edit/Delete" to work.
+                // User said "Enable all buttons". Edit/Delete is hard without pages.
+                // I will attach "Not implemented" to them for now to be safe, or just let them be dead.
+                // "Not implemented" is better.
+                document.querySelectorAll('.btn-edit, .btn-delete').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        alert('준비 중인 기능입니다.');
+                    });
+                });
+
+
+            } catch (error) {
+                console.error('Load products error:', error);
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: red;">Failed to load data: ${error.message}</td></tr>`;
+            }
+        };
+
+        // Call load initially
+        loadProducts();
+
+        if (uploadBtn && fileInput) {
+            uploadBtn.addEventListener('click', (e) => {
+                // Prevent generic handler from firing if it was attached (it shouldn't be due to :not selector, but good to be safe)
+                e.stopPropagation();
+                fileInput.click();
+            });
+
+            // ... rest of upload logic ...
+
+            fileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                // Show loading state
+                const originalText = uploadBtn.textContent;
+                uploadBtn.textContent = '업로드 중...';
+                uploadBtn.disabled = true;
+
+                try {
+                    // Get token from localStorage (assuming 'token' key)
+                    const token = localStorage.getItem('token');
+
+                    const response = await fetch(`${API_BASE}/api/excel/upload`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
                     });
 
-                    // Re-attach generic listeners to new buttons if needed or use delegation.
-                    // Since I used a generic listener on .scm-btn:not(#excelUploadBtn) earlier, it won't apply to these dynamically created ones unless I re-run logic or use delegation on a parent.
-                    // The generic listener was: "Feature not implemented".
-                    // I'll leave them working (no alert) for now, or users expect "Edit/Delete" to work.
-                    // User said "Enable all buttons". Edit/Delete is hard without pages.
-                    // I will attach "Not implemented" to them for now to be safe, or just let them be dead.
-                    // "Not implemented" is better.
-                    document.querySelectorAll('.btn-edit, .btn-delete').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            alert('준비 중인 기능입니다.');
-                        });
-                    });
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({}));
+                        if (response.status === 401 || response.status === 403) {
+                            throw new Error('권한이 없습니다. 다시 로그인해주세요.');
+                        }
+                        throw new Error(errData.error || `Upload failed (${response.status})`);
+                    }
 
+                    const result = await response.json();
+                    alert(`업로드 완료!\n성공: ${result.success}건\n실패: ${result.failed}건\n\n${result.errors.length > 0 ? '에러 로그:\n' + result.errors.slice(0, 5).join('\n') + (result.errors.length > 5 ? '...' : '') : ''}`);
+
+                    // Refresh to show changes
+                    window.location.reload();
 
                 } catch (error) {
-                    console.error('Load products error:', error);
-                    tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: red;">Failed to load data: ${error.message}</td></tr>`;
+                    console.error('Upload Error:', error);
+                    alert('업로드 실패: ' + error.message);
+                } finally {
+                    uploadBtn.textContent = originalText;
+                    uploadBtn.disabled = false;
+                    fileInput.value = ''; // Reset
                 }
-            };
-
-            // Call load initially
-            loadProducts();
-
-            if (uploadBtn && fileInput) {
-                uploadBtn.addEventListener('click', (e) => {
-                    // Prevent generic handler from firing if it was attached (it shouldn't be due to :not selector, but good to be safe)
-                    e.stopPropagation();
-                    fileInput.click();
-                });
-
-                // ... rest of upload logic ...
-
-                fileInput.addEventListener('change', async (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-
-                    const formData = new FormData();
-                    formData.append('file', file);
-
-                    // Show loading state
-                    const originalText = uploadBtn.textContent;
-                    uploadBtn.textContent = '업로드 중...';
-                    uploadBtn.disabled = true;
-
-                    try {
-                        // Get token from localStorage (assuming 'token' key)
-                        const token = localStorage.getItem('token');
-
-                        const response = await fetch(`${API_BASE}/api/excel/upload`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${token}`
-                            },
-                            body: formData
-                        });
-
-                        if (!response.ok) {
-                            const errData = await response.json().catch(() => ({}));
-                            if (response.status === 401 || response.status === 403) {
-                                throw new Error('권한이 없습니다. 다시 로그인해주세요.');
-                            }
-                            throw new Error(errData.error || `Upload failed (${response.status})`);
-                        }
-
-                        const result = await response.json();
-                        alert(`업로드 완료!\n성공: ${result.success}건\n실패: ${result.failed}건\n\n${result.errors.length > 0 ? '에러 로그:\n' + result.errors.slice(0, 5).join('\n') + (result.errors.length > 5 ? '...' : '') : ''}`);
-
-                        // Refresh to show changes
-                        window.location.reload();
-
-                    } catch (error) {
-                        console.error('Upload Error:', error);
-                        alert('업로드 실패: ' + error.message);
-                    } finally {
-                        uploadBtn.textContent = originalText;
-                        uploadBtn.disabled = false;
-                        fileInput.value = ''; // Reset
-                    }
-                });
-            }
+            });
+        }
         });
     </script>
 </body>

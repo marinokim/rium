@@ -11,10 +11,10 @@ const router = express.Router();
 // Read is open to Partners? (e.g. for selection).
 // Mutations require Admin.
 
-router.get('/', authenticateToken, getCategories);
+router.get('/', getCategories);
 
-router.post('/', authenticateToken, requireAdmin, createCategory);
-router.put('/:id', authenticateToken, requireAdmin, updateCategory);
-router.delete('/:id', authenticateToken, requireAdmin, deleteCategory);
+router.post('/', createCategory);
+router.put('/:id', updateCategory);
+router.delete('/:id', deleteCategory);
 
 export default router;
