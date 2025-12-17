@@ -474,9 +474,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderProductDetail(product) {
         // Normalize properties (API returns snake_case, static data returns camelCase)
-        const imageUrl = getImageUrl(product.image_url || product.image);
-        const detailUrl = product.detail_url || product.detailUrl;
-        const modelName = product.model_name || product.model;
+        const imageUrl = getImageUrl(product.imageUrl || product.image_url || product.image);
+        const detailUrl = product.detailUrl || product.detail_url;
+        const modelName = product.modelNo || product.model_name || product.model || '';
+        const productName = product.name || product.product_name || '제품명 없음';
 
         const isEmoji = !imageUrl.includes('/') && !imageUrl.includes('.');
         const imageHtml = isEmoji
@@ -489,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (detailUrl.trim().match(/<img/i) || detailUrl.includes('<img')) {
                 detailContentHtml = `<div class="product-detail-content">${detailUrl}</div>`;
             } else {
-                detailContentHtml = `<div class="product-detail-content"><img src="${detailUrl}" alt="Detail"></div>`;
+                detailContentHtml = `<div class="product-detail-content" style="text-align: center;"><img src="${detailUrl}" alt="Detail" style="max-width: 100%; height: auto;"></div>`;
             }
         }
 
@@ -507,17 +508,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div style="padding: 20px; text-align: center;">
                     <span style="background: #f0f0f0; padding: 5px 10px; border-radius: 20px; font-size: 0.9rem; color: #666;">${product.category_name || product.category}</span>
-                    <h2 style="font-size: 2rem; margin: 10px 0 20px; color: #333;">${product.brand}</h2>
-                    <h1 style="font-size: 1.5rem; margin-bottom: 20px; font-weight: normal; color: #555;">${modelName}</h1>
-                    <p style="font-size: 1.1rem; line-height: 1.6; color: #666; margin-bottom: 30px; word-break: keep-all;">${product.description}</p>
+                    <h2 style="font-size: 2rem; margin: 10px 0 20px; color: #333;">${product.brand || 'Brand'}</h2>
+                    <h1 style="font-size: 1.5rem; margin-bottom: 20px; font-weight: normal; color: #555;">${productName} <small style="color:#888; font-size: 1rem;">${modelName}</small></h1>
+                    <p style="font-size: 1.1rem; line-height: 1.6; color: #666; margin-bottom: 30px; word-break: keep-all;">${product.description || ''}</p>
                     
                     <div style="margin-top: 30px;">
-                        <button onclick="history.back()" style="padding: 12px 30px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem;">목록으로</button>
+                        <button id="btnBackToList" style="padding: 12px 30px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem;">목록으로</button>
                     </div>
                 </div>
             </div>
             ${detailImageHtml}
         `;
+
+        document.getElementById('btnBackToList').onclick = () => {
+            if (window.opener) {
+                window.close();
+            } else {
+                window.location.href = 'products.html';
+            }
+        };
     }
 
     // Smooth Scroll for Anchor Links
