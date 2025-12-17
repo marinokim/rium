@@ -390,7 +390,11 @@
                     <button class="scm-btn btn-teal">전체 다운로드</button>
                     <button class="scm-btn btn-green">양식</button>
                     <button class="scm-btn btn-red">구간 삭제</button>
-                    <button class="scm-btn btn-teal">엑셀 업로드</button>
+
+                    <!-- Excel Upload Logic -->
+                    <input type="file" id="excelUploadInput" style="display: none;" accept=".xlsx, .xls">
+                    <button class="scm-btn btn-teal" id="excelUploadBtn">엑셀 업로드</button>
+
                     <button class="scm-btn btn-cyan">카테고리 관리</button>
                     <button class="scm-btn btn-navy"><i class="fas fa-plus"></i> 신규 등록</button>
                 </div>
@@ -548,6 +552,71 @@
         </div>
     </main>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const uploadBtn = document.getElementById('excelUploadBtn');
+            const fileInput = document.getElementById('excelUploadInput');
+
+            // API Base URL (Dynamic)
+            const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'http://localhost:5000'
+                : 'https://rium-scm-backend.onrender.com';
+
+            if (uploadBtn && fileInput) {
+                uploadBtn.addEventListener('click', () => {
+                    fileInput.click();
+                });
+
+                fileInput.addEventListener('change', async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    // Show loading state
+                    const originalText = uploadBtn.textContent;
+                    uploadBtn.textContent = '업로드 중...';
+                    uploadBtn.disabled = true;
+
+                    try {
+                        // Get token from localStorage (assuming 'token' key)
+                        const token = localStorage.getItem('token');
+
+                        const response = await fetch(`${API_BASE}/api/excel/upload`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: formData
+                        });
+
+                        if (!response.ok) {
+                            const errData = await response.json().catch(() => ({}));
+                            if (response.status === 401 || response.status === 403) {
+                                throw new Error('권한이 없습니다. 다시 로그인해주세요.');
+                            }
+                            throw new Error(errData.error || `Upload failed (${response.status})`);
+                        }
+
+                        const result = await response.json();
+                        alert(`업로드 완료!\n성공: ${result.success}건\n실패: ${result.failed}건\n\n${result.errors.length > 0 ? '에러 로그:\n' + result.errors.slice(0, 5).join('\n') + (result.errors.length > 5 ? '...' : '') : ''}`);
+
+                        // Refresh to show changes
+                        window.location.reload();
+
+                    } catch (error) {
+                        console.error('Upload Error:', error);
+                        alert('업로드 실패: ' + error.message);
+                    } finally {
+                        uploadBtn.textContent = originalText;
+                        uploadBtn.disabled = false;
+                        fileInput.value = ''; // Reset
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>
