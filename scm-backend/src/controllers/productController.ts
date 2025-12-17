@@ -2,23 +2,42 @@ import { Request, Response } from 'express';
 import prisma from '../lib/prisma.js';
 
 // Get all products (Catalog)
+// Get all products (Catalog) with Pagination
 export const getProducts = async (req: Request, res: Response) => {
     try {
-        const { isNew, limit } = req.query;
+        const { isNew, limit, page } = req.query;
+
+        // Pagination setup
+        const pageNum = page ? Number(page) : 1;
+        const limitNum = limit ? Number(limit) : 20; // Default 20
+        const skip = (pageNum - 1) * limitNum;
 
         // Build filter
         const where: any = { isAvailable: true };
-        // If isNew is requested, we could filter by createdAt, but usually we just sort.
 
-        const products = await prisma.product.findMany({
-            where,
-            include: {
-                category: true
-            },
-            orderBy: isNew === 'true' ? { createdAt: 'desc' } : { name: 'asc' },
-            take: limit ? Number(limit) : undefined
+        // Transaction to get both count and data
+        const [total, products] = await prisma.$transaction([
+            prisma.product.count({ where }),
+            prisma.product.findMany({
+                where,
+                include: {
+                    category: true
+                },
+                orderBy: isNew === 'true' ? { createdAt: 'desc' } : { name: 'asc' },
+                take: limitNum,
+                skip: skip
+            })
+        ]);
+
+        res.json({
+            products,
+            pagination: {
+                total,
+                page: pageNum,
+                limit: limitNum,
+                totalPages: Math.ceil(total / limitNum)
+            }
         });
-        res.json({ products });
     } catch (error) {
         console.error('Get products error:', error);
         res.status(500).json({
