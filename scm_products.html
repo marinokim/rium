@@ -645,7 +645,13 @@
                         });
                         alert(`등록 완료: 성공 ${res.success}, 실패 ${res.failed}`);
                         loadProducts(); // Refresh list
-                    } catch (e) { alert('실패: ' + e.message); }
+                    } catch (e) {
+                        if (e.message.includes('not found') || e.message.includes('404')) {
+                            alert('⚠️ 서버 원본 엑셀 파일이 없습니다.\n[파일 교체] 버튼을 눌러 파일을 다시 업로드해주세요. (배포 시 초기화됨)');
+                        } else {
+                            alert('실패: ' + e.message);
+                        }
+                    }
                     finally { registerRangeBtn.innerText = '범위 등록'; }
                 };
             }
