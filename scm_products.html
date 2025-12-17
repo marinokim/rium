@@ -662,72 +662,65 @@
                             alert('실패: ' + e.message);
                         }
                     }
-                } catch (e) {
-                    if (e.message.includes('not found') || e.message.includes('404')) {
-                        alert('⚠️ 서버 원본 엑셀 파일이 없습니다.\n[파일 교체] 버튼을 눌러 파일을 다시 업로드해주세요. (배포 시 초기화됨)');
-                    } else {
-                        alert('실패: ' + e.message);
-                    }
-                }
-                finally { registerRangeBtn.innerText = '범위 등록'; }
-            };
-        }
+                    finally { registerRangeBtn.innerText = '범위 등록'; }
+                };
+            }
 
             // 4. Excel Upload (Public/Auth bypassed)
             if (uploadBtn && fileInput) {
-            uploadBtn.onclick = (e) => { e.preventDefault(); fileInput.click(); };
-            fileInput.onchange = async () => {
-                if (!fileInput.files.length) return;
-                const fd = new FormData();
-                fd.append('file', fileInput.files[0]);
-                uploadBtn.innerText = '업로드 중...';
+                uploadBtn.onclick = (e) => { e.preventDefault(); fileInput.click(); };
+                fileInput.onchange = async () => {
+                    if (!fileInput.files.length) return;
+                    const fd = new FormData();
+                    fd.append('file', fileInput.files[0]);
+                    uploadBtn.innerText = '업로드 중...';
+                    try {
+                        const res = await apiFetch('/api/excel/upload', { method: 'POST', body: fd });
+                        alert(`업로드 완료: 성공 ${res.success}, 실패 ${res.failed}`);
+                        loadProducts();
+                    } catch (e) { alert('실패: ' + e.message); }
+                    finally { uploadBtn.innerText = '엑셀 업로드'; fileInput.value = ''; }
+                };
+            }
+
+            // 5. Download & Template
+            const btnDownloadAll = document.getElementById('btnDownloadAll');
+            if (btnDownloadAll) btnDownloadAll.onclick = () => window.location.href = `${API_BASE}/api/excel/download`;
+
+            const btnTemplate = document.getElementById('btnTemplate');
+            if (btnTemplate) btnTemplate.onclick = () => window.location.href = `${API_BASE}/api/excel/template`;
+
+            // 6. Delete Range
+            const btnDeleteRange = document.getElementById('btnDeleteRange');
+            if (btnDeleteRange) {
+                btnDeleteRange.onclick = async (e) => {
+                    e.preventDefault();
+                    const input = prompt("삭제할 ID 범위 (예: 100-200)");
+                    if (!input) return;
+                    const [start, end] = input.split('-');
+                    try {
+                        const res = await apiFetch('/api/excel/delete-range', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ start, end })
+                        });
+                        alert(`${res.count}개 삭제 완료`);
+                        loadProducts();
+                    } catch (e) { alert('실패: ' + e.message); }
+                };
+            }
+
+            // --- CATEGORY MANAGEMENT ---
+            const categoryModal = document.getElementById('categoryModal');
+            const catListBody = document.getElementById('categoryListBody');
+            const categorySelect = document.getElementById('p_categoryId');
+
+            const loadCategories = async () => {
                 try {
-                    const res = await apiFetch('/api/excel/upload', { method: 'POST', body: fd });
-                    alert(`업로드 완료: 성공 ${res.success}, 실패 ${res.failed}`);
-                    loadProducts();
-                } catch (e) { alert('실패: ' + e.message); }
-                finally { uploadBtn.innerText = '엑셀 업로드'; fileInput.value = ''; }
-            };
-        }
+                    const data = await apiFetch('/api/categories');
+                    const cats = data.categories;
 
-        // 5. Download & Template
-        const btnDownloadAll = document.getElementById('btnDownloadAll');
-        if (btnDownloadAll) btnDownloadAll.onclick = () => window.location.href = `${API_BASE}/api/excel/download`;
-
-        const btnTemplate = document.getElementById('btnTemplate');
-        if (btnTemplate) btnTemplate.onclick = () => window.location.href = `${API_BASE}/api/excel/template`;
-
-        // 6. Delete Range
-        const btnDeleteRange = document.getElementById('btnDeleteRange');
-        if (btnDeleteRange) {
-            btnDeleteRange.onclick = async (e) => {
-                e.preventDefault();
-                const input = prompt("삭제할 ID 범위 (예: 100-200)");
-                if (!input) return;
-                const [start, end] = input.split('-');
-                try {
-                    const res = await apiFetch('/api/excel/delete-range', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ start, end })
-                    });
-                    alert(`${res.count}개 삭제 완료`);
-                    loadProducts();
-                } catch (e) { alert('실패: ' + e.message); }
-            };
-        }
-
-        // --- CATEGORY MANAGEMENT ---
-        const categoryModal = document.getElementById('categoryModal');
-        const catListBody = document.getElementById('categoryListBody');
-        const categorySelect = document.getElementById('p_categoryId');
-
-        const loadCategories = async () => {
-            try {
-                const data = await apiFetch('/api/categories');
-                const cats = data.categories;
-
-                catListBody.innerHTML = cats.map(c => `
+                    catListBody.innerHTML = cats.map(c => `
                         <tr>
                             <td>${c.id}</td>
                             <td>${c.name}</td>
@@ -736,123 +729,123 @@
                         </tr>
                     `).join('');
 
-                categorySelect.innerHTML = '<option value="">선택하세요</option>' +
-                    cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                    categorySelect.innerHTML = '<option value="">선택하세요</option>' +
+                        cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 
-            } catch (e) { console.error(e); }
-        };
-
-        // Open Modal
-        document.querySelectorAll('button').forEach(btn => {
-            if (btn.innerText.includes('카테고리 관리')) {
-                btn.onclick = (e) => { e.preventDefault(); categoryModal.style.display = 'flex'; loadCategories(); };
-            }
-        });
-        document.getElementById('btnCloseCatModal').onclick = () => categoryModal.style.display = 'none';
-
-        // Add Category
-        document.getElementById('btnAddCat').onclick = async () => {
-            const name = document.getElementById('newCatName').value;
-            const slug = document.getElementById('newCatSlug').value;
-            if (!name || !slug) return alert('입력값 확인 필요');
-            try {
-                await apiFetch('/api/categories', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, slug })
-                });
-                loadCategories();
-                document.getElementById('newCatName').value = '';
-                document.getElementById('newCatSlug').value = '';
-            } catch (e) { alert(e.message); }
-        };
-        // Delete Category
-        catListBody.onclick = async (e) => {
-            if (e.target.classList.contains('btn-del-cat')) {
-                if (!confirm('삭제하시겠습니까?')) return;
-                try { await apiFetch(`/api/categories/${e.target.dataset.id}`, { method: 'DELETE' }); loadCategories(); }
-                catch (e) { alert(e.message); }
-            }
-        };
-
-        // --- PRODUCT MANAGEMENT ---
-        const productModal = document.getElementById('productModal');
-        const productForm = document.getElementById('productForm');
-        const pTitle = document.getElementById('productModalTitle');
-
-        // Open New
-        document.querySelectorAll('button').forEach(btn => {
-            if (btn.innerText.includes('신규 등록')) {
-                btn.onclick = (e) => {
-                    e.preventDefault();
-                    pTitle.innerText = '신규 등록';
-                    productForm.reset();
-                    document.getElementById('p_id').value = '';
-                    loadCategories();
-                    productModal.style.display = 'flex';
-                };
-            }
-        });
-        document.getElementById('btnCloseProductModal').onclick = () => productModal.style.display = 'none';
-
-        // Save Product
-        productForm.onsubmit = async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('p_id').value;
-            const payload = {
-                name: document.getElementById('p_name').value,
-                modelNo: document.getElementById('p_modelNo').value,
-                brand: document.getElementById('p_brand').value,
-                categoryId: document.getElementById('p_categoryId').value,
-                price: document.getElementById('p_price').value,
-                consumerPrice: document.getElementById('p_consumerPrice').value,
-                supplyPrice: document.getElementById('p_supplyPrice').value,
-                stockQuantity: document.getElementById('p_stockQuantity').value,
-                imageUrl: document.getElementById('p_imageUrl').value,
-                detailUrl: document.getElementById('p_detailUrl').value,
-                isTaxFree: document.getElementById('p_isTaxFree').checked,
-                isAvailable: document.getElementById('p_isAvailable').checked
+                } catch (e) { console.error(e); }
             };
-            const url = id ? `/api/products/${id}` : '/api/products';
-            const method = id ? 'PUT' : 'POST';
-            try {
-                await apiFetch(url, {
-                    method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-                });
-                alert('저장되었습니다.');
-                productModal.style.display = 'none';
-                alert('저장되었습니다.');
-                productModal.style.display = 'none';
-                loadProducts(currentPage); // Reload current page
-            } catch (e) { alert(e.message); }
-        };
 
-        // --- PAGINATION STATE ---
-        let currentPage = 1;
-        const itemsPerPage = 20;
-
-        // --- LOAD LIST ---
-        const loadProducts = async (page = 1) => {
-            currentPage = page;
-            try {
-                // Fetch with pagination
-                const data = await apiFetch(`/api/products?limit=${itemsPerPage}&page=${page}&isNew=true`);
-                const products = data.products;
-                const pagination = data.pagination;
-
-                productTableBody.innerHTML = '';
-
-                if (!products.length) {
-                    productTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 2rem;">등록된 상품이 없습니다.</td></tr>';
-                    renderPagination(0, 0);
-                    return;
+            // Open Modal
+            document.querySelectorAll('button').forEach(btn => {
+                if (btn.innerText.includes('카테고리 관리')) {
+                    btn.onclick = (e) => { e.preventDefault(); categoryModal.style.display = 'flex'; loadCategories(); };
                 }
+            });
+            document.getElementById('btnCloseCatModal').onclick = () => categoryModal.style.display = 'none';
 
-                products.forEach(p => {
-                    const tr = document.createElement('tr');
-                    const date = new Date(p.createdAt).toLocaleDateString();
-                    const statusClass = p.isAvailable ? 'status-active' : 'status-inactive';
-                    const imgSrc = p.imageUrl || 'https://via.placeholder.com/60?text=No+Img';
+            // Add Category
+            document.getElementById('btnAddCat').onclick = async () => {
+                const name = document.getElementById('newCatName').value;
+                const slug = document.getElementById('newCatSlug').value;
+                if (!name || !slug) return alert('입력값 확인 필요');
+                try {
+                    await apiFetch('/api/categories', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, slug })
+                    });
+                    loadCategories();
+                    document.getElementById('newCatName').value = '';
+                    document.getElementById('newCatSlug').value = '';
+                } catch (e) { alert(e.message); }
+            };
+            // Delete Category
+            catListBody.onclick = async (e) => {
+                if (e.target.classList.contains('btn-del-cat')) {
+                    if (!confirm('삭제하시겠습니까?')) return;
+                    try { await apiFetch(`/api/categories/${e.target.dataset.id}`, { method: 'DELETE' }); loadCategories(); }
+                    catch (e) { alert(e.message); }
+                }
+            };
 
-                    tr.innerHTML = `
+            // --- PRODUCT MANAGEMENT ---
+            const productModal = document.getElementById('productModal');
+            const productForm = document.getElementById('productForm');
+            const pTitle = document.getElementById('productModalTitle');
+
+            // Open New
+            document.querySelectorAll('button').forEach(btn => {
+                if (btn.innerText.includes('신규 등록')) {
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        pTitle.innerText = '신규 등록';
+                        productForm.reset();
+                        document.getElementById('p_id').value = '';
+                        loadCategories();
+                        productModal.style.display = 'flex';
+                    };
+                }
+            });
+            document.getElementById('btnCloseProductModal').onclick = () => productModal.style.display = 'none';
+
+            // Save Product
+            productForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('p_id').value;
+                const payload = {
+                    name: document.getElementById('p_name').value,
+                    modelNo: document.getElementById('p_modelNo').value,
+                    brand: document.getElementById('p_brand').value,
+                    categoryId: document.getElementById('p_categoryId').value,
+                    price: document.getElementById('p_price').value,
+                    consumerPrice: document.getElementById('p_consumerPrice').value,
+                    supplyPrice: document.getElementById('p_supplyPrice').value,
+                    stockQuantity: document.getElementById('p_stockQuantity').value,
+                    imageUrl: document.getElementById('p_imageUrl').value,
+                    detailUrl: document.getElementById('p_detailUrl').value,
+                    isTaxFree: document.getElementById('p_isTaxFree').checked,
+                    isAvailable: document.getElementById('p_isAvailable').checked
+                };
+                const url = id ? `/api/products/${id}` : '/api/products';
+                const method = id ? 'PUT' : 'POST';
+                try {
+                    await apiFetch(url, {
+                        method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                    });
+                    alert('저장되었습니다.');
+                    productModal.style.display = 'none';
+                    alert('저장되었습니다.');
+                    productModal.style.display = 'none';
+                    loadProducts(currentPage); // Reload current page
+                } catch (e) { alert(e.message); }
+            };
+
+            // --- PAGINATION STATE ---
+            let currentPage = 1;
+            const itemsPerPage = 20;
+
+            // --- LOAD LIST ---
+            const loadProducts = async (page = 1) => {
+                currentPage = page;
+                try {
+                    // Fetch with pagination
+                    const data = await apiFetch(`/api/products?limit=${itemsPerPage}&page=${page}&isNew=true`);
+                    const products = data.products;
+                    const pagination = data.pagination;
+
+                    productTableBody.innerHTML = '';
+
+                    if (!products.length) {
+                        productTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 2rem;">등록된 상품이 없습니다.</td></tr>';
+                        renderPagination(0, 0);
+                        return;
+                    }
+
+                    products.forEach(p => {
+                        const tr = document.createElement('tr');
+                        const date = new Date(p.createdAt).toLocaleDateString();
+                        const statusClass = p.isAvailable ? 'status-active' : 'status-inactive';
+                        const imgSrc = p.imageUrl || 'https://via.placeholder.com/60?text=No+Img';
+
+                        tr.innerHTML = `
                             <td style="text-align: center;"><strong>${p.id}</strong></td>
                             <td style="text-align: center;"><img src="${imgSrc}" style="width: 60px; height: 60px; object-fit: cover; border: 1px solid #ddd;" onerror="this.src='https://via.placeholder.com/60?text=Error'"></td>
                             <td><strong>${p.brand || '-'}</strong><br><small style="color:#007bff">${p.category?.name || '-'}</small></td>
@@ -870,124 +863,124 @@
                                 </div>
                             </td>
                         `;
-                    productTableBody.appendChild(tr);
+                        productTableBody.appendChild(tr);
+                    });
+
+                    // Render Pagination
+                    renderPagination(pagination.totalPages, currentPage);
+
+                    // List Buttons wiring
+                    attachRowListeners();
+
+                } catch (e) {
+                    console.error(e);
+                    alert('데이터 로드 실패: ' + e.message);
+                }
+            };
+
+            const attachRowListeners = () => {
+                document.querySelectorAll('.btn-edit').forEach(btn => {
+                    btn.onclick = async (e) => {
+                        e.preventDefault();
+                        const id = e.target.dataset.id;
+                        pTitle.innerText = '상품 수정';
+                        loadCategories();
+                        try {
+                            const data = await apiFetch(`/api/products/${id}`);
+                            const p = data.product;
+                            document.getElementById('p_id').value = p.id;
+                            document.getElementById('p_name').value = p.name;
+                            document.getElementById('p_modelNo').value = p.modelNo || '';
+                            document.getElementById('p_brand').value = p.brand || '';
+                            document.getElementById('p_categoryId').value = p.categoryId;
+                            document.getElementById('p_price').value = p.price;
+                            document.getElementById('p_consumerPrice').value = p.consumerPrice || '';
+                            document.getElementById('p_supplyPrice').value = p.supplyPrice || '';
+                            document.getElementById('p_stockQuantity').value = p.stockQuantity || '';
+                            document.getElementById('p_imageUrl').value = p.imageUrl || '';
+                            document.getElementById('p_detailUrl').value = p.detailUrl || '';
+                            document.getElementById('p_isTaxFree').checked = p.isTaxFree;
+                            document.getElementById('p_isAvailable').checked = p.isAvailable;
+                            productModal.style.display = 'flex';
+                        } catch (e) { alert(e.message); }
+                    };
                 });
 
-                // Render Pagination
-                renderPagination(pagination.totalPages, currentPage);
+                document.querySelectorAll('.btn-delete').forEach(btn => {
+                    btn.onclick = async (e) => {
+                        if (!confirm('정말 삭제하시겠습니까?')) return;
+                        try {
+                            await apiFetch(`/api/products/${e.target.dataset.id}`, { method: 'DELETE' });
+                            alert('삭제되었습니다.');
+                            loadProducts(currentPage);
+                        }
+                        catch (e) { alert(e.message); }
+                    };
+                });
+            };
 
-                // List Buttons wiring
-                attachRowListeners();
+            // Render Pagination Logic
+            const renderPagination = (totalPages, current) => {
+                const paginationContainer = document.querySelector('.scm-pagination');
+                if (!paginationContainer) return;
 
-            } catch (e) {
-                console.error(e);
-                alert('데이터 로드 실패: ' + e.message);
-            }
-        };
+                paginationContainer.innerHTML = '';
 
-        const attachRowListeners = () => {
-            document.querySelectorAll('.btn-edit').forEach(btn => {
-                btn.onclick = async (e) => {
-                    e.preventDefault();
-                    const id = e.target.dataset.id;
-                    pTitle.innerText = '상품 수정';
-                    loadCategories();
-                    try {
-                        const data = await apiFetch(`/api/products/${id}`);
-                        const p = data.product;
-                        document.getElementById('p_id').value = p.id;
-                        document.getElementById('p_name').value = p.name;
-                        document.getElementById('p_modelNo').value = p.modelNo || '';
-                        document.getElementById('p_brand').value = p.brand || '';
-                        document.getElementById('p_categoryId').value = p.categoryId;
-                        document.getElementById('p_price').value = p.price;
-                        document.getElementById('p_consumerPrice').value = p.consumerPrice || '';
-                        document.getElementById('p_supplyPrice').value = p.supplyPrice || '';
-                        document.getElementById('p_stockQuantity').value = p.stockQuantity || '';
-                        document.getElementById('p_imageUrl').value = p.imageUrl || '';
-                        document.getElementById('p_detailUrl').value = p.detailUrl || '';
-                        document.getElementById('p_isTaxFree').checked = p.isTaxFree;
-                        document.getElementById('p_isAvailable').checked = p.isAvailable;
-                        productModal.style.display = 'flex';
-                    } catch (e) { alert(e.message); }
-                };
-            });
+                if (totalPages <= 1) return;
 
-            document.querySelectorAll('.btn-delete').forEach(btn => {
-                btn.onclick = async (e) => {
-                    if (!confirm('정말 삭제하시겠습니까?')) return;
-                    try {
-                        await apiFetch(`/api/products/${e.target.dataset.id}`, { method: 'DELETE' });
-                        alert('삭제되었습니다.');
-                        loadProducts(currentPage);
+                // Prev Button
+                const prevBtn = document.createElement('button');
+                prevBtn.innerText = '<';
+                prevBtn.disabled = current === 1;
+                prevBtn.onclick = () => loadProducts(current - 1);
+                paginationContainer.appendChild(prevBtn);
+
+                // Page Numbers
+                let startPage = Math.max(1, current - 2);
+                let endPage = Math.min(totalPages, current + 2);
+
+                if (startPage > 1) {
+                    const firstBtn = document.createElement('button');
+                    firstBtn.innerText = '1';
+                    firstBtn.onclick = () => loadProducts(1);
+                    paginationContainer.appendChild(firstBtn);
+                    if (startPage > 2) {
+                        const span = document.createElement('span');
+                        span.innerText = '...';
+                        paginationContainer.appendChild(span);
                     }
-                    catch (e) { alert(e.message); }
-                };
-            });
-        };
-
-        // Render Pagination Logic
-        const renderPagination = (totalPages, current) => {
-            const paginationContainer = document.querySelector('.scm-pagination');
-            if (!paginationContainer) return;
-
-            paginationContainer.innerHTML = '';
-
-            if (totalPages <= 1) return;
-
-            // Prev Button
-            const prevBtn = document.createElement('button');
-            prevBtn.innerText = '<';
-            prevBtn.disabled = current === 1;
-            prevBtn.onclick = () => loadProducts(current - 1);
-            paginationContainer.appendChild(prevBtn);
-
-            // Page Numbers
-            let startPage = Math.max(1, current - 2);
-            let endPage = Math.min(totalPages, current + 2);
-
-            if (startPage > 1) {
-                const firstBtn = document.createElement('button');
-                firstBtn.innerText = '1';
-                firstBtn.onclick = () => loadProducts(1);
-                paginationContainer.appendChild(firstBtn);
-                if (startPage > 2) {
-                    const span = document.createElement('span');
-                    span.innerText = '...';
-                    paginationContainer.appendChild(span);
                 }
-            }
 
-            for (let i = startPage; i <= endPage; i++) {
-                const btn = document.createElement('button');
-                btn.innerText = i;
-                if (i === current) btn.classList.add('active');
-                btn.onclick = () => loadProducts(i);
-                paginationContainer.appendChild(btn);
-            }
-
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) {
-                    const span = document.createElement('span');
-                    span.innerText = '...';
-                    paginationContainer.appendChild(span);
+                for (let i = startPage; i <= endPage; i++) {
+                    const btn = document.createElement('button');
+                    btn.innerText = i;
+                    if (i === current) btn.classList.add('active');
+                    btn.onclick = () => loadProducts(i);
+                    paginationContainer.appendChild(btn);
                 }
-                const lastBtn = document.createElement('button');
-                lastBtn.innerText = totalPages;
-                lastBtn.onclick = () => loadProducts(totalPages);
-                paginationContainer.appendChild(lastBtn);
-            }
 
-            // Next Button
-            const nextBtn = document.createElement('button');
-            nextBtn.innerText = '>';
-            nextBtn.disabled = current === totalPages;
-            nextBtn.onclick = () => loadProducts(current + 1);
-            paginationContainer.appendChild(nextBtn);
-        };
+                if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) {
+                        const span = document.createElement('span');
+                        span.innerText = '...';
+                        paginationContainer.appendChild(span);
+                    }
+                    const lastBtn = document.createElement('button');
+                    lastBtn.innerText = totalPages;
+                    lastBtn.onclick = () => loadProducts(totalPages);
+                    paginationContainer.appendChild(lastBtn);
+                }
 
-        // Init
-        loadProducts();
+                // Next Button
+                const nextBtn = document.createElement('button');
+                nextBtn.innerText = '>';
+                nextBtn.disabled = current === totalPages;
+                nextBtn.onclick = () => loadProducts(current + 1);
+                paginationContainer.appendChild(nextBtn);
+            };
+
+            // Init
+            loadProducts();
         });
     </script>
 </body>
