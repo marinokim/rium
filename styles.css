@@ -1119,3 +1119,115 @@ footer {
         text-align: center;
     }
 }
+
+/* =========================================
+   SCM Product Management Styles (Arontec Style)
+   ========================================= */
+
+/* Action Bar Container */
+.scm-action-bar {
+    display: flex;
+    align-items: center;
+    background-color: #f8f9fa;
+    padding: 0.8rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+/* Action Groups */
+.scm-action-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.scm-action-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Custom SCM Buttons */
+.scm-btn {
+    padding: 6px 14px;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    color: white;
+    font-weight: 500;
+}
+
+.btn-red {
+    background-color: #dc3545;
+}
+.btn-red:hover {
+    background-color: #c82333;
+}
+
+.btn-blue {
+    background-color: #007bff;
+}
+.btn-blue:hover {
+    background-color: #0069d9;
+}
+
+.btn-teal {
+    background-color: #17a2b8;
+}
+.btn-teal:hover {
+    background-color: #138496;
+}
+
+.btn-green {
+    background-color: #28a745;
+}
+.btn-green:hover {
+    background-color: #218838;
+}
+
+.btn-cyan {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+.btn-cyan:hover {
+    background-color: #c1e7ef;
+}
+
+.btn-navy {
+    background-color: #001f3f;
+}
+.btn-navy:hover {
+    background-color: #001830;
+}
+
+.scm-table th {
+    background-color: #001f3f !important;
+    color: white !important;
+    text-align: center;
+    padding: 0.8rem;
+    font-weight: 600;
+    border-bottom: 2px solid #001830;
+}
+
+.scm-table td {
+    vertical-align: middle;
+    padding: 0.6rem;
+    border-bottom: 1px solid #eee;
+    font-size: 0.9rem;
+}
+
+.badge-new {
+    background-color: #ffc107;
+    color: #000;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    margin-right: 5px;
+}
