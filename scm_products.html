@@ -557,8 +557,19 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Excel Upload Logic
             const uploadBtn = document.getElementById('excelUploadBtn');
             const fileInput = document.getElementById('excelUploadInput');
+
+            // Generic handler for other buttons
+            const otherButtons = document.querySelectorAll('.scm-btn:not(#excelUploadBtn)');
+            otherButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const btnText = btn.innerText.trim();
+                    alert(`[${btnText}] 기능은 아직 구현되지 않았습니다.\n현재 '엑셀 업로드' 기능만 사용 가능합니다.`);
+                });
+            });
 
             // API Base URL (Dynamic)
             const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -566,9 +577,13 @@
                 : 'https://rium-scm-backend.onrender.com';
 
             if (uploadBtn && fileInput) {
-                uploadBtn.addEventListener('click', () => {
+                uploadBtn.addEventListener('click', (e) => {
+                    // Prevent generic handler from firing if it was attached (it shouldn't be due to :not selector, but good to be safe)
+                    e.stopPropagation();
                     fileInput.click();
                 });
+
+                // ... rest of upload logic ...
 
                 fileInput.addEventListener('change', async (e) => {
                     const file = e.target.files[0];
