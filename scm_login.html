@@ -148,8 +148,10 @@
                 const username = document.getElementById('username').value;
 
                 if (username === 'admin') {
+                    localStorage.setItem('scm_user', JSON.stringify({ username, role: 'ADMIN' }));
                     window.location.href = 'scm_products.html';
                 } else {
+                    localStorage.setItem('scm_user', JSON.stringify({ username, role: 'PARTNER' }));
                     window.location.href = 'scm_dashboard.html';
                 }
             });
