@@ -158,15 +158,28 @@ export const uploadExcel = async (req: Request, res: Response) => {
                     // Update
                     await prisma.product.update({
                         where: { id: existingProduct.id },
-                        data: productData
+                        data: {
+                            ...productData,
+                            // For update, categoryId can be undefined (no change) or null (if schema allowed, but it doesn't).
+                            // If we want to allow updating category, we pass it if it exists.
+                            // However, productData.categoryId is number | undefined.
+                            // If specific logic needed for category update:
+                            categoryId: categoryId || undefined
+                        }
                     });
                 } else {
                     // Create
+                    if (!categoryId) {
+                        throw new Error('Category is required for new products');
+                    }
+
+
                     await prisma.product.create({
                         data: {
                             ...productData,
                             name: modelName,
-                            modelNo: modelNo || modelName // Ensure modelNo is populated
+                            modelNo: modelNo || modelName,
+                            categoryId: categoryId // Guaranteed number here
                         }
                     });
                 }
