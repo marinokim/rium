@@ -837,40 +837,39 @@
                     productModal.style.display = 'none';
                     loadProducts(currentPage); // Reload current page
                 } catch (e) { alert(e.message); }
-            } catch (e) { alert(e.message); }
-        };
+            };
 
-        // --- GLOBAL STATE ---
-        let currentProducts = [];
-        let currentPage = 1;
-        const itemsPerPage = 20;
+            // --- GLOBAL STATE ---
+            let currentProducts = [];
+            let currentPage = 1;
+            const itemsPerPage = 20;
 
-        // --- LOAD LIST ---
-        const loadProducts = async (page = 1) => {
-            currentPage = page;
-            try {
-                // Fetch with pagination
-                const data = await apiFetch(`/api/products?limit=${itemsPerPage}&page=${page}&isNew=true`);
-                currentProducts = data.products || []; // Store globally for safe access
-                const products = currentProducts;
-                const pagination = data.pagination;
+            // --- LOAD LIST ---
+            const loadProducts = async (page = 1) => {
+                currentPage = page;
+                try {
+                    // Fetch with pagination
+                    const data = await apiFetch(`/api/products?limit=${itemsPerPage}&page=${page}&isNew=true`);
+                    currentProducts = data.products || []; // Store globally for safe access
+                    const products = currentProducts;
+                    const pagination = data.pagination;
 
-                productTableBody.innerHTML = '';
+                    productTableBody.innerHTML = '';
 
-                if (!products.length) {
-                    productTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 2rem;">등록된 상품이 없습니다.</td></tr>';
-                    renderPagination(0, 0);
-                    return;
-                }
+                    if (!products.length) {
+                        productTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 2rem;">등록된 상품이 없습니다.</td></tr>';
+                        renderPagination(0, 0);
+                        return;
+                    }
 
-                products.forEach((p, index) => {
-                    const tr = document.createElement('tr');
-                    const date = new Date(p.createdAt).toLocaleDateString();
-                    const statusClass = p.isAvailable ? 'status-active' : 'status-inactive';
-                    const imgSrc = p.imageUrl || 'https://via.placeholder.com/60?text=No+Img';
-                    const categoryName = p.category ? p.category.name : '-'; // Handle potentially missing category object
+                    products.forEach((p, index) => {
+                        const tr = document.createElement('tr');
+                        const date = new Date(p.createdAt).toLocaleDateString();
+                        const statusClass = p.isAvailable ? 'status-active' : 'status-inactive';
+                        const imgSrc = p.imageUrl || 'https://via.placeholder.com/60?text=No+Img';
+                        const categoryName = p.category ? p.category.name : '-'; // Handle potentially missing category object
 
-                    tr.innerHTML = `
+                        tr.innerHTML = `
                             <td style="text-align: center;"><strong>${p.id}</strong></td>
                             <td style="text-align: center;">
                                 <div class="product-img-thumb" style="cursor: pointer;" onclick="openProductDetail(${index})">
@@ -893,136 +892,136 @@
                                 </div>
                             </td>
                         `;
-                    productTableBody.appendChild(tr);
+                        productTableBody.appendChild(tr);
+                    });
+
+                    // Render Pagination
+                    renderPagination(pagination.totalPages, currentPage);
+
+                    // List Buttons wiring
+                    attachRowListeners();
+
+                } catch (e) {
+                    console.error(e);
+                    alert('데이터 로드 실패: ' + e.message);
+                }
+            };
+
+            const attachRowListeners = () => {
+                document.querySelectorAll('.btn-edit').forEach(btn => {
+                    btn.onclick = async (e) => {
+                        e.preventDefault();
+                        const id = e.target.dataset.id;
+                        pTitle.innerText = '상품 수정';
+                        loadCategories();
+                        try {
+                            const data = await apiFetch(`/api/products/${id}`);
+                            const p = data.product;
+                            document.getElementById('p_id').value = p.id;
+                            document.getElementById('p_name').value = p.name;
+                            document.getElementById('p_modelNo').value = p.modelNo || '';
+                            document.getElementById('p_brand').value = p.brand || '';
+                            document.getElementById('p_categoryId').value = p.categoryId;
+                            document.getElementById('p_price').value = p.price;
+                            document.getElementById('p_consumerPrice').value = p.consumerPrice || '';
+                            document.getElementById('p_supplyPrice').value = p.supplyPrice || '';
+                            document.getElementById('p_stockQuantity').value = p.stockQuantity || '';
+                            document.getElementById('p_imageUrl').value = p.imageUrl || '';
+                            document.getElementById('p_detailUrl').value = p.detailUrl || '';
+                            document.getElementById('p_isTaxFree').checked = p.isTaxFree;
+                            document.getElementById('p_isAvailable').checked = p.isAvailable;
+                            productModal.style.display = 'flex';
+                        } catch (e) { alert(e.message); }
+                    };
                 });
 
-                // Render Pagination
-                renderPagination(pagination.totalPages, currentPage);
+                document.querySelectorAll('.btn-delete').forEach(btn => {
+                    btn.onclick = async (e) => {
+                        if (!confirm('정말 삭제하시겠습니까?')) return;
+                        try {
+                            await apiFetch(`/api/products/${e.target.dataset.id}`, { method: 'DELETE' });
+                            alert('삭제되었습니다.');
+                            loadProducts(currentPage);
+                        }
+                        catch (e) { alert(e.message); }
+                    };
+                });
+            };
 
-                // List Buttons wiring
-                attachRowListeners();
+            // Render Pagination Logic
+            const renderPagination = (totalPages, current) => {
+                const paginationContainer = document.querySelector('.scm-pagination');
+                if (!paginationContainer) return;
 
-            } catch (e) {
-                console.error(e);
-                alert('데이터 로드 실패: ' + e.message);
-            }
-        };
+                paginationContainer.innerHTML = '';
 
-        const attachRowListeners = () => {
-            document.querySelectorAll('.btn-edit').forEach(btn => {
-                btn.onclick = async (e) => {
-                    e.preventDefault();
-                    const id = e.target.dataset.id;
-                    pTitle.innerText = '상품 수정';
-                    loadCategories();
-                    try {
-                        const data = await apiFetch(`/api/products/${id}`);
-                        const p = data.product;
-                        document.getElementById('p_id').value = p.id;
-                        document.getElementById('p_name').value = p.name;
-                        document.getElementById('p_modelNo').value = p.modelNo || '';
-                        document.getElementById('p_brand').value = p.brand || '';
-                        document.getElementById('p_categoryId').value = p.categoryId;
-                        document.getElementById('p_price').value = p.price;
-                        document.getElementById('p_consumerPrice').value = p.consumerPrice || '';
-                        document.getElementById('p_supplyPrice').value = p.supplyPrice || '';
-                        document.getElementById('p_stockQuantity').value = p.stockQuantity || '';
-                        document.getElementById('p_imageUrl').value = p.imageUrl || '';
-                        document.getElementById('p_detailUrl').value = p.detailUrl || '';
-                        document.getElementById('p_isTaxFree').checked = p.isTaxFree;
-                        document.getElementById('p_isAvailable').checked = p.isAvailable;
-                        productModal.style.display = 'flex';
-                    } catch (e) { alert(e.message); }
-                };
-            });
+                if (totalPages <= 1) return;
 
-            document.querySelectorAll('.btn-delete').forEach(btn => {
-                btn.onclick = async (e) => {
-                    if (!confirm('정말 삭제하시겠습니까?')) return;
-                    try {
-                        await apiFetch(`/api/products/${e.target.dataset.id}`, { method: 'DELETE' });
-                        alert('삭제되었습니다.');
-                        loadProducts(currentPage);
+                // Prev Button
+                const prevBtn = document.createElement('button');
+                prevBtn.innerText = '<';
+                prevBtn.disabled = current === 1;
+                prevBtn.onclick = () => loadProducts(current - 1);
+                paginationContainer.appendChild(prevBtn);
+
+                // Page Numbers
+                let startPage = Math.max(1, current - 2);
+                let endPage = Math.min(totalPages, current + 2);
+
+                if (startPage > 1) {
+                    const firstBtn = document.createElement('button');
+                    firstBtn.innerText = '1';
+                    firstBtn.onclick = () => loadProducts(1);
+                    paginationContainer.appendChild(firstBtn);
+                    if (startPage > 2) {
+                        const span = document.createElement('span');
+                        span.innerText = '...';
+                        paginationContainer.appendChild(span);
                     }
-                    catch (e) { alert(e.message); }
-                };
-            });
-        };
-
-        // Render Pagination Logic
-        const renderPagination = (totalPages, current) => {
-            const paginationContainer = document.querySelector('.scm-pagination');
-            if (!paginationContainer) return;
-
-            paginationContainer.innerHTML = '';
-
-            if (totalPages <= 1) return;
-
-            // Prev Button
-            const prevBtn = document.createElement('button');
-            prevBtn.innerText = '<';
-            prevBtn.disabled = current === 1;
-            prevBtn.onclick = () => loadProducts(current - 1);
-            paginationContainer.appendChild(prevBtn);
-
-            // Page Numbers
-            let startPage = Math.max(1, current - 2);
-            let endPage = Math.min(totalPages, current + 2);
-
-            if (startPage > 1) {
-                const firstBtn = document.createElement('button');
-                firstBtn.innerText = '1';
-                firstBtn.onclick = () => loadProducts(1);
-                paginationContainer.appendChild(firstBtn);
-                if (startPage > 2) {
-                    const span = document.createElement('span');
-                    span.innerText = '...';
-                    paginationContainer.appendChild(span);
                 }
-            }
 
-            for (let i = startPage; i <= endPage; i++) {
-                const btn = document.createElement('button');
-                btn.innerText = i;
-                if (i === current) btn.classList.add('active');
-                btn.onclick = () => loadProducts(i);
-                paginationContainer.appendChild(btn);
-            }
-
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) {
-                    const span = document.createElement('span');
-                    span.innerText = '...';
-                    paginationContainer.appendChild(span);
+                for (let i = startPage; i <= endPage; i++) {
+                    const btn = document.createElement('button');
+                    btn.innerText = i;
+                    if (i === current) btn.classList.add('active');
+                    btn.onclick = () => loadProducts(i);
+                    paginationContainer.appendChild(btn);
                 }
-                const lastBtn = document.createElement('button');
-                lastBtn.innerText = totalPages;
-                lastBtn.onclick = () => loadProducts(totalPages);
-                paginationContainer.appendChild(lastBtn);
-            }
 
-            // Next Button
-            const nextBtn = document.createElement('button');
-            nextBtn.innerText = '>';
-            nextBtn.disabled = current === totalPages;
-            nextBtn.onclick = () => loadProducts(current + 1);
-            paginationContainer.appendChild(nextBtn);
-        };
-
-        // Open Product Detail Page
-        window.openProductDetail = (index) => {
-            if (currentProducts && currentProducts[index]) {
-                const p = currentProducts[index];
-                if (p.id) {
-                    window.open(`product_detail.html?id=${p.id}`, '_blank');
-                } else {
-                    alert('상품 ID를 찾을 수 없습니다.');
+                if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) {
+                        const span = document.createElement('span');
+                        span.innerText = '...';
+                        paginationContainer.appendChild(span);
+                    }
+                    const lastBtn = document.createElement('button');
+                    lastBtn.innerText = totalPages;
+                    lastBtn.onclick = () => loadProducts(totalPages);
+                    paginationContainer.appendChild(lastBtn);
                 }
-            }
-        };
 
-        // Init
-        loadProducts();
+                // Next Button
+                const nextBtn = document.createElement('button');
+                nextBtn.innerText = '>';
+                nextBtn.disabled = current === totalPages;
+                nextBtn.onclick = () => loadProducts(current + 1);
+                paginationContainer.appendChild(nextBtn);
+            };
+
+            // Open Product Detail Page
+            window.openProductDetail = (index) => {
+                if (currentProducts && currentProducts[index]) {
+                    const p = currentProducts[index];
+                    if (p.id) {
+                        window.open(`product_detail.html?id=${p.id}`, '_blank');
+                    } else {
+                        alert('상품 ID를 찾을 수 없습니다.');
+                    }
+                }
+            };
+
+            // Init
+            loadProducts();
         });
     </script>
 </body>
