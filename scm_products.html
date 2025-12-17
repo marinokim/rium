@@ -873,7 +873,7 @@
                     tr.innerHTML = `
                             <td style="text-align: center;"><strong>${p.id}</strong></td>
                             <td style="text-align: center;">
-                                <div class="product-img-thumb" style="cursor: pointer;" onclick="openImageModalByIndex(${index})">
+                                <div class="product-img-thumb" style="cursor: pointer;" onclick="openProductDetail(${index})">
                                     <img src="${imgSrc}" style="width: 60px; height: 60px; object-fit: cover; border: 1px solid #ddd;" onerror="this.src='https://via.placeholder.com/60?text=Error'">
                                     <div style="font-size: 0.7rem; color: #007bff; margin-top: 2px;">상세보기</div>
                                 </div>
@@ -1009,16 +1009,15 @@
             paginationContainer.appendChild(nextBtn);
         };
 
-        // Safe wrapper using index
-        window.openImageModalByIndex = (index) => {
+        // Open Product Detail Page
+        window.openProductDetail = (index) => {
             if (currentProducts && currentProducts[index]) {
                 const p = currentProducts[index];
-                const url = p.detailUrl || '';
-                if (!url || url === 'null' || url.trim() === '') {
-                    alert('등록된 상세 페이지 링크가 없습니다.');
-                    return;
+                if (p.id) {
+                    window.open(`product_detail.html?id=${p.id}`, '_blank');
+                } else {
+                    alert('상품 ID를 찾을 수 없습니다.');
                 }
-                window.open(url, '_blank');
             }
         };
 
