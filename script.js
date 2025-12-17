@@ -488,9 +488,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (detailUrl) {
             // Check if it contains HTML tags (specifically img)
             if (detailUrl.trim().match(/<img/i) || detailUrl.includes('<img')) {
-                detailContentHtml = `<div class="product-detail-content">${detailUrl}</div>`;
+                // If HTML content, wrap it and center it
+                detailContentHtml = `<div class="product-detail-content" style="text-align: center; display: flex; flex-direction: column; align-items: center; width: 100%;">${detailUrl}</div>`;
             } else {
-                detailContentHtml = `<div class="product-detail-content" style="text-align: center;"><img src="${detailUrl}" alt="Detail" style="max-width: 100%; height: auto;"></div>`;
+                // If standard URL, render img centered
+                detailContentHtml = `<div class="product-detail-content" style="text-align: center; width: 100%;"><img src="${detailUrl}" alt="Detail" style="max-width: 100%; width: auto; height: auto; margin: 0 auto; display: block;"></div>`;
             }
         }
 
