@@ -271,3 +271,104 @@ export const registerRange = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to register range' });
     }
 };
+
+// 4. Download All Products
+export const downloadAll = async (req: Request, res: Response) => {
+    try {
+        const products = await prisma.product.findMany();
+
+        // Map to Excel format
+        const data = products.map(p => ({
+            'ModelName': p.name,
+            'ModelNo': p.modelNo,
+            'Brand': p.brand,
+            'Description': p.description,
+            'B2BPrice': p.price,
+            'ConsumerPrice': p.consumerPrice,
+            'SupplyPrice': p.supplyPrice,
+            'Stock': p.stockQuantity,
+            'ImageURL': p.imageUrl,
+            'DetailURL': p.detailUrl,
+            'Manufacturer': p.manufacturer,
+            'Origin': p.origin,
+            'IsTaxFree': p.isTaxFree ? 'TRUE' : 'FALSE',
+            'ShippingFee': p.shippingFee
+        }));
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(data);
+        XLSX.utils.book_append_sheet(wb, ws, 'Products');
+
+        const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=products_export.xlsx');
+        res.send(buffer);
+
+    } catch (error) {
+        console.error('Download error:', error);
+        res.status(500).json({ error: 'Failed to download products' });
+    }
+};
+
+// 5. Download Template
+export const downloadTemplate = async (req: Request, res: Response) => {
+    try {
+        const headers = [
+            {
+                'Brand': 'Brand Name',
+                'ModelName': 'Product Name',
+                'ModelNo': 'Model Number',
+                'Category': 'Category Name',
+                'B2BPrice': 10000,
+                'ConsumerPrice': 20000,
+                'Stock': 100,
+                'ImageURL': 'https://example.com/image.jpg',
+                'DetailURL': 'https://example.com/detail.jpg'
+            }
+        ];
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(headers);
+        XLSX.utils.book_append_sheet(wb, ws, 'Template');
+
+        const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=product_template.xlsx');
+        res.send(buffer);
+    } catch (error) {
+        console.error('Template error:', error);
+        res.status(500).json({ error: 'Failed to download template' });
+    }
+};
+
+// 6. Delete Range (by ID for now, as consistent with "Range")
+export const deleteRange = async (req: Request, res: Response) => {
+    try {
+        // Expecting ?start=100&end=200 query params? Or body?
+        // User UI has "Start ~ End".
+        const { start, end } = req.body;
+        const startId = parseInt(start);
+        const endId = parseInt(end);
+
+        if (isNaN(startId) || isNaN(endId)) {
+            return res.status(400).json({ error: 'Invalid ID range' });
+        }
+
+        const result = await prisma.product.deleteMany({
+            where: {
+                id: {
+                    gte: startId,
+                    lte: endId
+                }
+            }
+        });
+
+        res.json({ message: `${result.count} products deleted`, count: result.count });
+
+    } catch (error) {
+        console.error('Delete range error:', error);
+        res.status(500).json({ error: 'Failed to delete range' });
+    }
+};

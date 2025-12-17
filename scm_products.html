@@ -404,13 +404,15 @@
 
                 <!-- Group 3: Right Aligned Actions -->
                 <div class="scm-action-group" style="margin-left: auto;">
-                    <button class="scm-btn btn-teal">전체 다운로드</button>
-                    <button class="scm-btn btn-green">양식</button>
-                    <button class="scm-btn btn-red">구간 삭제</button>
+                    <button class="scm-btn btn-teal" id="btnDownloadAll">전체 다운로드</button>
+                    <button class="scm-btn btn-green" id="btnTemplate">양식</button>
+                    <button class="scm-btn btn-red" id="btnDeleteRange">구간 삭제</button>
 
                     <!-- Excel Upload Logic -->
                     <input type="file" id="excelUploadInput" style="display: none;" accept=".xlsx, .xls">
-                    <button class="scm-btn btn-teal" id="excelUploadBtn">엑셀 업로드</button>
+                    <button class="scm-btn btn-cyan" id="excelUploadBtn">엑셀 업로드</button>
+
+                    <!-- Only Excel Upload implemented via Input -->
 
                     <button class="scm-btn btn-cyan">카테고리 관리</button>
                     <button class="scm-btn btn-navy"><i class="fas fa-plus"></i> 신규 등록</button>
@@ -691,6 +693,59 @@
                     }
                 });
             }
+            // -----------------------------------------------------
+
+            // 4. Handle 'Download All'
+            const btnDownloadAll = document.getElementById('btnDownloadAll');
+            if (btnDownloadAll) {
+                btnDownloadAll.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    window.location.href = `${API_BASE}/api/excel/download`;
+                });
+            }
+
+            // 5. Handle 'Template'
+            const btnTemplate = document.getElementById('btnTemplate');
+            if (btnTemplate) {
+                btnTemplate.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    window.location.href = `${API_BASE}/api/excel/template`;
+                });
+            }
+
+            // 6. Handle 'Delete Range'
+            const btnDeleteRange = document.getElementById('btnDeleteRange');
+            if (btnDeleteRange) {
+                btnDeleteRange.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const input = prompt("삭제할 상품 ID 범위를 입력하세요 (예: 100-200)");
+                    if (!input) return;
+
+                    const [start, end] = input.split('-').map(s => s.trim());
+                    if (!start || !end || isNaN(start) || isNaN(end)) {
+                        alert('올바른 범위를 입력해주세요. (예: 100-200)');
+                        return;
+                    }
+
+                    if (!confirm(`정말로 ID ${start}번부터 ${end}번까지 상품을 삭제하시겠습니까?`)) return;
+
+                    try {
+                        const response = await fetch(`${API_BASE}/api/excel/delete-range`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ start, end })
+                        });
+
+                        if (!response.ok) throw new Error('Delete failed');
+                        const result = await response.json();
+                        alert(`${result.count}개의 상품이 삭제되었습니다.`);
+                        window.location.reload();
+                    } catch (err) {
+                        alert('삭제 실패: ' + err.message);
+                    }
+                });
+            }
+
             // -----------------------------------------------------
 
             if (uploadBtn && fileInput) {
