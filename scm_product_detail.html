@@ -8,83 +8,93 @@
     <title>상품 상세 - RIUM SCM</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&family=Open+Sans:wght@400;600&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root {
-            --primary-color: #333;
-            --secondary-color: #555;
-            --accent-color: #D4AF37;
-            --bg-color: #f8f9fa;
-        }
-
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-            margin: 0;
-            background-color: var(--bg-color);
-            color: #333;
-            height: 100vh;
+        /* Copied SCM Base Styles from scm_catalog.html */
+        body.scm-body {
+            background-color: #f5f7fa;
             display: flex;
+            height: 100vh;
             overflow: hidden;
         }
 
-        /* Sidebar */
+        /* Sidebar Styles */
         .scm-sidebar {
-            width: 250px;
-            background-color: white;
-            border-right: 1px solid #eee;
+            width: 100px;
+            background-color: #1a1a1a;
+            color: white;
+            flex-shrink: 0;
             display: flex;
             flex-direction: column;
-            z-index: 100;
-            transition: transform 0.3s;
+            transition: width 0.3s;
         }
 
         .scm-logo-area {
-            padding: 2rem;
-            text-align: center;
-            border-bottom: 1px solid #eee;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .scm-logo-area a {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary-color);
+            font-family: var(--font-heading);
+            font-size: 1rem;
+            font-weight: 800;
+            color: white;
             text-decoration: none;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
+            text-align: center;
+            line-height: 1.2;
         }
 
         .scm-menu {
-            flex: 1;
             padding: 1rem 0;
-            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
 
         .scm-menu-item {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            padding: 1rem 2rem;
-            color: #666;
+            justify-content: center;
+            padding: 1rem 0.5rem;
+            color: #aaa;
             text-decoration: none;
-            transition: all 0.2s;
+            transition: all 0.3s;
             border-left: 3px solid transparent;
+            text-align: center;
         }
 
         .scm-menu-item:hover,
         .scm-menu-item.active {
-            background-color: #fce4ec;
-            color: #d81b60;
-            border-left-color: #d81b60;
+            background-color: rgba(255, 255, 255, 0.05);
+            color: white;
+            border-left-color: var(--primary-color);
         }
 
         .scm-menu-item i {
-            width: 25px;
-            font-size: 1.1rem;
-            margin-right: 10px;
+            width: auto;
+            font-size: 1.5rem;
+            margin-right: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .scm-menu-item span {
+            font-size: 0.8rem;
+            word-break: keep-all;
+            line-height: 1.2;
         }
 
         .scm-user-profile {
-            padding: 1.5rem;
+            padding: 1rem;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             flex-direction: column;
@@ -93,24 +103,35 @@
             text-align: center;
         }
 
+        .scm-user-info {
+            display: none;
+        }
+
+        .scm-user-profile a {
+            margin-left: 0 !important;
+            margin-top: 0.5rem;
+        }
+
         /* Main Content */
         .scm-main {
             flex: 1;
             display: flex;
             flex-direction: column;
-            width: calc(100% - 250px);
+            width: calc(100% - 100px);
             background: white;
         }
 
-        /* Detail Container */
-        .detail-container {
+        /* Detail Page Specific Styles */
+        .detail-wrapper {
             flex: 1;
             overflow-y: auto;
             padding: 2rem;
+            background-color: white;
+        }
+
+        .detail-container {
             max-width: 1200px;
             margin: 0 auto;
-            width: 100%;
-            box-sizing: border-box;
         }
 
         .back-btn {
@@ -132,6 +153,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 3rem;
+            margin-bottom: 3rem;
         }
 
         .product-image-area {
@@ -251,10 +273,29 @@
             cursor: pointer;
         }
 
+        .detail-image-section {
+            margin-top: 3rem;
+            border-top: 1px solid #eee;
+            padding-top: 2rem;
+            text-align: center;
+        }
+
+        .detail-image-section h3 {
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+
+        .detail-image-section img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
         @media (max-width: 768px) {
             .scm-sidebar {
-                display: none;
-                /* Simplify for now */
+                width: 0;
+                overflow: hidden;
             }
 
             .scm-main {
@@ -269,77 +310,118 @@
     </style>
 </head>
 
-<body>
+<body class="scm-body">
 
-    <!-- Sidebar (Simplified Copy from Catalog) -->
-    <aside class="scm-sidebar">
+    <!-- Sidebar (Exact Copy from scm_catalog.html) -->
+    <aside class="scm-sidebar" id="scmSidebar">
         <div class="scm-logo-area">
             <a href="index.html">RIUM<br>SCM</a>
         </div>
         <nav class="scm-menu">
             <a href="scm_dashboard.html" class="scm-menu-item">
-                <i class="fas fa-home"></i> <span>대시보드</span>
+                <i class="fas fa-home"></i>
+                <span>대시보드</span>
             </a>
             <a href="scm_catalog.html" class="scm-menu-item active">
-                <i class="fas fa-book-open"></i> <span>상품 카탈로그</span>
+                <i class="fas fa-book-open"></i>
+                <span>상품<br>카탈로그</span>
             </a>
             <a href="scm_quote.html" class="scm-menu-item">
-                <i class="fas fa-file-invoice-dollar"></i> <span>견적/발주 관리</span>
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>견적/발주<br>관리</span>
+            </a>
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-exchange-alt"></i>
+                <span>반품/교환</span>
+            </a>
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-calculator"></i>
+                <span>정산 관리</span>
+            </a>
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-bullhorn"></i>
+                <span>공지사항</span>
+            </a>
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-cog"></i>
+                <span>설정</span>
             </a>
         </nav>
+        <div class="scm-user-profile">
+            <div class="scm-user-avatar">P</div>
+            <div class="scm-user-info">
+                <h4>Partner User</h4>
+                <p>Wizard Co.</p>
+            </div>
+            <a href="index.html" style="color: #888; margin-left: 0 !important; margin-top: 0.5rem;"><i
+                    class="fas fa-sign-out-alt"></i></a>
+        </div>
     </aside>
 
     <main class="scm-main">
-        <div class="detail-container">
-            <a onclick="history.back()" class="back-btn"><i class="fas fa-arrow-left"></i> 목록으로 돌아가기</a>
+        <div class="detail-wrapper">
+            <div class="detail-container">
+                <a onclick="history.back()" class="back-btn"><i class="fas fa-arrow-left"></i> 목록으로 돌아가기</a>
 
-            <div id="loading" style="text-align: center; padding: 5rem;">
-                <i class="fas fa-spinner fa-spin fa-2x"></i>
-            </div>
-
-            <div id="productContent" class="product-detail-grid" style="display: none;">
-                <!-- Left: Image -->
-                <div class="product-image-area">
-                    <img id="mainImage" src="" alt="Product Image">
+                <div id="loading" style="text-align: center; padding: 5rem;">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
                 </div>
 
-                <!-- Right: Info -->
-                <div class="product-info-area">
-                    <span class="brand-badge" id="productBrand">BRAND</span>
-                    <h1 id="productName">Product Name</h1>
-                    <p id="productModel" style="color: #888; margin-bottom: 1rem;">Model: -</p>
-
-                    <div class="price-section">
-                        <div class="price-row">
-                            <span class="price-label">소비자가</span>
-                            <span class="price-value" style="text-decoration: line-through; color: #999;"
-                                id="consumerPrice">₩0</span>
+                <div id="productContent" style="display: none;">
+                    <div class="product-detail-grid">
+                        <!-- Left: Image -->
+                        <div class="product-image-area">
+                            <img id="mainImage" src="" alt="Product Image">
                         </div>
-                        <div class="price-row">
-                            <span class="price-label">공급가 (B2B)</span>
-                            <span class="b2b-price-value" id="b2bPrice">₩0</span>
+
+                        <!-- Right: Info -->
+                        <div class="product-info-area">
+                            <span class="brand-badge" id="productBrand">BRAND</span>
+                            <h1 id="productName">Product Name</h1>
+                            <p id="productModel" style="color: #888; margin-bottom: 1rem;">Model: -</p>
+
+                            <div class="price-section">
+                                <div class="price-row">
+                                    <span class="price-label">소비자가</span>
+                                    <span class="price-value" style="text-decoration: line-through; color: #999;"
+                                        id="consumerPrice">₩0</span>
+                                </div>
+                                <div class="price-row">
+                                    <span class="price-label">공급가 (B2B)</span>
+                                    <span class="b2b-price-value" id="b2bPrice">₩0</span>
+                                </div>
+                            </div>
+
+                            <div class="product-description" id="productDesc">
+                                상품 설명이 없습니다.
+                            </div>
+
+                            <table class="specs-table">
+                                <tr>
+                                    <th>카테고리</th>
+                                    <td id="productCategory">-</td>
+                                </tr>
+                                <tr>
+                                    <th>재고상태</th>
+                                    <td id="productStatus">Available</td>
+                                </tr>
+                            </table>
+
+                            <div class="action-buttons">
+                                <button class="btn-quote" onclick="addToQuote()">견적서 담기</button>
+                                <button class="btn-cart" onclick="alert('준비중입니다.')">장바구니 담기</button>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="product-description" id="productDesc">
-                        상품 설명이 없습니다.
+                    <!-- Detail Image Section -->
+                    <div class="detail-image-section" id="detailImageSection" style="display: none;">
+                        <h3>상세 정보</h3>
+                        <div id="detailImageContainer">
+                            <!-- Detail image(s) will be injected here -->
+                        </div>
                     </div>
 
-                    <table class="specs-table">
-                        <tr>
-                            <th>카테고리</th>
-                            <td id="productCategory">-</td>
-                        </tr>
-                        <tr>
-                            <th>재고상태</th>
-                            <td id="productStatus">Available</td>
-                        </tr>
-                    </table>
-
-                    <div class="action-buttons">
-                        <button class="btn-quote" onclick="addToQuote()">견적서 담기</button>
-                        <button class="btn-cart" onclick="alert('준비중입니다.')">장바구니 담기</button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -377,7 +459,7 @@
 
         function renderProduct(p) {
             document.getElementById('loading').style.display = 'none';
-            document.getElementById('productContent').style.display = 'grid';
+            document.getElementById('productContent').style.display = 'block';
 
             // Images
             const imgUrl = p.imageUrl || (p.images && p.images[0]) || 'https://placehold.co/600x400?text=No+Image';
@@ -404,6 +486,27 @@
                 document.getElementById('productCategory').textContent = p.category.name;
             }
             document.getElementById('productStatus').textContent = p.isAvailable ? '주문 가능' : '일시 품절';
+
+            // Detail Image (New!)
+            if (p.detailUrl) {
+                const detailSection = document.getElementById('detailImageSection');
+                const detailContainer = document.getElementById('detailImageContainer');
+                detailSection.style.display = 'block';
+
+                // Allow for simple image URL or HTML content if needed, but assuming URL for now based on 'detailUrl' name.
+                // If it contains HTML tags, we should set innerHTML. Check for tags?
+                // Typically detailUrl is just a string URL.
+
+                // If the field is named detailUrl but contains HTML (as per previous conversation history 30774814),
+                // we should be careful. 
+                // However user asked to "show detail image".
+                // I'll assume it's an image source string first.
+
+                const img = document.createElement('img');
+                img.src = p.detailUrl;
+                img.onerror = () => { img.style.display = 'none'; }; // Hide if broken
+                detailContainer.appendChild(img);
+            }
 
             // Global ID for actions
             window.currentProductId = p.id;
