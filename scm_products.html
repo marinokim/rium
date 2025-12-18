@@ -897,7 +897,10 @@
                         const statusClass = p.isAvailable ? 'status-active' : 'status-inactive';
                         const imgSrc = p.imageUrl || 'https://via.placeholder.com/60?text=No+Img';
                         const categoryName = p.category ? p.category.name : '-';
-                        const newClass = p.isNew ? 'btn-green' : 'btn-gray'; // Visual toggle style
+
+                        // Handle snake_case from DB if camleCase not present
+                        const isNew = p.isNew !== undefined ? p.isNew : (p.is_new !== undefined ? p.is_new : false);
+                        const newClass = isNew ? 'btn-green' : 'btn-gray';
 
                         tr.innerHTML = `
                             <td style="text-align: center;"><strong>${p.id}</strong></td>
@@ -915,7 +918,7 @@
                             <td style="text-align:center;font-size:0.85rem">개별 ${(p.shippingFeeIndividual || 0).toLocaleString()}<br>카톤 ${(p.shippingFeeCarton || 0).toLocaleString()}</td>
                             <td style="font-size:0.8rem;color:#555">제조: ${p.manufacturer || '-'}<br>원산: ${p.origin || '-'}<br>${date}</td>
                             <td style="text-align:center;">
-                                <button class="scm-btn ${newClass} btn-toggle-new" data-id="${p.id}" style="padding: 2px 8px; font-size: 0.75rem; margin-bottom: 5px;">${p.isNew ? 'New' : 'Normal'}</button>
+                                <button class="scm-btn ${newClass} btn-toggle-new" data-id="${p.id}" style="padding: 2px 8px; font-size: 0.75rem; margin-bottom: 5px;">${isNew ? 'New' : 'Normal'}</button>
                                 <br>
                                 <span class="scm-status ${statusClass}">${p.isAvailable ? '판매중' : '중지'}</span>
                                 <div style="display:flex;gap:3px;justify-content:center;margin-top:5px;">
@@ -957,7 +960,10 @@
                             document.getElementById('p_price').value = p.price;
                             document.getElementById('p_consumerPrice').value = p.consumerPrice || '';
 
-                            document.getElementById('p_isNew').checked = p.isNew || false;
+                            // Handle snake_case is_new
+                            const isNewVal = p.isNew !== undefined ? p.isNew : (p.is_new !== undefined ? p.is_new : false);
+                            document.getElementById('p_isNew').checked = isNewVal;
+
                             document.getElementById('p_supplyPrice').value = p.supplyPrice || '';
                             document.getElementById('p_stockQuantity').value = p.stockQuantity || '';
                             document.getElementById('p_imageUrl').value = p.imageUrl || '';
@@ -989,8 +995,16 @@
                         try {
                             const data = await apiFetch(`/api/products/${id}`);
                             const p = data.product;
+
+                            // Check both camelCase and snake_case
+                            const currentIsNew = p.isNew !== undefined ? p.isNew : (p.is_new !== undefined ? p.is_new : false);
+
                             // Toggle
-                            p.isNew = !p.isNew;
+                            p.isNew = !currentIsNew;
+
+                            // Ensure backend receives what it expects (it handles isNew in body per products.js)
+                            // We just send the modified product object.
+
                             // Update
                             await apiFetch(`/api/products/${id}`, {
                                 method: 'PUT',
