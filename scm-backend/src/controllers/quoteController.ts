@@ -122,7 +122,7 @@ export const downloadQuoteExcel = async (req: AuthRequest, res: Response) => {
 
         // Row 1: Header Info
         const headerInfo = [
-            ['ARONTEC KOREA', '', '', '', '당사가 운영하는 모든 상품은 폐쇄몰을 제외한 온라인 판매를 급하며, 판매 시 상품 공급이 중단됩니다.', '', '', '', '', '', '', '', '', `(아론텍코리아)_제안_${new Date().toISOString().split('T')[0]}`]
+            ['RIUM', '', '', '', '당사가 운영하는 모든 상품은 폐쇄몰을 제외한 온라인 판매를 급하며, 판매 시 상품 공급이 중단됩니다.', '', '', '', '', '', '', '', '', `(리움)_제안_${new Date().toISOString().split('T')[0]}`]
         ];
 
         // Row 2: Columns
