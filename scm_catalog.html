@@ -6,13 +6,12 @@
     <link rel="icon" type="image/png" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>상품 카탈로그 - RIUM SCM</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&family=Open+Sans:wght@400;600&display=swap"
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- SheetJS for Client Signal Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
         /* SCM Specific Styles */
         body.scm-body {
@@ -856,6 +855,34 @@
             localStorage.setItem('scm_proposals', JSON.stringify(proposals));
 
             alert('제안서가 출력되었습니다 (로컬 모드).\n제안 관리 리스트에 등록되었습니다.');
+            try {
+                if (confirm('엑셀 파일도 다운로드 하시겠습니까? (로컬 생성)')) {
+                    const wb = XLSX.utils.book_new();
+                    const data = [
+                        {
+                            'No': 1,
+                            'Product Name': newProposal.product.name,
+                            'Model No': '-', 'Spec': '-',
+                            'Quantity': newProposal.qty,
+                            'Unit Price': newProposal.amount,
+                            'Supply Price': '-',
+                            'Amount': newProposal.amount,
+                            'Remark': ''
+                        },
+                        {
+                            'No': '', 'Product Name': 'Total', 'Model No': '', 'Spec': '',
+                            'Quantity': newProposal.qty, 'Unit Price': '', 'Supply Price': '', 'Amount': newProposal.amount, 'Remark': ''
+                        }
+                    ];
+                    const ws = XLSX.utils.json_to_sheet(data);
+                    XLSX.utils.book_append_sheet(wb, ws, 'Proposal');
+                    XLSX.writeFile(wb, `Quote_${newProposal.id}.xlsx`);
+                }
+            } catch (e) {
+                console.error('Local Excel Error', e);
+                alert('엑셀 생성 중 오류가 발생했습니다.');
+            }
+
             location.href = 'scm_orders.html';
         }
 

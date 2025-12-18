@@ -6,12 +6,12 @@
     <link rel="icon" type="image/png" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>제안/주문/견적관리 - RIUM SCM</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&family=Open+Sans:wght@400;600&display=swap"
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=2">
+    <link rel="stylesheet" href="styles.css?v=20231215">
+    <!-- SheetJS for Client Signal Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* SCM Specific Styles (Copied from Dashboard) */
@@ -530,6 +530,83 @@
             }
         }
 
+        // Mock Excel Generator (Client Side)
+        function downloadMockExcel(proposalId) {
+            try {
+                const proposals = JSON.parse(localStorage.getItem('scm_proposals') || '[]');
+                const prop = proposals.find(p => p.id === proposalId);
+
+                if (!prop) {
+                    alert('제안서를 찾을 수 없습니다.');
+                    return;
+                }
+
+                const wb = XLSX.utils.book_new();
+                const data = [
+                    {
+                        'No': 1,
+                        'Product Name': prop.product.name,
+                        'Model No': '-',
+                        'Spec': '-',
+                        'Quantity': prop.qty,
+                        'Unit Price': prop.amount, // amount string '450,000원' needs parsing if calc needed, but simpler here.
+                        'Supply Price': '-',
+                        'Amount': prop.amount,
+                        'Remark': ''
+                    },
+                    {
+                        'No': '', 'Product Name': 'Total', 'Model No': '', 'Spec': '',
+                        'Quantity': prop.qty, 'Unit Price': '', 'Supply Price': '', 'Amount': prop.amount, 'Remark': ''
+                    }
+                ];
+
+                const ws = XLSX.utils.json_to_sheet(data);
+                ws['!cols'] = [{ wch: 5 }, { wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 15 }];
+
+                XLSX.utils.book_append_sheet(wb, ws, 'Proposal');
+                XLSX.writeFile(wb, `Quote_${prop.id}.xlsx`);
+
+            } catch (e) {
+                console.error('Client Excel Error', e);
+                alert('엑셀 생성 중 오류가 발생했습니다.');
+            }
+        }
+
+        function viewProposalMock(proposalId) {
+            const proposals = JSON.parse(localStorage.getItem('scm_proposals') || '[]');
+            const prop = proposals.find(p => p.id === proposalId);
+            if (!prop) return;
+
+            // Simple Alert for now or create a Modal? User asked for "Check and Download".
+            // A modal is better.
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;
+             `;
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 8px; width: 600px; max-width: 90%;">
+                    <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 1.5rem; border-bottom: 2px solid #333; padding-bottom: 10px;">
+                        제안서 상세 정보
+                        <button onclick="this.closest('div').parentElement.remove()" style="float: right; border: none; background: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                    </h2>
+                    <div style="display: grid; grid-template-columns: 100px 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div style="font-weight: bold;">제안번호</div><div>${prop.id}</div>
+                        <div style="font-weight: bold;">일자</div><div>${prop.date}</div>
+                        <div style="font-weight: bold;">고객사</div><div>${prop.client}</div>
+                        <div style="font-weight: bold;">상품명</div><div>${prop.product.name}</div>
+                        <div style="font-weight: bold;">금액</div><div>${prop.amount}</div>
+                    </div>
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button class="scm-btn" onclick="downloadMockExcel('${prop.id}')" style="background: #217346; color: white;">
+                            <i class="fas fa-file-excel"></i> 엑셀 다운로드
+                        </button>
+                    </div>
+                </div>
+             `;
+            document.body.appendChild(modal);
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             const tbody = document.querySelector('tbody');
 
@@ -539,7 +616,6 @@
                 const quotes = data.quotes || [];
 
                 if (quotes.length > 0) {
-                    // Prepend real data.
                     quotes.forEach(quote => {
                         const firstItem = quote.items[0];
                         const productImg = firstItem?.product?.imageUrl || 'https://via.placeholder.com/40';
@@ -562,7 +638,7 @@
                             <td>${quote.totalAmount.toLocaleString()}원</td>
                             <td><span class="scm-status status-new" style="background: #e3f2fd; color: #1565c0;">${quote.status}</span></td>
                             <td>
-                                <button class="scm-btn scm-btn-outline" style="padding: 2px 8px; font-size: 0.8rem;">제안서 보기</button>
+                                <button class="scm-btn scm-btn-outline" style="padding: 2px 8px; font-size: 0.8rem;" onclick="alert('API 상세 보기 준비중')">제안서 보기</button>
                                 <button class="scm-btn scm-btn-outline" style="padding: 2px 8px; font-size: 0.8rem; margin-left: 5px;" 
                                         onclick="downloadExcel(${quote.id}, '${quote.quoteNumber}')" title="Excel Download">
                                     <i class="fas fa-file-excel"></i>
@@ -573,10 +649,14 @@
                         if (tbody.firstChild) tbody.insertBefore(row, tbody.firstChild);
                         else tbody.appendChild(row);
                     });
-                    return;
+                    // Do NOT return here if we want to show merged data.
+                    // The user wants to see "User Generated" data mixed with real data?
+                    // Actually, usually we prefer real data if connection works. 
+                    // But the user has Local Storage data they just created.
+                    // I will remove the "return" so it falls through to render LocalStorage items too.
                 }
             } catch (err) {
-                console.log('API Fetch failed, using LocalStorage only', err);
+                console.log('API Fetch failed', err);
             }
 
             // 2. LocalStorage Data (Mock/Fallback)
@@ -599,8 +679,12 @@
                     <td>${prop.amount}</td>
                     <td><span class="scm-status status-new" style="background: #e3f2fd; color: #1565c0;">제안중</span></td>
                     <td>
-                        <button class="scm-btn scm-btn-outline" style="padding: 2px 8px; font-size: 0.8rem;">제안서 보기</button>
-                        <!-- No download for mock data yet, or could simulate -->
+                        <button class="scm-btn scm-btn-outline" style="padding: 2px 8px; font-size: 0.8rem;" 
+                                onclick="viewProposalMock('${prop.id}')">제안서 보기</button>
+                        <button class="scm-btn scm-btn-outline" style="padding: 2px 8px; font-size: 0.8rem; margin-left: 5px;" 
+                                onclick="downloadMockExcel('${prop.id}')" title="Excel Download">
+                             <i class="fas fa-file-excel"></i>
+                        </button>
                     </td>
                 `;
                 if (tbody.firstChild) {
