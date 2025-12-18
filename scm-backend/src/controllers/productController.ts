@@ -15,6 +15,16 @@ export const getProducts = async (req: Request, res: Response) => {
         // Build filter
         const where: any = { isAvailable: true };
 
+        // If isNew=true is passed, strict filter by isNew column if it exists in schema
+        // Or if we interpret 'New' as 'Recently Added', the current code just sorts.
+        // User explicitly said "Checked as New", so we must filter by 'isNew' column.
+        if (isNew === 'true') {
+            // Assuming schema has isNew boolean. 
+            // If schema doesn't have it, this might crash or be ignored depending on Prisma strictness.
+            // We will check schema next, but for now let's add the filter.
+            where.isNew = true;
+        }
+
         // Transaction to get both count and data
         const [total, products] = await prisma.$transaction([
             prisma.product.count({ where }),

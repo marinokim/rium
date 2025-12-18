@@ -79,22 +79,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 newProductList.innerHTML = products.map(product => {
                     // Normalize image URL
-                    const imageUrl = getImageUrl(product.image_url);
+                    const imageUrl = getImageUrl(product.imageUrl || product.image_url);
+                    const productName = product.name || product.modelNo || product.model_name || '제품명 없음';
+                    const brandName = product.brand || 'Brand';
+                    const productId = product.id;
 
                     // Check if image is an emoji (legacy support)
                     const isEmoji = !imageUrl.includes('/') && !imageUrl.includes('.');
                     const imageHtml = isEmoji
                         ? `<div class="product-icon" style="font-size: 3rem; padding: 2rem; background: #fff; display: flex; align-items: center; justify-content: center; height: 200px;">${imageUrl}</div>`
                         : `<div class="product-image-container" style="height: 200px; overflow: hidden; background: #fff; display: flex; align-items: center; justify-content: center; padding: 10px;">
-                             <img src="${imageUrl}" alt="${product.model_name}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                             <img src="${imageUrl}" alt="${productName}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
                            </div>`;
 
                     return `
-                    <div class="card product-card" onclick="window.location.href='product_detail.html?id=${product.id}'" style="cursor: pointer; padding: 0; overflow: hidden;">
+                    <div class="card product-card" onclick="window.location.href='product_detail.html?id=${productId}'" style="cursor: pointer; padding: 0; overflow: hidden;">
                         ${imageHtml}
                         <div style="padding: 1.5rem;">
-                            <h3 style="font-size: 1rem; color: #666; margin-bottom: 0.5rem;">${product.brand}</h3>
-                            <h4 style="font-size: 1.1rem; margin-bottom: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${product.model_name}</h4>
+                            <h3 style="font-size: 1rem; color: #666; margin-bottom: 0.5rem;">${brandName}</h3>
+                            <h4 style="font-size: 1.1rem; margin-bottom: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${productName}</h4>
                         </div>
                     </div>
                 `}).join('');
