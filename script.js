@@ -14,13 +14,118 @@ document.addEventListener('DOMContentLoaded', () => {
         ? 'http://localhost:5000'
         : 'https://rium-scm-backend.onrender.com';
 
-    // Helper to get full image URL
-    function getImageUrl(url) {
+    // Helper: Optimize Image URL using wsrv.nl proxy & handle relative paths
+    function getSecureImageUrl(url, width = 0) {
         if (!url) return '';
-        const cleanUrl = url.trim();
-        if (cleanUrl.startsWith('http') || cleanUrl.startsWith('data:')) return cleanUrl;
-        if (cleanUrl.startsWith('/')) return `${API_BASE_URL}${cleanUrl}`;
+        let cleanUrl = url.trim();
+
+        // Handle relative paths first
+        if (cleanUrl.startsWith('/')) {
+            cleanUrl = `${API_BASE_URL}${cleanUrl}`;
+        }
+
+        // If it's already HTTPS or data URI, return as is (unless resizing needed, but for now keep simple)
+        if (cleanUrl.startsWith('https://') || cleanUrl.startsWith('data:')) return cleanUrl;
+
+        // If HTTP, use wsrv.nl proxy
+        if (cleanUrl.startsWith('http://')) {
+            const encoded = encodeURIComponent(cleanUrl);
+            let proxyUrl = `https://wsrv.nl/?url=${encoded}&output=webp`;
+            if (width > 0) proxyUrl += `&w=${width}`;
+            return proxyUrl;
+        }
+
         return cleanUrl;
+    }
+
+    // Global State for Public Catalog
+    let currentPublicCategory = '';
+
+    // Initialize Public Catalog (if on products.html)
+    const publicGrid = document.getElementById('publicProductGrid');
+    if (publicGrid) {
+        loadPublicCategories();
+        loadPublicProducts();
+    }
+
+    // Load Public Categories
+    async function loadPublicCategories() {
+        const container = document.getElementById('categoryFilters');
+        if (!container) return;
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/categories`);
+            const data = await res.json();
+            const categories = data.categories || [];
+
+            let html = `<button class="filter-btn active" onclick="window.filterPublicCategory(this, '')">All</button>`;
+            categories.forEach(cat => {
+                html += `<button class="filter-btn" onclick="window.filterPublicCategory(this, ${cat.id})">${cat.name}</button>`;
+            });
+            container.innerHTML = html;
+        } catch (error) {
+            console.error('Error loading categories:', error);
+            container.innerHTML = '<span style="color:red;">Error loading categories</span>';
+        }
+    }
+
+    // Filter Function (Global)
+    window.filterPublicCategory = (btn, categoryId) => {
+        // Update active state
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Update state and reload
+        currentPublicCategory = categoryId;
+        loadPublicProducts();
+    };
+
+    // Load Public Products
+    async function loadPublicProducts() {
+        if (!publicGrid) return;
+
+        publicGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 50px;"><i class="fas fa-spinner fa-spin fa-3x"></i></div>';
+
+        try {
+            let query = `${API_BASE_URL}/api/products?isAvailable=true`;
+            if (currentPublicCategory) query += `&categoryId=${currentPublicCategory}`;
+
+            const res = await fetch(query);
+            const data = await res.json();
+            const products = data.products || [];
+
+            publicGrid.innerHTML = '';
+
+            if (products.length === 0) {
+                publicGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 50px; color: #666;">등록된 상품이 없습니다.</div>';
+                return;
+            }
+
+            products.forEach(product => {
+                const imageUrl = getSecureImageUrl(product.imageUrl || product.images?.[0] || '', 400);
+                const brandName = product.brand || 'RIUM';
+
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.onclick = () => window.location.href = `product_detail.html?id=${product.id}`;
+
+                // NO PRICE shown, as requested
+                card.innerHTML = `
+                    <div class="product-img-wrapper">
+                        <img src="${imageUrl}" alt="${product.name}" loading="lazy" onerror="this.src='https://placehold.co/400x400?text=No+Image'">
+                    </div>
+                    <div class="product-info">
+                        <div class="product-brand">${brandName}</div>
+                        <h3 class="product-title">${product.name}</h3>
+                    </div>
+                `;
+                publicGrid.appendChild(card);
+            });
+
+        } catch (error) {
+            console.error('Error loading products:', error);
+            publicGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: red;">상품을 불러오는 중 오류가 발생했습니다.</div>';
+        }
     }
 
     // Render Notices
@@ -79,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 newProductList.innerHTML = products.map(product => {
                     // Normalize image URL
-                    const imageUrl = getImageUrl(product.imageUrl || product.image_url);
+                    const imageUrl = getSecureImageUrl(product.imageUrl || product.image_url);
                     const productName = product.name || product.modelNo || product.model_name || '제품명 없음';
                     const brandName = product.brand || 'Brand';
                     const productId = product.id;
@@ -413,10 +518,6 @@ document.addEventListener('DOMContentLoaded', () => {
         `}).join('');
     }
 
-    if (productGrid) {
-        initProducts();
-    }
-
     // Product Detail Page Logic
     const detailContainer = document.getElementById('product-detail-container');
     if (detailContainer) {
@@ -432,12 +533,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchProductDetail(id) {
         try {
-            // Create a timeout promise
-            const timeout = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Request timed out')), 5000)
-            );
-
-            // Race fetch against timeout
             const res = await Promise.race([
                 fetch(`${API_BASE_URL}/api/products/${id}`),
                 timeout
@@ -477,68 +572,76 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderProductDetail(product) {
         // Normalize properties (API returns snake_case, static data returns camelCase)
-        const imageUrl = getImageUrl(product.imageUrl || product.image_url || product.image);
+        // Secure & Resize Main Image (800px)
+        const imageUrl = getSecureImageUrl(product.imageUrl || product.image_url || product.image, 800);
         const detailUrl = product.detailUrl || product.detail_url;
         const modelName = product.modelNo || product.model_name || product.model || '';
         const productName = product.name || product.product_name || '제품명 없음';
+        const brandName = product.brand || 'Brand';
+        const categoryName = product.category_name || product.category?.name || 'Category';
 
-        const isEmoji = !imageUrl.includes('/') && !imageUrl.includes('.');
-        const imageHtml = isEmoji
-            ? `<div style="font-size: 10rem; text-align: center; background: #f8f9fa; padding: 2rem; border-radius: 8px;">${imageUrl}</div>`
-            : `<img src="${imageUrl}" alt="${modelName}" style="width: 100%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin: 0 auto;">`;
+        const imageHtml = `<img src="${imageUrl}" alt="${modelName}" style="width: 100%; max-width: 600px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin: 0 auto; display: block;">`;
 
+        // Process Detail Content (Secure images inside HTML)
         let detailContentHtml = '';
         if (detailUrl) {
-            // Check if it contains HTML tags (specifically img)
-            if (detailUrl.trim().match(/<img/i) || detailUrl.includes('<img')) {
-                // If HTML content, wrap it and center it
-                detailContentHtml = `<div class="product-detail-content" style="text-align: center; display: flex; flex-direction: column; align-items: center; width: 100%;">${detailUrl}</div>`;
+            // Helper to replace http images in HTML string with proxy
+            const secureHtml = (html) => {
+                return html.replace(/src=["'](http:\/\/[^"']+)["']/g, (match, p1) => {
+                    return `src="${getSecureImageUrl(p1)}"`;
+                });
+            };
+
+            if (detailUrl.trim().startsWith('<')) {
+                // HTML Content
+                detailContentHtml = `<div class="product-detail-content" style="text-align: center; display: flex; flex-direction: column; align-items: center; width: 100%;">${secureHtml(detailUrl)}</div>`;
             } else {
-                // If standard URL, render img centered
-                detailContentHtml = `<div class="product-detail-content" style="text-align: center; width: 100%;"><img src="${detailUrl}" alt="Detail" style="max-width: 100%; width: auto; height: auto; margin: 0 auto; display: block;"></div>`;
+                // Image URL
+                detailContentHtml = `<div class="product-detail-content" style="text-align: center; width: 100%;"><img src="${getSecureImageUrl(detailUrl)}" alt="Detail" style="max-width: 100%; margin: 0 auto; display: block;"></div>`;
             }
         }
 
-        const detailImageHtml = detailContentHtml
+        const detailSectionHtml = detailContentHtml
             ? `<div style="margin-top: 60px; border-top: 1px solid #eee; padding-top: 40px;">
-                 <h3 style="font-size: 1.5rem; margin-bottom: 20px; border-left: 4px solid var(--primary-color); padding-left: 10px;">상세 정보</h3>
+                 <h3 style="font-size: 1.5rem; margin-bottom: 30px; text-align: center; color: #333;">상세 정보</h3>
                  ${detailContentHtml}
                </div>`
             : '';
 
-        detailContainer.innerHTML = `
-            <div class="product-detail-wrapper" style="max-width: 800px; margin: 0 auto;">
-                <div style="text-align: center;">
-                    ${imageHtml}
-                </div>
-                <div style="padding: 20px; text-align: center;">
-                    <span style="background: #f0f0f0; padding: 5px 10px; border-radius: 20px; font-size: 0.9rem; color: #666;">${product.category_name || product.category}</span>
-                    <h2 style="font-size: 2rem; margin: 10px 0 20px; color: #333;">${product.brand || 'Brand'}</h2>
-                    <h1 style="font-size: 1.5rem; margin-bottom: 20px; font-weight: normal; color: #555;">${productName} <small style="color:#888; font-size: 1rem;">${modelName}</small></h1>
-                    <p style="font-size: 1.1rem; line-height: 1.6; color: #666; margin-bottom: 30px; word-break: keep-all;">${product.description || ''}</p>
-                    
-                    <div style="margin-top: 30px;">
-                        <button id="btnBackToList" style="padding: 12px 30px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem;">목록으로</button>
+        const detailContainer = document.getElementById('product-detail-container');
+        if (detailContainer) {
+            detailContainer.innerHTML = `
+                <div class="product-detail-wrapper" style="max-width: 1000px; margin: 0 auto;">
+                    <div style="text-align: center; margin-bottom: 2rem;">
+                        ${imageHtml}
+                    </div>
+                    <div style="padding: 20px; text-align: center; max-width: 800px; margin: 0 auto;">
+                        <span style="background: #f0f0f0; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; color: #666; display: inline-block; margin-bottom: 1rem;">${categoryName}</span>
+                        <h2 style="font-size: 1.5rem; color: var(--primary-color); margin-bottom: 0.5rem; font-weight: 600;">${brandName}</h2>
+                        <h1 style="font-size: 2.2rem; margin-bottom: 1rem; font-weight: 700; color: #333;">${productName}</h1>
+                        <p style="font-size: 1.1rem; color: #888; margin-bottom: 2rem;">${modelName}</p>
+                        
+                        <p style="font-size: 1.1rem; line-height: 1.8; color: #555; margin-bottom: 30px; word-break: keep-all;">${product.description || ''}</p>
+                        
+                        <div style="margin-top: 40px;">
+                            <button id="btnBackToList" style="padding: 12px 40px; background: #333; color: white; border: none; border-radius: 30px; cursor: pointer; font-size: 1rem; transition: background 0.3s;">목록으로 돌아가기</button>
+                        </div>
                     </div>
                 </div>
-            </div>
-            ${detailImageHtml}
-        `;
+                ${detailSectionHtml}
+            `;
 
-        document.getElementById('btnBackToList').onclick = () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('from') === 'scm') {
-                if (window.opener) {
-                    window.close();
-                } else {
-                    window.location.href = 'scm_products.html';
-                }
-            } else if (window.opener) {
-                window.close();
-            } else {
-                window.location.href = 'products.html';
+            const btn = document.getElementById('btnBackToList');
+            if (btn) {
+                btn.onclick = () => {
+                    if (document.referrer && document.referrer.includes('products.html')) {
+                        history.back();
+                    } else {
+                        window.location.href = 'products.html';
+                    }
+                };
             }
-        };
+        }
     }
 
     // Smooth Scroll for Anchor Links

@@ -45,121 +45,48 @@
         </div>
     </section>
 
-    <!-- Brand Showcase -->
-    <section class="section" style="background-color: #f8f9fa; padding-bottom: 0;">
-        <div class="container">
-            <h2 class="section-title">Our Brands & Best Sellers</h2>
-            <div class="brand-showcase-grid"
-                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
-                <!-- Wizard -->
-                <div class="brand-card"
-                    style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                    <div style="height: 200px; overflow: hidden;">
-                        <img src="assets/images/brand_wizard.png" alt="Wizard"
-                            style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;">
-                    </div>
-                    <div style="padding: 1.5rem;">
-                        <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; color: #333;">WIZARD</h3>
-                        <p style="color: #666; font-size: 0.95rem;">합리적인 가격의 모바일 액세서리<br>(자사 브랜드)</p>
-                    </div>
-                </div>
-                <!-- Living & Kitchen -->
-                <div class="brand-card"
-                    style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                    <div style="height: 200px; overflow: hidden;">
-                        <img src="assets/images/brand_living.png" alt="Living"
-                            style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;">
-                    </div>
-                    <div style="padding: 1.5rem;">
-                        <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; color: #333;">LIVING & KITCHEN</h3>
-                        <p style="color: #666; font-size: 0.95rem;">글라스터, 천연 옻칠 제품, 리빙스타<br>프리미엄 리빙</p>
-                    </div>
-                </div>
-                <!-- Seasonal -->
-                <div class="brand-card"
-                    style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                    <div style="height: 200px; overflow: hidden;">
-                        <img src="assets/images/brand_seasonal.png" alt="Seasonal"
-                            style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;">
-                    </div>
-                    <div style="padding: 1.5rem;">
-                        <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; color: #333;">SEASONAL</h3>
-                        <p style="color: #666; font-size: 0.95rem;">여름(선풍기), 겨울(전기요/가습기)<br>계절 가전</p>
-                    </div>
-                </div>
-                <!-- Health & Care -->
-                <div class="brand-card"
-                    style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                    <div style="height: 200px; overflow: hidden;">
-                        <img src="assets/images/brand_health.png" alt="Health"
-                            style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;">
-                    </div>
-                    <div style="padding: 1.5rem;">
-                        <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; color: #333;">HEALTH & CARE</h3>
-                        <p style="color: #666; font-size: 0.95rem;">탈모샴푸 CH6, 한일의료기, 마스크<br>헬스케어 솔루션</p>
-                    </div>
-                </div>
+    <li class="category-item">
+        <span class="category-link" data-category="Food">Food</span>
+    </li>
+    <li class="category-item">
+        <span class="category-link" data-category="Living">Living</span>
+    </li>
+    </ul>
+    </div>
+
+    <div class="filter-group">
+        <h3 class="filter-title">Price Range</h3>
+        <div style="padding: 10px 0; color: #666; font-size: 0.9rem;">
+            <input type="range" min="0" max="100000" style="width: 100%;">
+            <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                <span>0원</span>
+                <span>100,000원+</span>
             </div>
         </div>
-    </section>
+    </div>
+    </aside>
 
-    <!-- Products Layout -->
-    <section class="section">
-        <div class="container">
-            <div class="products-layout">
-                <!-- Sidebar -->
-                <aside class="products-sidebar">
-                    <div class="filter-group">
-                        <h3 class="filter-title">Categories</h3>
-                        <ul class="category-list category-filters">
-                            <li class="category-item">
-                                <span class="category-link active" data-category="All">All Products</span>
-                            </li>
-                            <li class="category-item">
-                                <span class="category-link" data-category="Beauty">Beauty</span>
-                            </li>
-                            <li class="category-item">
-                                <span class="category-link" data-category="Food">Food</span>
-                            </li>
-                            <li class="category-item">
-                                <span class="category-link" data-category="Living">Living</span>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div class="filter-group">
-                        <h3 class="filter-title">Price Range</h3>
-                        <div style="padding: 10px 0; color: #666; font-size: 0.9rem;">
-                            <input type="range" min="0" max="100000" style="width: 100%;">
-                            <div style="display: flex; justify-content: space-between; margin-top: 5px;">
-                                <span>0원</span>
-                                <span>100,000원+</span>
-                            </div>
-                        </div>
-                    </div>
-                </aside>
-
-                <!-- Main Content -->
-                <main class="products-content">
-                    <!-- Toolbar -->
-                    <div class="products-toolbar">
-                        <div class="result-count">Showing all products</div>
-                        <div class="sort-options">
-                            <select class="sort-select">
-                                <option value="newest">Newest</option>
-                                <option value="price-low">Price: Low to High</option>
-                                <option value="price-high">Price: High to Low</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Product Grid -->
-                    <div class="product-grid" id="product-grid">
-                        <!-- Products loaded via script.js -->
-                    </div>
-                </main>
+    <!-- Main Content -->
+    <main class="products-content">
+        <!-- Toolbar -->
+        <div class="products-toolbar">
+            <div class="result-count">Showing all products</div>
+            <div class="sort-options">
+                <select class="sort-select">
+                    <option value="newest">Newest</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                </select>
             </div>
         </div>
+
+        <!-- Product Grid -->
+        <div class="product-grid" id="product-grid">
+            <!-- Products loaded via script.js -->
+        </div>
+    </main>
+    </div>
+    </div>
     </section>
 
     <!-- Footer -->
