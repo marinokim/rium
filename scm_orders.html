@@ -683,11 +683,23 @@
             location.reload();
         }
 
+        // Select All Logic
+        function toggleAll(source) {
+            const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+            checkboxes.forEach(chk => chk.checked = source.checked);
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             // Update Delete Button Handler
             const deleteBtn = document.querySelector('.scm-btn[style*="color: #d32f2f"]'); // Find by style for robustness
             if (deleteBtn) {
                 deleteBtn.onclick = deleteSelectedProposals;
+            }
+
+            // Update Select All Checkbox
+            const headerCheckbox = document.querySelector('thead input[type="checkbox"]');
+            if (headerCheckbox) {
+                headerCheckbox.onclick = function () { toggleAll(this); };
             }
 
             const tbody = document.querySelector('tbody');
