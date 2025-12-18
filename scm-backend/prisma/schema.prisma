@@ -66,6 +66,7 @@ model Product {
   remarks     String?
   
   isAvailable Boolean  @default(true)
+  isNew       Boolean  @default(false) @map("is_new")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   

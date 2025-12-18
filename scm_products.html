@@ -589,6 +589,7 @@
                     <!-- Or textarea -->
                 </div>
                 <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                    <label><input type="checkbox" id="p_isNew"> New (신상품)</label>
                     <label><input type="checkbox" id="p_isTaxFree"> 면세상품</label>
                     <label><input type="checkbox" id="p_isAvailable" checked> 판매중</label>
                 </div>
@@ -800,6 +801,8 @@
                         pTitle.innerText = '신규 등록';
                         productForm.reset();
                         document.getElementById('p_id').value = '';
+                        document.getElementById('p_isNew').checked = true; // Default New
+                        document.getElementById('p_isAvailable').checked = true;
                         loadCategories();
                         productModal.style.display = 'flex';
                     };
@@ -823,6 +826,7 @@
                     imageUrl: document.getElementById('p_imageUrl').value,
                     detailUrl: document.getElementById('p_detailUrl').value,
                     isTaxFree: document.getElementById('p_isTaxFree').checked,
+                    isNew: document.getElementById('p_isNew').checked,
                     isAvailable: document.getElementById('p_isAvailable').checked
                 };
                 const url = id ? `/api/products/${id}` : '/api/products';
@@ -924,6 +928,8 @@
                             document.getElementById('p_categoryId').value = p.categoryId;
                             document.getElementById('p_price').value = p.price;
                             document.getElementById('p_consumerPrice').value = p.consumerPrice || '';
+
+                            document.getElementById('p_isNew').checked = p.isNew || false;
                             document.getElementById('p_supplyPrice').value = p.supplyPrice || '';
                             document.getElementById('p_stockQuantity').value = p.stockQuantity || '';
                             document.getElementById('p_imageUrl').value = p.imageUrl || '';
