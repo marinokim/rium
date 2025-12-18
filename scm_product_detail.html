@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상품 상세 - RIUM SCM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #333;
+            --secondary-color: #555;
+            --accent-color: #D4AF37;
+            --bg-color: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: #333;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .scm-sidebar {
+            width: 250px;
+            background-color: white;
+            border-right: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            transition: transform 0.3s;
+        }
+
+        .scm-logo-area {
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .scm-logo-area a {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .scm-menu {
+            flex: 1;
+            padding: 1rem 0;
+            overflow-y: auto;
+        }
+
+        .scm-menu-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem 2rem;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .scm-menu-item:hover,
+        .scm-menu-item.active {
+            background-color: #fce4ec;
+            color: #d81b60;
+            border-left-color: #d81b60;
+        }
+
+        .scm-menu-item i {
+            width: 25px;
+            font-size: 1.1rem;
+            margin-right: 10px;
+        }
+
+        .scm-user-profile {
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .scm-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: calc(100% - 250px);
+            background: white;
+        }
+
+        /* Detail Container */
+        .detail-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #666;
+            text-decoration: none;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .back-btn:hover {
+            color: var(--primary-color);
+        }
+
+        .product-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+        }
+
+        .product-image-area {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #eee;
+        }
+
+        .product-image-area img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .product-info-area h1 {
+            font-size: 1.8rem;
+            margin: 0 0 1rem 0;
+            color: #333;
+        }
+
+        .brand-badge {
+            display: inline-block;
+            background: #eee;
+            color: #666;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .price-section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .price-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .price-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .b2b-price-value {
+            color: #d81b60;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .product-description {
+            line-height: 1.6;
+            color: #555;
+            margin-bottom: 2rem;
+        }
+
+        .specs-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+
+        .specs-table th,
+        .specs-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+
+        .specs-table th {
+            width: 120px;
+            color: #888;
+            font-weight: normal;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn-quote {
+            flex: 1;
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-quote:hover {
+            background: black;
+        }
+
+        .btn-cart {
+            flex: 1;
+            background: white;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 1rem;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .scm-sidebar {
+                display: none;
+                /* Simplify for now */
+            }
+
+            .scm-main {
+                width: 100%;
+            }
+
+            .product-detail-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Sidebar (Simplified Copy from Catalog) -->
+    <aside class="scm-sidebar">
+        <div class="scm-logo-area">
+            <a href="index.html">RIUM<br>SCM</a>
+        </div>
+        <nav class="scm-menu">
+            <a href="scm_dashboard.html" class="scm-menu-item">
+                <i class="fas fa-home"></i> <span>대시보드</span>
+            </a>
+            <a href="scm_catalog.html" class="scm-menu-item active">
+                <i class="fas fa-book-open"></i> <span>상품 카탈로그</span>
+            </a>
+            <a href="scm_quote.html" class="scm-menu-item">
+                <i class="fas fa-file-invoice-dollar"></i> <span>견적/발주 관리</span>
+            </a>
+        </nav>
+    </aside>
+
+    <main class="scm-main">
+        <div class="detail-container">
+            <a onclick="history.back()" class="back-btn"><i class="fas fa-arrow-left"></i> 목록으로 돌아가기</a>
+
+            <div id="loading" style="text-align: center; padding: 5rem;">
+                <i class="fas fa-spinner fa-spin fa-2x"></i>
+            </div>
+
+            <div id="productContent" class="product-detail-grid" style="display: none;">
+                <!-- Left: Image -->
+                <div class="product-image-area">
+                    <img id="mainImage" src="" alt="Product Image">
+                </div>
+
+                <!-- Right: Info -->
+                <div class="product-info-area">
+                    <span class="brand-badge" id="productBrand">BRAND</span>
+                    <h1 id="productName">Product Name</h1>
+                    <p id="productModel" style="color: #888; margin-bottom: 1rem;">Model: -</p>
+
+                    <div class="price-section">
+                        <div class="price-row">
+                            <span class="price-label">소비자가</span>
+                            <span class="price-value" style="text-decoration: line-through; color: #999;"
+                                id="consumerPrice">₩0</span>
+                        </div>
+                        <div class="price-row">
+                            <span class="price-label">공급가 (B2B)</span>
+                            <span class="b2b-price-value" id="b2bPrice">₩0</span>
+                        </div>
+                    </div>
+
+                    <div class="product-description" id="productDesc">
+                        상품 설명이 없습니다.
+                    </div>
+
+                    <table class="specs-table">
+                        <tr>
+                            <th>카테고리</th>
+                            <td id="productCategory">-</td>
+                        </tr>
+                        <tr>
+                            <th>재고상태</th>
+                            <td id="productStatus">Available</td>
+                        </tr>
+                    </table>
+
+                    <div class="action-buttons">
+                        <button class="btn-quote" onclick="addToQuote()">견적서 담기</button>
+                        <button class="btn-cart" onclick="alert('준비중입니다.')">장바구니 담기</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:5000'
+            : 'https://rium-scm-backend.onrender.com';
+
+        async function fetchProduct() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+
+            if (!id) {
+                alert('잘못된 접근입니다.');
+                location.href = 'scm_catalog.html';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/products/${id}`);
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error || 'Failed to fetch');
+
+                const p = data.product;
+                renderProduct(p);
+            } catch (err) {
+                console.error(err);
+                alert('상품 정보를 불러오지 못했습니다.');
+                location.href = 'scm_catalog.html';
+            }
+        }
+
+        function renderProduct(p) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('productContent').style.display = 'grid';
+
+            // Images
+            const imgUrl = p.imageUrl || (p.images && p.images[0]) || 'https://placehold.co/600x400?text=No+Image';
+            document.getElementById('mainImage').src = imgUrl;
+
+            // Info
+            document.getElementById('productBrand').textContent = p.brand || 'RIUM';
+            document.getElementById('productName').textContent = p.name;
+            document.getElementById('productModel').textContent = `Model: ${p.modelNo || '-'}`;
+
+            // Prices
+            const price = p.price || 0;
+            const consumer = Math.floor(price * 1.3);
+            document.getElementById('consumerPrice').textContent = `₩${consumer.toLocaleString()}`;
+            document.getElementById('b2bPrice').textContent = `₩${price.toLocaleString()}`;
+
+            // Desc
+            if (p.description) {
+                document.getElementById('productDesc').textContent = p.description;
+            }
+
+            // Specs
+            if (p.category) {
+                document.getElementById('productCategory').textContent = p.category.name;
+            }
+            document.getElementById('productStatus').textContent = p.isAvailable ? '주문 가능' : '일시 품절';
+
+            // Global ID for actions
+            window.currentProductId = p.id;
+        }
+
+        function addToQuote() {
+            if (window.currentProductId) {
+                alert(`상품 ID ${window.currentProductId}가 견적서에 추가되었습니다.`);
+            }
+        }
+
+        // Init
+        fetchProduct();
+    </script>
+</body>
+
+</html>

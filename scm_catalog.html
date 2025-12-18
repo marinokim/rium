@@ -167,7 +167,8 @@
         }
 
         .scm-content {
-            padding: 2rem;
+            padding: 0;
+            /* Remove padding to allow full-width sticky */
             overflow-y: auto;
             flex: 1;
             /* Take remaining space */
@@ -381,17 +382,24 @@
         .scm-filter-bar {
             background: white;
             padding: 1rem 1.5rem;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
+            margin-bottom: 0;
+            /* Remove bottom margin */
+            border-bottom: 1px solid #eee;
+            /* Add separator */
             display: flex;
             gap: 1rem;
             align-items: center;
             flex-wrap: wrap;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            /* Softer shadow */
             position: sticky;
             top: 0;
-            z-index: 10;
-            border: 1px solid #eee;
+            z-index: 90;
+        }
+
+        /* Wrapper for grid to add padding back */
+        .catalog-container {
+            padding: 2rem;
         }
 
         .filter-group {
@@ -534,15 +542,15 @@
                 </div>
             </div>
             <div class="scm-header-actions">
-                <div class="scm-icon-btn" onclick="alert('제안서(Excel) 다운로드 기능이 실행됩니다.')" title="제안서 다운로드">
-                    <i class="fas fa-file-download"></i>
-                    <span class="scm-badge" style="background-color: #ff9800;">2</span>
+                <div class="scm-icon-btn" onclick="location.href='scm_quote.html'" title="견적함">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span class="scm-badge">2</span>
                 </div>
-                <div class="scm-icon-btn">
+                <div class="scm-icon-btn" onclick="alert('장바구니 기능은 준비중입니다.')" title="장바구니">
                     <i class="fas fa-shopping-cart"></i>
                     <span class="scm-badge">2</span>
                 </div>
-                <div class="scm-icon-btn">
+                <div class="scm-icon-btn" onclick="alert('새로운 알림이 없습니다.')" title="알림">
                     <i class="fas fa-bell"></i>
                     <span class="scm-badge">3</span>
                 </div>
@@ -551,8 +559,8 @@
 
         <!-- Content -->
         <div class="scm-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h2 style="font-size: 1.5rem; margin: 0;">상품 카탈로그 (Product Catalog)</h2>
+            <div style="background-color: #f8f9fa; padding: 1.5rem 2rem; border-bottom: 1px solid #eee;">
+                <h2 style="font-size: 1.5rem; margin: 0; color: #333;">상품 카탈로그 (Product Catalog)</h2>
             </div>
 
             <!-- Filters -->
@@ -569,10 +577,13 @@
 
             <!-- Product Grid -->
             <!-- Product Grid -->
-            <div class="catalog-grid" id="productGrid">
-                <!-- Products will be loaded here -->
-                <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
-                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <!-- Product Grid -->
+            <div class="catalog-container">
+                <div class="catalog-grid" id="productGrid">
+                    <!-- Products will be loaded here -->
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
+                        <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -649,6 +660,17 @@
             loadProducts();
         };
 
+        // Navigate to Product Detail
+        window.goToDetail = function (productId) {
+            // Save scroll position
+            const scrollPos = document.querySelector('.scm-content').scrollTop;
+            sessionStorage.setItem('catalogScrollPos', scrollPos);
+            sessionStorage.setItem('catalogCategoryId', currentCategoryId);
+            sessionStorage.setItem('catalogSearchQuery', currentSearchQuery);
+
+            location.href = `scm_product_detail.html?id=${productId}`;
+        };
+
         // Load Products
         const loadProducts = async () => {
             const grid = document.getElementById('productGrid');
@@ -678,6 +700,15 @@
 
                     const card = document.createElement('div');
                     card.className = 'product-card';
+                    card.style.cursor = 'pointer';
+
+                    // Add click event to card to go to detail
+                    card.onclick = (e) => {
+                        // Prevent click if clicking heart or button
+                        if (e.target.closest('.heart-btn') || e.target.closest('.add-quote-btn')) return;
+                        goToDetail(product.id);
+                    };
+
                     card.innerHTML = `
                         <div class="product-img-wrapper">
                             <img src="${imageUrl}" alt="${product.name}" onerror="this.src='https://placehold.co/600x400?text=Error'">
@@ -722,9 +753,37 @@
             alert(`상품 ID ${productId}가 견적서에 담겼습니다.`);
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadCategories();
-            loadProducts();
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Restore state if available
+            const savedCategory = sessionStorage.getItem('catalogCategoryId');
+            const savedSearch = sessionStorage.getItem('catalogSearchQuery');
+
+            if (savedCategory) currentCategoryId = savedCategory;
+            if (savedSearch) {
+                currentSearchQuery = savedSearch;
+                document.getElementById('searchInput').value = savedSearch;
+            }
+
+            await loadCategories();
+
+            // Highlight saved category
+            if (currentCategoryId) {
+                const btn = document.querySelector(`.filter-btn[data-id="${currentCategoryId}"]`);
+                if (btn) {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                }
+            }
+
+            await loadProducts();
+
+            // Restore scroll position
+            const savedScroll = sessionStorage.getItem('catalogScrollPos');
+            if (savedScroll) {
+                document.querySelector('.scm-content').scrollTop = savedScroll;
+                // Clear it after use? Or keep it? Usually good to clear if navigating away elsewhere, but fine to keep for now.
+                // sessionStorage.removeItem('catalogScrollPos'); 
+            }
         });
     </script>
 
