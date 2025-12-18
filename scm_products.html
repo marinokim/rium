@@ -1193,16 +1193,8 @@
                         ${detailContentHtml}
                     </div>` : '';
 
-                // Sticky Header: Centered Button (Match Homepage) - Full Width
+                // Match Homepage Layout but without in-content sticky header (will be in main header)
                 detailView.innerHTML = `
-                    <div style="position: sticky; top: 0; width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 0; border-bottom: 1px solid #eee; z-index: 10000; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                         <div style="max-width: 1000px; margin: 0 auto;">
-                             <button onclick="closeProductDetail()" style="padding: 10px 40px; background: #333; color: white; border: none; border-radius: 30px; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                                 <i class="fas fa-list"></i> 목록으로 돌아가기
-                             </button>
-                         </div>
-                    </div>
-
                     <div style="max-width: 1000px; margin: 0 auto; padding: 3rem 2rem;">
                          <div style="text-align: center; margin-bottom: 2rem;">
                             ${imageHtml}
@@ -1220,22 +1212,34 @@
                 `;
             };
 
-            // Global State for Scroll Position
+            // Global State for Scroll Position & Breadcrumb
             let lastScrollTop = 0;
+            let originalBreadcrumb = '';
 
             // Updated Open Function
             window.openProductDetail = async (index) => {
                 const listContainer = document.getElementById('productListView');
                 const detailContainer = document.getElementById('productDetailView');
                 const scmContent = document.querySelector('.scm-content');
+                const breadcrumb = document.querySelector('.scm-breadcrumb');
 
                 if (currentProducts && currentProducts[index]) {
                     // Save Scroll Position
                     lastScrollTop = scmContent.scrollTop;
 
+                    // Inject Back Button into Header (Replace Breadcrumb)
+                    if (breadcrumb) {
+                        originalBreadcrumb = breadcrumb.innerHTML;
+                        breadcrumb.innerHTML = `
+                            <button onclick="closeProductDetail()" style="padding: 6px 20px; background: #333; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                 <i class="fas fa-list"></i> 목록으로 돌아가기
+                             </button>
+                        `;
+                    }
+
                     const simpleProduct = currentProducts[index];
 
-                    // Fetch Full Detail to ensure we have detailUrl etc.
+                    // Fetch Full Detail
                     try {
                         // Show loading?
                         detailContainer.innerHTML = '<div style="padding:50px; text-align:center;">Loading...</div>';
@@ -1243,9 +1247,9 @@
                         listContainer.style.display = 'none';
                         detailContainer.style.display = 'block';
 
-                        // Hide SCM Header for immersive view
+                        // Show SCM Header (ensure it is visible)
                         const scmHeader = document.querySelector('.scm-header');
-                        if (scmHeader) scmHeader.style.display = 'none';
+                        if (scmHeader) scmHeader.style.display = 'flex';
 
                         // Temporarily remove padding from main scroll container
                         scmContent.style.padding = '0';
@@ -1272,9 +1276,15 @@
                 const listContainer = document.getElementById('productListView');
                 const detailContainer = document.getElementById('productDetailView');
                 const scmContent = document.querySelector('.scm-content');
+                const breadcrumb = document.querySelector('.scm-breadcrumb');
 
                 detailContainer.style.display = 'none';
                 listContainer.style.display = 'block';
+
+                // Restore Breadcrumb
+                if (breadcrumb && originalBreadcrumb) {
+                    breadcrumb.innerHTML = originalBreadcrumb;
+                }
 
                 // Restore Padding
                 scmContent.style.padding = '2rem';
