@@ -667,7 +667,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const detailContainer = document.getElementById('product-detail-container');
         if (detailContainer) {
+            // Sticky Back Button (Top 90px to clear fixed header)
+            const stickyHeaderHtml = `
+            <div style="position: sticky; top: 90px; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 0; border-bottom: 1px solid #eee; z-index: 100; margin-bottom: 30px; margin-top: -20px;">
+                 <div style="max-width: 1000px; margin: 0 auto; text-align: center;">
+                       <button id="btnBackToList" style="padding: 10px 40px; background: #333; color: white; border: none; border-radius: 30px; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                           <i class="fas fa-list"></i> 목록으로 돌아가기
+                       </button>
+                 </div>
+            </div>`;
+
             detailContainer.innerHTML = `
+                ${stickyHeaderHtml}
                 <div class="product-detail-wrapper" style="max-width: 1000px; margin: 0 auto;">
                     <div style="text-align: center; margin-bottom: 2rem;">
                         ${imageHtml}
@@ -681,7 +692,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p style="font-size: 1.1rem; line-height: 1.8; color: #555; margin-bottom: 30px; word-break: keep-all;">${product.description || ''}</p>
                         
                         <div style="margin-top: 40px;">
-                            <button id="btnBackToList" style="padding: 12px 40px; background: #333; color: white; border: none; border-radius: 30px; cursor: pointer; font-size: 1rem; transition: background 0.3s;">목록으로 돌아가기</button>
                         </div>
                     </div>
                 </div>
