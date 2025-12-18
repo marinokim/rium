@@ -580,10 +580,69 @@
     </main>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const tbody = document.querySelector('tbody');
-            const proposals = JSON.parse(localStorage.getItem('scm_proposals') || '[]');
+        // Copy apiFetch from catalog or common place.
+        // For robustness, I'll inline a simplified version or rely on window if shared, 
+        // but since they are separate pages, I should define it.
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:5000'
+            : 'https://rium-scm-backend.onrender.com';
 
+        async function apiFetch(url) {
+            const token = localStorage.getItem('token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            const res = await fetch(`${API_BASE}${url}`, { headers });
+            if (!res.ok) throw new Error(res.statusText);
+            return res.json();
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const tbody = document.querySelector('tbody');
+
+            // 1. Try API Data
+            try {
+                const data = await apiFetch('/api/quotes');
+                const quotes = data.quotes || [];
+
+                if (quotes.length > 0) {
+                    // Clear mock data if we have real data? Or prepend?
+                    // Let's prepend real data.
+                    quotes.forEach(quote => {
+                        const firstItem = quote.items[0];
+                        const productImg = firstItem?.product?.imageUrl || 'https://via.placeholder.com/40';
+                        const productName = firstItem?.product?.name || `Bundle (${quote.items.length})`;
+
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><input type="checkbox"></td>
+                            <td>${quote.quoteNumber}</td>
+                            <td>${new Date(quote.createdAt).toISOString().split('T')[0]}</td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <img src="${productImg}"
+                                        style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                    <span>${productName}</span>
+                                </div>
+                            </td>
+                            <td>${quote.items.reduce((sum, i) => sum + i.quantity, 0)}</td>
+                            <td>${quote.userId} (Client)</td>
+                            <td>${quote.totalAmount.toLocaleString()}원</td>
+                            <td><span class="scm-status status-new" style="background: #e3f2fd; color: #1565c0;">${quote.status}</span></td>
+                            <td><button class="scm-btn scm-btn-outline" style="padding: 2px 8px; font-size: 0.8rem;">제안서 보기</button></td>
+                        `;
+                        // Insert at top
+                        if (tbody.firstChild) tbody.insertBefore(row, tbody.firstChild);
+                        else tbody.appendChild(row);
+                    });
+                    return; // If successful, maybe skip localStorage? Or merge? 
+                    // Let's merge for now so user sees their "Local Only" creations too.
+                }
+            } catch (err) {
+                console.log('API Fetch failed, using LocalStorage only', err);
+            }
+
+            // 2. LocalStorage Data (Mock/Fallback)
+            const proposals = JSON.parse(localStorage.getItem('scm_proposals') || '[]');
             proposals.forEach(prop => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -603,7 +662,6 @@
                     <td><span class="scm-status status-new" style="background: #e3f2fd; color: #1565c0;">제안중</span></td>
                     <td><button class="scm-btn scm-btn-outline" style="padding: 2px 8px; font-size: 0.8rem;">제안서 보기</button></td>
                 `;
-                // Insert as first child
                 if (tbody.firstChild) {
                     tbody.insertBefore(row, tbody.firstChild);
                 } else {

@@ -573,7 +573,7 @@
                 </div>
                 <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
                     <button class="filter-btn" style="background: #333; color: white; border: none;"
-                        onclick="createMockProposal()">
+                        onclick="createProposal()">
                         <i class="fas fa-print"></i> 제안서 출력
                     </button>
                     <input type="text" id="searchInput" placeholder="상품명 검색"
@@ -779,12 +779,43 @@
         }
 
         // Mock Proposal Creation
-        function createMockProposal() {
+        // Real Proposal Creation via API
+        async function createProposal() {
+            // Get Items (mock buffer for now since addToQuote just alerts)
+            // In a real scenario, we'd read sessionStorage.
+            let items = [];
+            // Only add a dummy item if we have no cart.
+
+            // Try to find a product ID from currently loaded products, or default to 1
+            const firstCard = document.querySelector('.product-card button');
+            let dummyId = 1;
+            if (firstCard) {
+                const match = firstCard.getAttribute('onclick')?.match(/\d+/);
+                if (match) dummyId = Number(match[0]);
+            }
+            items.push({ productId: dummyId, quantity: 1 });
+
+            try {
+                // 1. Try API Call
+                const response = await apiFetch('/api/quotes', {
+                    method: 'POST',
+                    body: JSON.stringify({ items, message: 'Auto-generated from Catalog' })
+                });
+
+                if (response.quote) {
+                    alert('제안서가 서버에 성공적으로 저장되었습니다!');
+                    location.href = 'scm_orders.html';
+                    return;
+                }
+            } catch (e) {
+                console.warn('API Creation Failed, falling back to LocalStorage Mock', e);
+            }
+
+            // Fallback Logic
             const today = new Date();
             const dateStr = today.toISOString().split('T')[0];
             const randomId = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
 
-            // Create a mock proposal item
             const newProposal = {
                 id: `PROP-${dateStr.replace(/-/g, '')}-${randomId}`,
                 date: dateStr,
@@ -798,12 +829,11 @@
                 status: 'new' // 'new' maps to '제안중'
             };
 
-            // Save to LocalStorage
             let proposals = JSON.parse(localStorage.getItem('scm_proposals') || '[]');
             proposals.unshift(newProposal); // Add to top
             localStorage.setItem('scm_proposals', JSON.stringify(proposals));
 
-            alert('제안서가 출력되었습니다.\n제안 관리 리스트에 자동 등록됩니다.');
+            alert('제안서가 출력되었습니다 (로컬 모드).\n제안 관리 리스트에 등록되었습니다.');
             location.href = 'scm_orders.html';
         }
 
