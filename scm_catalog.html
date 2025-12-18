@@ -394,12 +394,47 @@
                 width: 100%;
             }
 
-            .catalog-filters {
-                top: 70px;
-                /* Adjust for mobile header */
-                padding: 1rem;
+            /* Filter Bar - Sticky */
+            .scm-filter-bar {
+                background: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                margin-bottom: 1.5rem;
+                display: flex;
+                gap: 1rem;
+                align-items: center;
+                flex-wrap: wrap;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                border: 1px solid #eee;
+            }
+
+            .filter-group {
+                display: flex;
+                gap: 0.5rem;
                 overflow-x: auto;
+                align-items: center;
+            }
+
+            .filter-btn {
+                padding: 0.5rem 1rem;
+                border: 1px solid #ddd;
+                border-radius: 20px;
+                background: white;
+                cursor: pointer;
+                transition: all 0.2s;
                 white-space: nowrap;
+                font-size: 0.9rem;
+                color: #666;
+            }
+
+            .filter-btn:hover,
+            .filter-btn.active {
+                background: var(--primary-color);
+                color: white;
+                border-color: var(--primary-color);
             }
 
             .scm-header {
@@ -505,14 +540,14 @@
             </div>
 
             <!-- Filters -->
-            <div class="catalog-filters">
-                <button class="category-btn active">전체</button>
-                <button class="category-btn">가전 (Living)</button>
-                <button class="category-btn">주방 (Kitchen)</button>
-                <button class="category-btn">식품 (Food)</button>
-                <div style="margin-left: auto; display: flex; gap: 10px;">
-                    <input type="text" placeholder="상품명 검색"
-                        style="padding: 0.5rem 1rem; border: 1px solid #ddd; border-radius: 20px; outline: none;">
+            <!-- Filters (Sticky) -->
+            <div class="scm-filter-bar">
+                <div class="filter-group" id="categoryFilters">
+                    <!-- Categories will be loaded here -->
+                </div>
+                <div style="margin-left: auto;">
+                    <input type="text" id="searchInput" placeholder="상품명 검색"
+                        style="padding: 0.5rem 1rem; border: 1px solid #ddd; border-radius: 20px; outline: none; width: 200px;">
                 </div>
             </div>
 
@@ -556,20 +591,58 @@
                 // Optional: Handle token expiration
             }
 
-            if (!response.ok) {
-                const err = await response.json().catch(() => ({}));
-                throw new Error(err.error || err.message || 'Request failed');
-            }
-
             return response.json();
         }
+
+        // Global State
+        let currentCategoryId = '';
+        let currentSearchQuery = '';
+
+        // Load Categories
+        const loadCategories = async () => {
+            try {
+                const data = await apiFetch('/api/categories');
+                const categories = data.categories || [];
+                const container = document.getElementById('categoryFilters');
+
+                // Keep 'All' button and append others
+                container.innerHTML = `<button class="filter-btn active" data-id="" onclick="filterCategory(this, '')">전체</button>`;
+
+                categories.forEach(cat => {
+                    const btn = document.createElement('button');
+                    btn.className = 'filter-btn';
+                    btn.textContent = cat.name;
+                    btn.dataset.id = cat.id;
+                    btn.onclick = () => filterCategory(btn, cat.id);
+                    container.appendChild(btn);
+                });
+
+            } catch (err) {
+                console.error('Failed to load categories:', err);
+            }
+        };
+
+        // Filter Handlers
+        window.filterCategory = function (btn, categoryId) {
+            // Update UI
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Update State
+            currentCategoryId = categoryId;
+            loadProducts();
+        };
 
         // Load Products
         const loadProducts = async () => {
             const grid = document.getElementById('productGrid');
             try {
-                // Fetch only available products (default behavior)
-                const data = await apiFetch(`/api/products?limit=50&page=1`);
+                // Build Query String
+                let query = `/api/products?limit=50&page=1`;
+                if (currentCategoryId) query += `&categoryId=${currentCategoryId}`;
+                if (currentSearchQuery) query += `&search=${encodeURIComponent(currentSearchQuery)}`;
+
+                const data = await apiFetch(query);
                 const products = data.products || [];
 
                 grid.innerHTML = '';
@@ -633,7 +706,10 @@
             alert(`상품 ID ${productId}가 견적서에 담겼습니다.`);
         }
 
-        document.addEventListener('DOMContentLoaded', loadProducts);
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+            loadProducts();
+        });
     </script>
 
     </main>
