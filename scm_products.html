@@ -896,7 +896,8 @@
                         const date = new Date(p.createdAt).toLocaleDateString();
                         const statusClass = p.isAvailable ? 'status-active' : 'status-inactive';
                         const imgSrc = p.imageUrl || 'https://via.placeholder.com/60?text=No+Img';
-                        const categoryName = p.category ? p.category.name : '-'; // Handle potentially missing category object
+                        const categoryName = p.category ? p.category.name : '-';
+                        const newClass = p.isNew ? 'btn-green' : 'btn-gray'; // Visual toggle style
 
                         tr.innerHTML = `
                             <td style="text-align: center;"><strong>${p.id}</strong></td>
@@ -914,6 +915,8 @@
                             <td style="text-align:center;font-size:0.85rem">개별 ${(p.shippingFeeIndividual || 0).toLocaleString()}<br>카톤 ${(p.shippingFeeCarton || 0).toLocaleString()}</td>
                             <td style="font-size:0.8rem;color:#555">제조: ${p.manufacturer || '-'}<br>원산: ${p.origin || '-'}<br>${date}</td>
                             <td style="text-align:center;">
+                                <button class="scm-btn ${newClass} btn-toggle-new" data-id="${p.id}" style="padding: 2px 8px; font-size: 0.75rem; margin-bottom: 5px;">${p.isNew ? 'New' : 'Normal'}</button>
+                                <br>
                                 <span class="scm-status ${statusClass}">${p.isAvailable ? '판매중' : '중지'}</span>
                                 <div style="display:flex;gap:3px;justify-content:center;margin-top:5px;">
                                     <button class="scm-btn btn-cyan btn-edit" data-id="${p.id}" style="padding:2px 6px;font-size:0.75rem">수정</button>
@@ -975,6 +978,31 @@
                             loadProducts(currentPage);
                         }
                         catch (e) { alert(e.message); }
+                    };
+                });
+
+                // Toggle New Status
+                document.querySelectorAll('.btn-toggle-new').forEach(btn => {
+                    btn.onclick = async (e) => {
+                        e.preventDefault();
+                        const id = e.target.dataset.id;
+                        try {
+                            const data = await apiFetch(`/api/products/${id}`);
+                            const p = data.product;
+                            // Toggle
+                            p.isNew = !p.isNew;
+                            // Update
+                            await apiFetch(`/api/products/${id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(p)
+                            });
+                            // Reload logic
+                            loadProducts(currentPage);
+                        } catch (e) {
+                            console.error(e);
+                            alert('상태 변경 실패: ' + e.message);
+                        }
                     };
                 });
             };
