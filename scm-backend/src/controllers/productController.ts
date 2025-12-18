@@ -194,3 +194,23 @@ export const deleteProduct = async (req: Request, res: Response) => {
         });
     }
 };
+// Toggle New Status
+export const toggleNewStatus = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { isNew } = req.body;
+
+        const updatedProduct = await prisma.product.update({
+            where: { id: Number(id) },
+            data: { isNew }
+        });
+
+        res.json({ message: "Product status updated", product: updatedProduct });
+    } catch (error) {
+        console.error("Toggle new status error:", error);
+        res.status(500).json({
+            error: "Failed to update product status",
+            details: error instanceof Error ? error.message : String(error)
+        });
+    }
+};
