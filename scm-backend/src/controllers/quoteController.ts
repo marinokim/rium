@@ -186,3 +186,27 @@ export const downloadQuoteExcel = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: 'Failed to download quote' });
     }
 };
+
+// Delete Quotes (Bulk or Single)
+export const deleteQuotes = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.userId;
+        const { ids } = req.body; // Expect array of IDs
+
+        if (!userId) return res.status(401).json({ error: 'User ID missing' });
+        if (!ids || !Array.isArray(ids)) return res.status(400).json({ error: 'Invalid IDs' });
+
+        const deleteResult = await prisma.quote.deleteMany({
+            where: {
+                id: { in: ids.map(Number) },
+                // userId: Number(userId) // Optional security
+            }
+        });
+
+        res.json({ success: true, count: deleteResult.count });
+
+    } catch (error) {
+        console.error('Delete quotes error:', error);
+        res.status(500).json({ error: 'Failed to delete quotes' });
+    }
+};
