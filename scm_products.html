@@ -862,8 +862,6 @@
                     });
                     alert('저장되었습니다.');
                     productModal.style.display = 'none';
-                    alert('저장되었습니다.');
-                    productModal.style.display = 'none';
                     loadProducts(currentPage); // Reload current page
                 } catch (e) { alert(e.message); }
             };
@@ -999,18 +997,13 @@
                             // Check both camelCase and snake_case
                             const currentIsNew = p.isNew !== undefined ? p.isNew : (p.is_new !== undefined ? p.is_new : false);
 
-                            // Toggle
-                            p.isNew = !currentIsNew;
-
-                            // Ensure backend receives what it expects (it handles isNew in body per products.js)
-                            // We just send the modified product object.
-
-                            // Update
-                            await apiFetch(`/api/products/${id}`, {
-                                method: 'PUT',
+                            // Use PATCH endpoint for specific status update
+                            await apiFetch(`/api/products/${id}/new-status`, {
+                                method: 'PATCH',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(p)
+                                body: JSON.stringify({ isNew: !currentIsNew })
                             });
+
                             // Reload logic
                             loadProducts(currentPage);
                         } catch (e) {
