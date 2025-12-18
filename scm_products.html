@@ -1243,6 +1243,10 @@
                         listContainer.style.display = 'none';
                         detailContainer.style.display = 'block';
 
+                        // Hide SCM Header for immersive view
+                        const scmHeader = document.querySelector('.scm-header');
+                        if (scmHeader) scmHeader.style.display = 'none';
+
                         // Temporarily remove padding from main scroll container
                         scmContent.style.padding = '0';
 
@@ -1274,6 +1278,10 @@
 
                 // Restore Padding
                 scmContent.style.padding = '2rem';
+
+                // Show SCM Header again
+                const scmHeader = document.querySelector('.scm-header');
+                if (scmHeader) scmHeader.style.display = 'flex';
 
                 // Restore container styling (optional but good practice)
                 detailContainer.style.background = 'white';
