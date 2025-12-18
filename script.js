@@ -31,7 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // 2. Handle relative paths (even without leading slash if it looks like a path)
+        // 2. Handle protocol-relative URLs (e.g. //kdsoundmall.co.kr/...)
+        if (cleanUrl.startsWith('//')) {
+            cleanUrl = `https:${cleanUrl}`;
+        }
+
+        // 3. Handle relative paths (even without leading slash if it looks like a path)
         if (cleanUrl.startsWith('/') || cleanUrl.match(/^(uploads|assets|images)\//)) {
             // Ensure leading slash for concatenation
             const path = cleanUrl.startsWith('/') ? cleanUrl : `/${cleanUrl}`;
