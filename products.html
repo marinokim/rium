@@ -45,48 +45,29 @@
         </div>
     </section>
 
-    <li class="category-item">
-        <span class="category-link" data-category="Food">Food</span>
-    </li>
-    <li class="category-item">
-        <span class="category-link" data-category="Living">Living</span>
-    </li>
-    </ul>
-    </div>
+    <!-- Product Catalog Section -->
+    <section class="section" style="background-color: #fff; min-height: 80vh;">
+        <div class="container">
+            <!-- Category Filter (Horizontal Scroll) -->
+            <div class="category-scroll-container">
+                <div class="category-filters" id="categoryFilters">
+                    <!-- Categories will be injected here -->
+                    <button class="filter-btn active" onclick="filterPublicCategory(this, '')">All</button>
+                    <div style="padding: 20px; text-align: center; width: 100%;">
+                        <i class="fas fa-spinner fa-spin"></i> Loading Categories...
+                    </div>
+                </div>
+            </div>
 
-    <div class="filter-group">
-        <h3 class="filter-title">Price Range</h3>
-        <div style="padding: 10px 0; color: #666; font-size: 0.9rem;">
-            <input type="range" min="0" max="100000" style="width: 100%;">
-            <div style="display: flex; justify-content: space-between; margin-top: 5px;">
-                <span>0원</span>
-                <span>100,000원+</span>
+            <!-- Product Grid -->
+            <div class="product-grid" id="publicProductGrid">
+                <!-- Products will be injected here -->
+                <div style="grid-column: 1 / -1; text-align: center; padding: 50px;">
+                    <i class="fas fa-spinner fa-spin fa-3x"></i>
+                    <p style="margin-top: 20px; color: #666;">제품을 불러오는 중입니다...</p>
+                </div>
             </div>
         </div>
-    </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="products-content">
-        <!-- Toolbar -->
-        <div class="products-toolbar">
-            <div class="result-count">Showing all products</div>
-            <div class="sort-options">
-                <select class="sort-select">
-                    <option value="newest">Newest</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Product Grid -->
-        <div class="product-grid" id="product-grid">
-            <!-- Products loaded via script.js -->
-        </div>
-    </main>
-    </div>
-    </div>
     </section>
 
     <!-- Footer -->
