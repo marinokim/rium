@@ -487,25 +487,23 @@
             }
             document.getElementById('productStatus').textContent = p.isAvailable ? '주문 가능' : '일시 품절';
 
-            // Detail Image (New!)
+            // Detail Image (Supported formats: URL or HTML string)
             if (p.detailUrl) {
                 const detailSection = document.getElementById('detailImageSection');
                 const detailContainer = document.getElementById('detailImageContainer');
                 detailSection.style.display = 'block';
+                detailContainer.innerHTML = ''; // Clear previous content
 
-                // Allow for simple image URL or HTML content if needed, but assuming URL for now based on 'detailUrl' name.
-                // If it contains HTML tags, we should set innerHTML. Check for tags?
-                // Typically detailUrl is just a string URL.
-
-                // If the field is named detailUrl but contains HTML (as per previous conversation history 30774814),
-                // we should be careful. 
-                // However user asked to "show detail image".
-                // I'll assume it's an image source string first.
-
-                const img = document.createElement('img');
-                img.src = p.detailUrl;
-                img.onerror = () => { img.style.display = 'none'; }; // Hide if broken
-                detailContainer.appendChild(img);
+                // Check if detailUrl is a raw HTML string (e.g. <img src=...>)
+                if (p.detailUrl.trim().startsWith('<')) {
+                    detailContainer.innerHTML = p.detailUrl;
+                } else {
+                    // Assume it is a URL
+                    const img = document.createElement('img');
+                    img.src = p.detailUrl;
+                    img.onerror = () => { img.style.display = 'none'; }; // Hide if broken
+                    detailContainer.appendChild(img);
+                }
             }
 
             // Global ID for actions
