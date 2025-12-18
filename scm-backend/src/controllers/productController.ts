@@ -5,7 +5,7 @@ import prisma from '../lib/prisma.js';
 // Get all products (Catalog) with Pagination
 export const getProducts = async (req: Request, res: Response) => {
     try {
-        const { isNew, limit, page } = req.query;
+        const { isNew, limit, page, includeUnavailable } = req.query;
 
         // Pagination setup
         const pageNum = page ? Number(page) : 1;
@@ -13,7 +13,12 @@ export const getProducts = async (req: Request, res: Response) => {
         const skip = (pageNum - 1) * limitNum;
 
         // Build filter
-        const where: any = { isAvailable: true };
+        const where: any = {};
+
+        // Default to filtering available products unless explicitly requested to include unavailable ones
+        if (includeUnavailable !== 'true') {
+            where.isAvailable = true;
+        }
 
         // If isNew=true is passed, strict filter by isNew column if it exists in schema
         // Or if we interpret 'New' as 'Recently Added', the current code just sorts.

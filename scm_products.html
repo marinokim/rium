@@ -876,7 +876,7 @@
                 currentPage = page;
                 try {
                     // Fetch with pagination
-                    const data = await apiFetch(`/api/products?limit=${itemsPerPage}&page=${page}`);
+                    const data = await apiFetch(`/api/products?limit=${itemsPerPage}&page=${page}&includeUnavailable=true`);
                     currentProducts = data.products || []; // Store globally for safe access
                     const products = currentProducts;
                     const pagination = data.pagination;
