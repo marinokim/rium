@@ -781,7 +781,10 @@
 
             // Scrape Real Data for Local Fallback
             // Find card
-            const cardBtn = document.querySelector(`button[onclick="addToQuote(${productId})"]`);
+            // Try both quoted and unquoted for robustness
+            const cardBtn = document.querySelector(`button[onclick="addToQuote('${productId}')"]`) ||
+                document.querySelector(`button[onclick="addToQuote(${productId})"]`);
+
             let pName = 'Unknown Product';
             let pImage = '';
             let pPrice = 0;
@@ -794,6 +797,8 @@
                     const priceText = card.querySelector('.b2b-price')?.innerText || '0';
                     pPrice = parseInt(priceText.replace(/[^0-9]/g, '')) || 0;
                 }
+            } else {
+                console.warn('Could not find product card for ID:', productId);
             }
 
             if (existing) {
