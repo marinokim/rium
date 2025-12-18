@@ -858,23 +858,54 @@
             try {
                 if (confirm('엑셀 파일도 다운로드 하시겠습니까? (로컬 생성)')) {
                     const wb = XLSX.utils.book_new();
-                    const data = [
-                        {
-                            'No': 1,
-                            'Product Name': newProposal.product.name,
-                            'Model No': '-', 'Spec': '-',
-                            'Quantity': newProposal.qty,
-                            'Unit Price': newProposal.amount,
-                            'Supply Price': '-',
-                            'Amount': newProposal.amount,
-                            'Remark': ''
-                        },
-                        {
-                            'No': '', 'Product Name': 'Total', 'Model No': '', 'Spec': '',
-                            'Quantity': newProposal.qty, 'Unit Price': '', 'Supply Price': '', 'Amount': newProposal.amount, 'Remark': ''
-                        }
+
+                    // Header Info
+                    const headerInfo = [
+                        ['ARONTEC KOREA', '', '', '', '당사가 운영하는 모든 상품은 폐쇄몰을 제외한 온라인 판매를 급하며, 판매 시 상품 공급이 중단됩니다.', '', '', '', '', '', '', '', '', `(아론텍코리아)_제안_${new Date().toISOString().split('T')[0]}`]
                     ];
-                    const ws = XLSX.utils.json_to_sheet(data);
+
+                    // Columns
+                    const columns = [
+                        '순번', '품절여부', '고유번호', '상품명', '상품이미지',
+                        '모델명', '옵션', '실명', '제조일', '원산지',
+                        '카톤입수량', '기본수량', '소비자가', '공급가(부가세포함)', '배송비(부가세포함)',
+                        '대표이미지', '상세이미지', '비고'
+                    ];
+
+                    const dataRow = [
+                        1,
+                        '',
+                        newProposal.id.split('-').pop(),
+                        newProposal.product.name,
+                        '',
+                        '-',
+                        '',
+                        '',
+                        '',
+                        '중국',
+                        1,
+                        1,
+                        parseInt(newProposal.amount.replace(/[^0-9]/g, '')) * 1.5,
+                        parseInt(newProposal.amount.replace(/[^0-9]/g, '')),
+                        0,
+                        newProposal.product.image || '',
+                        `<img src="${newProposal.product.image || ''}">`,
+                        ''
+                    ];
+
+                    const wsData = [...headerInfo, columns, dataRow];
+                    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+                    if (!ws['!merges']) ws['!merges'] = [];
+                    ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } });
+
+                    ws['!cols'] = [
+                        { wch: 5 }, { wch: 8 }, { wch: 8 }, { wch: 40 }, { wch: 15 },
+                        { wch: 20 }, { wch: 10 }, { wch: 15 }, { wch: 10 }, { wch: 10 },
+                        { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
+                        { wch: 50 }, { wch: 50 }, { wch: 20 }
+                    ];
+
                     XLSX.utils.book_append_sheet(wb, ws, 'Proposal');
                     XLSX.writeFile(wb, `Quote_${newProposal.id}.xlsx`);
                 }

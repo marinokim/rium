@@ -542,26 +542,57 @@
                 }
 
                 const wb = XLSX.utils.book_new();
-                const data = [
-                    {
-                        'No': 1,
-                        'Product Name': prop.product.name,
-                        'Model No': '-',
-                        'Spec': '-',
-                        'Quantity': prop.qty,
-                        'Unit Price': prop.amount, // amount string '450,000원' needs parsing if calc needed, but simpler here.
-                        'Supply Price': '-',
-                        'Amount': prop.amount,
-                        'Remark': ''
-                    },
-                    {
-                        'No': '', 'Product Name': 'Total', 'Model No': '', 'Spec': '',
-                        'Quantity': prop.qty, 'Unit Price': '', 'Supply Price': '', 'Amount': prop.amount, 'Remark': ''
-                    }
+
+                // Row 1: Header Info
+                const headerInfo = [
+                    ['ARONTEC KOREA', '', '', '', '당사가 운영하는 모든 상품은 폐쇄몰을 제외한 온라인 판매를 급하며, 판매 시 상품 공급이 중단됩니다.', '', '', '', '', '', '', '', '', `(아론텍코리아)_제안_${new Date().toISOString().split('T')[0]}`]
                 ];
 
-                const ws = XLSX.utils.json_to_sheet(data);
-                ws['!cols'] = [{ wch: 5 }, { wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 15 }];
+                // Row 2: Columns
+                const columns = [
+                    '순번', '품절여부', '고유번호', '상품명', '상품이미지',
+                    '모델명', '옵션', '실명', '제조일', '원산지',
+                    '카톤입수량', '기본수량', '소비자가', '공급가(부가세포함)', '배송비(부가세포함)',
+                    '대표이미지', '상세이미지', '비고'
+                ];
+
+                // Data Rows
+                // Mock properties might be missing, so we use defaults.
+                const dataRow = [
+                    1, // 순번
+                    '', // 품절여부 (Available)
+                    prop.id.split('-').pop(), // 고유번호 (Fake)
+                    prop.product.name, // 상품명
+                    '', // 상품이미지
+                    '-', // 모델명
+                    '', // 옵션
+                    '', // 실명
+                    '', // 제조일
+                    '중국', // 원산지
+                    1, // 카톤입수량
+                    1, // 기본수량
+                    parseInt(prop.amount.replace(/[^0-9]/g, '')) * 1.5, // 소비자가 (Fake)
+                    parseInt(prop.amount.replace(/[^0-9]/g, '')), // 공급가
+                    0, // 배송비
+                    prop.product.image || '', // 대표이미지
+                    `<img src="${prop.product.image || ''}">`, // 상세이미지
+                    '' // 비고
+                ];
+
+                const wsData = [...headerInfo, columns, dataRow];
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+                // Merge A1:D1
+                if (!ws['!merges']) ws['!merges'] = [];
+                ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } });
+
+                // Column Widths
+                ws['!cols'] = [
+                    { wch: 5 }, { wch: 8 }, { wch: 8 }, { wch: 40 }, { wch: 15 },
+                    { wch: 20 }, { wch: 10 }, { wch: 15 }, { wch: 10 }, { wch: 10 },
+                    { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
+                    { wch: 50 }, { wch: 50 }, { wch: 20 }
+                ];
 
                 XLSX.utils.book_append_sheet(wb, ws, 'Proposal');
                 XLSX.writeFile(wb, `Quote_${prop.id}.xlsx`);
