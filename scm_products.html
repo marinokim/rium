@@ -1195,7 +1195,7 @@
 
                 // Sticky Header: Centered Button (Match Homepage) - Full Width
                 detailView.innerHTML = `
-                    <div style="position: sticky; top: 0; width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 0; border-bottom: 1px solid #eee; z-index: 999; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <div style="position: sticky; top: 0; width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 0; border-bottom: 1px solid #eee; z-index: 10000; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
                          <div style="max-width: 1000px; margin: 0 auto;">
                              <button onclick="closeProductDetail()" style="padding: 10px 40px; background: #333; color: white; border: none; border-radius: 30px; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                                  <i class="fas fa-list"></i> 목록으로 돌아가기
@@ -1246,6 +1246,11 @@
                         // Temporarily remove padding from main scroll container
                         scmContent.style.padding = '0';
 
+                        // Remove container styling for full screen look
+                        detailContainer.style.background = 'transparent';
+                        detailContainer.style.boxShadow = 'none';
+                        detailContainer.style.borderRadius = '0';
+
                         // scroll to top for detail view
                         scmContent.scrollTop = 0;
 
@@ -1269,6 +1274,11 @@
 
                 // Restore Padding
                 scmContent.style.padding = '2rem';
+
+                // Restore container styling (optional but good practice)
+                detailContainer.style.background = 'white';
+                detailContainer.style.boxShadow = '0 2px 10px rgba(0,0,0,0.03)';
+                detailContainer.style.borderRadius = '8px';
 
                 // Restore Scroll
                 scmContent.scrollTop = lastScrollTop;
