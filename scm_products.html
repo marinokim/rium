@@ -900,6 +900,10 @@
                         const isNew = p.isNew !== undefined ? p.isNew : (p.is_new !== undefined ? p.is_new : false);
                         const newClass = isNew ? 'btn-green' : 'btn-gray';
 
+                        const isAvailable = p.isAvailable !== undefined ? p.isAvailable : true;
+                        const availClass = isAvailable ? 'btn-green' : 'btn-red';
+                        const availText = isAvailable ? 'Selling' : '중지';
+
                         tr.innerHTML = `
                             <td style="text-align: center;"><strong>${p.id}</strong></td>
                             <td style="text-align: center;">
@@ -918,7 +922,7 @@
                             <td style="text-align:center;">
                                 <button class="scm-btn ${newClass} btn-toggle-new" data-id="${p.id}" style="padding: 2px 8px; font-size: 0.75rem; margin-bottom: 5px;">${isNew ? 'New' : 'Normal'}</button>
                                 <br>
-                                <span class="scm-status ${statusClass}">${p.isAvailable ? '판매중' : '중지'}</span>
+                                <button class="scm-btn ${availClass} btn-toggle-avail" data-id="${p.id}" style="padding: 2px 8px; font-size: 0.75rem; margin-bottom: 5px;">${availText}</button>
                                 <div style="display:flex;gap:3px;justify-content:center;margin-top:5px;">
                                     <button class="scm-btn btn-cyan btn-edit" data-id="${p.id}" style="padding:2px 6px;font-size:0.75rem">수정</button>
                                     <button class="scm-btn btn-red btn-delete" data-id="${p.id}" style="padding:2px 6px;font-size:0.75rem">삭제</button>
@@ -941,6 +945,40 @@
             };
 
             const attachRowListeners = () => {
+                document.querySelectorAll('.btn-toggle-avail').forEach(btn => {
+                    btn.onclick = async (e) => {
+                        e.stopPropagation();
+                        // Optimistic UI Update
+                        const isCurrentlySelling = btn.innerText === 'Selling';
+                        const originalText = btn.innerText;
+                        const originalClass = btn.className;
+
+                        const newStatus = !isCurrentlySelling;
+
+                        // Immediate visual feedback
+                        btn.innerText = newStatus ? 'Selling' : '중지';
+                        btn.className = `scm-btn ${newStatus ? 'btn-green' : 'btn-red'} btn-toggle-avail`;
+
+                        const id = e.target.dataset.id;
+                        try {
+                            const response = await fetch(`${API_BASE_URL}/products/${id}/availability`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ isAvailable: newStatus })
+                            });
+
+                            if (!response.ok) throw new Error('Status update failed');
+                            // No need to reload, optimistic update is enough
+                        } catch (err) {
+                            console.error(err);
+                            alert('상태 변경 실패');
+                            // Revert on error
+                            btn.innerText = originalText;
+                            btn.className = originalClass;
+                        }
+                    };
+                });
+
                 document.querySelectorAll('.btn-edit').forEach(btn => {
                     btn.onclick = async (e) => {
                         e.preventDefault();
