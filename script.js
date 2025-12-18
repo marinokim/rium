@@ -526,7 +526,14 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         document.getElementById('btnBackToList').onclick = () => {
-            if (window.opener) {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('from') === 'scm') {
+                if (window.opener) {
+                    window.close();
+                } else {
+                    window.location.href = 'scm_products.html';
+                }
+            } else if (window.opener) {
                 window.close();
             } else {
                 window.location.href = 'products.html';
