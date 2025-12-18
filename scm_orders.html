@@ -22,32 +22,38 @@
             overflow-x: hidden;
         }
 
-        /* Sidebar */
+        /* Sidebar - Narrow Style */
         .scm-sidebar {
-            width: 250px;
+            width: 100px;
             background-color: #1a1a1a;
             color: white;
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
             transition: width 0.3s;
         }
 
         .scm-logo-area {
             height: 70px;
+            min-height: 70px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0 5px;
         }
 
         .scm-logo-area a {
             font-family: var(--font-heading);
-            font-size: 1.5rem;
+            font-size: 1rem;
             font-weight: 800;
             color: white;
             text-decoration: none;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            text-align: center;
+            line-height: 1.2;
         }
 
         .scm-menu {
@@ -55,15 +61,20 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            gap: 0.5rem;
         }
 
         .scm-menu-item {
-            display: block;
-            padding: 0.8rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 0.5rem;
             color: #aaa;
             text-decoration: none;
             transition: all 0.3s;
             border-left: 3px solid transparent;
+            text-align: center;
         }
 
         .scm-menu-item:hover,
@@ -74,28 +85,52 @@
         }
 
         .scm-menu-item i {
-            width: 25px;
-            text-align: center;
-            margin-right: 10px;
+            width: auto;
+            font-size: 1.5rem;
+            margin-right: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .scm-menu-item span {
+            font-size: 0.75rem;
+            word-break: keep-all;
+            line-height: 1.2;
         }
 
         .scm-user-profile {
-            padding: 1.5rem;
+            padding: 1rem;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
+            flex-direction: column;
             align-items: center;
             gap: 10px;
+            text-align: center;
+            margin-top: auto;
         }
 
         .scm-user-avatar {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             background-color: var(--primary-color);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .scm-user-info {
+            display: none;
+        }
+
+        /* Main Content Adjustment */
+        .scm-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: calc(100% - 100px);
+            height: 100%;
         }
 
         .scm-user-info h4 {
@@ -327,24 +362,48 @@
     <!-- Sidebar -->
     <aside class="scm-sidebar">
         <div class="scm-logo-area">
-            <a href="index.html">RIUM SCM</a>
+            <a href="index.html">RIUM<br>SCM</a>
         </div>
         <nav class="scm-menu">
-            <a href="scm_dashboard.html" class="scm-menu-item"><i class="fas fa-home"></i> 대시보드</a>
-            <a href="scm_products.html" class="scm-menu-item"><i class="fas fa-box"></i> 상품 관리</a>
-            <a href="scm_orders.html" class="scm-menu-item active"><i class="fas fa-shopping-cart"></i> 주문 관리</a>
-            <a href="#" class="scm-menu-item"><i class="fas fa-exchange-alt"></i> 반품/교환</a>
-            <a href="#" class="scm-menu-item"><i class="fas fa-calculator"></i> 정산 관리</a>
-            <a href="#" class="scm-menu-item"><i class="fas fa-bullhorn"></i> 공지사항</a>
-            <a href="#" class="scm-menu-item"><i class="fas fa-cog"></i> 설정</a>
+            <a href="scm_admin.html" class="scm-menu-item">
+                <i class="fas fa-chart-line"></i>
+                <span>대시보드</span>
+            </a>
+            <a href="scm_products.html" class="scm-menu-item">
+                <i class="fas fa-box"></i>
+                <span>상품 관리</span>
+            </a>
+            <a href="scm_orders.html" class="scm-menu-item active">
+                <i class="fas fa-shopping-cart"></i>
+                <span>주문 관리</span>
+            </a>
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-exchange-alt"></i>
+                <span>반품/교환</span>
+            </a>
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-calculator"></i>
+                <span>정산 관리</span>
+            </a>
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-bullhorn"></i>
+                <span>공지사항</span>
+            </a>
+            <a href="scm_admin.html" class="scm-menu-item">
+                <i class="fas fa-cog"></i>
+                <span>설정</span>
+            </a>
         </nav>
         <div class="scm-user-profile">
-            <div class="scm-user-avatar">P</div>
-            <div class="scm-user-info">
-                <h4>Partner User</h4>
-                <p>Wizard Co.</p>
+            <div class="scm-user-avatar">
+                <span>A</span>
             </div>
-            <a href="index.html" style="color: #888; margin-left: auto;"><i class="fas fa-sign-out-alt"></i></a>
+            <div class="scm-user-info">
+                <h4>Admin User</h4>
+            </div>
+            <a href="index.html" style="color: #888; margin-top: 10px;" title="로그아웃">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
         </div>
     </aside>
 
