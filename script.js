@@ -19,16 +19,36 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!url) return '';
         let cleanUrl = url.trim();
 
-        // Handle relative paths first
+        // 1. Fix localhost/127.0.0.1 URLs (e.g. from local DB seed) to point to correct backend
+        if (cleanUrl.match(/https?:\/\/(localhost|127\.0\.0\.1)/)) {
+            try {
+                const urlObj = new URL(cleanUrl);
+                cleanUrl = `${API_BASE_URL}${urlObj.pathname}${urlObj.search}`;
+            } catch (e) {
+                // Fallback regex if URL parsing fails
+                const path = cleanUrl.replace(/https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, '');
+                cleanUrl = `${API_BASE_URL}${path}`;
+            }
+        }
+
+        // 2. Handle relative paths
         if (cleanUrl.startsWith('/')) {
             cleanUrl = `${API_BASE_URL}${cleanUrl}`;
         }
 
-        // If it's already HTTPS or data URI, return as is (unless resizing needed, but for now keep simple)
-        if (cleanUrl.startsWith('https://') || cleanUrl.startsWith('data:')) return cleanUrl;
+        const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-        // If HTTP, use wsrv.nl proxy
-        if (cleanUrl.startsWith('http://')) {
+        // 3. Skip proxy for data URIs or if we are in local dev env (proxy can't reach localhost)
+        if (cleanUrl.startsWith('data:') || (isLocalEnv && cleanUrl.includes('localhost'))) {
+            return cleanUrl;
+        }
+
+        // 4. Use Proxy for HTTP (Mixed Content Fix) or for resizing
+        // Only proxy if it's a public URL (http/https)
+        if (cleanUrl.startsWith('http://') || (width > 0 && cleanUrl.startsWith('https://'))) {
+            // For https, we only proxy if width > 0 to optimize, otherwise keep original
+            if (cleanUrl.startsWith('https://') && width === 0) return cleanUrl;
+
             const encoded = encodeURIComponent(cleanUrl);
             let proxyUrl = `https://wsrv.nl/?url=${encoded}&output=webp`;
             if (width > 0) proxyUrl += `&w=${width}`;
