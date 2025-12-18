@@ -462,7 +462,9 @@
             document.getElementById('productContent').style.display = 'block';
 
             // Images
-            const imgUrl = p.imageUrl || (p.images && p.images[0]) || 'https://placehold.co/600x400?text=No+Image';
+            let imgUrl = p.imageUrl || (p.images && p.images[0]) || 'https://placehold.co/600x400?text=No+Image';
+            // Secure the main image
+            imgUrl = getSecureImageUrl(imgUrl);
             document.getElementById('mainImage').src = imgUrl;
 
             // Info
@@ -496,11 +498,12 @@
 
                 // Check if detailUrl is a raw HTML string (e.g. <img src=...>)
                 if (p.detailUrl.trim().startsWith('<')) {
-                    detailContainer.innerHTML = p.detailUrl;
+                    // Secure HTML content
+                    detailContainer.innerHTML = secureTargetHtml(p.detailUrl);
                 } else {
                     // Assume it is a URL
                     const img = document.createElement('img');
-                    img.src = p.detailUrl;
+                    img.src = getSecureImageUrl(p.detailUrl);
                     img.onerror = () => { img.style.display = 'none'; }; // Hide if broken
                     detailContainer.appendChild(img);
                 }
@@ -516,8 +519,40 @@
             }
         }
 
-        // Init
+        // Initialize
         fetchProduct();
+
+        // Helper: Convert mixed-content (HTTP) images to HTTPS via proxy
+        function getSecureImageUrl(url, width = 0) {
+            if (!url) return '';
+
+            // If already HTTPS, or a relative path, or a data URI, return as is
+            if (url.startsWith('https://') || url.startsWith('/') || url.startsWith('data:')) {
+                return url;
+            }
+
+            // If HTTP, use wsrv.nl proxy (free, reliable, supports SSL)
+            // wsrv.nl is a global CDN for image resizing and proxying
+            if (url.startsWith('http://')) {
+                // Encode the original URL
+                const encoded = encodeURIComponent(url);
+                let proxyUrl = `https://wsrv.nl/?url=${encoded}`;
+                if (width > 0) proxyUrl += `&w=${width}&output=webp`; // Opt: Resize & optimize
+                return proxyUrl;
+            }
+
+            return url;
+        }
+
+        // Helper: Replace http:// src in HTML content
+        function secureTargetHtml(html) {
+            // Regex to find src="http://..." and wrap with proxy
+            // This is a simple replacement.
+            return html.replace(/src=["'](http:\/\/[^"']+)["']/g, (match, p1) => {
+                return `src="${getSecureImageUrl(p1)}"`;
+            });
+        }
+
     </script>
 </body>
 
