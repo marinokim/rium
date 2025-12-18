@@ -773,40 +773,86 @@
             }
         }
 
+        // Quote Buffer (Session Storage)
         function addToQuote(productId) {
-            alert(`상품 ID ${productId}가 견적서에 담겼습니다.`);
+            let buffer = JSON.parse(sessionStorage.getItem('quoteBuffer') || '[]');
+            // De-duplicate or allow updates? Simple de-dupe for now.
+            const existing = buffer.find(i => i.productId === productId);
+
+            // Scrape Real Data for Local Fallback
+            // Find card
+            const cardBtn = document.querySelector(`button[onclick="addToQuote(${productId})"]`);
+            let pName = 'Unknown Product';
+            let pImage = '';
+            let pPrice = 0;
+
+            if (cardBtn) {
+                const card = cardBtn.closest('.product-card');
+                if (card) {
+                    pName = card.querySelector('h3')?.innerText || pName;
+                    pImage = card.querySelector('img')?.src || '';
+                    const priceText = card.querySelector('.b2b-price')?.innerText || '0';
+                    pPrice = parseInt(priceText.replace(/[^0-9]/g, '')) || 0;
+                }
+            }
+
+            if (existing) {
+                existing.quantity += 1;
+                alert(`상품이 추가되었습니다. (수량: ${existing.quantity})`);
+            } else {
+                buffer.push({
+                    productId,
+                    quantity: 1,
+                    // Store detailed info for local fallback!
+                    name: pName,
+                    image: pImage,
+                    price: pPrice
+                });
+                alert('상품이 견적서에 담겼습니다.');
+            }
+            sessionStorage.setItem('quoteBuffer', JSON.stringify(buffer));
+            updateProposalBadge();
         }
 
-        // Mock Proposal Creation
-        // Real Proposal Creation via API
-        async function createProposal() {
-            // Get Items (mock buffer for now since addToQuote just alerts)
-            // In a real scenario, we'd read sessionStorage.
-            let items = [];
-            // Only add a dummy item if we have no cart.
-
-            // Try to find a product ID from currently loaded products, or default to 1
-            const firstCard = document.querySelector('.product-card button');
-            let dummyId = 1;
-            if (firstCard) {
-                const match = firstCard.getAttribute('onclick')?.match(/\d+/);
-                if (match) dummyId = Number(match[0]);
+        function updateProposalBadge() {
+            const buffer = JSON.parse(sessionStorage.getItem('quoteBuffer') || '[]');
+            const count = buffer.reduce((sum, i) => sum + i.quantity, 0);
+            const badge = document.getElementById('proposal-count');
+            if (badge) {
+                badge.innerText = count;
+                badge.style.display = count > 0 ? 'inline-block' : 'none';
             }
-            items.push({ productId: dummyId, quantity: 1 });
+        }
+
+        // Init Badge
+        document.addEventListener('DOMContentLoaded', updateProposalBadge);
+
+
+        async function createProposal() {
+            const buffer = JSON.parse(sessionStorage.getItem('quoteBuffer') || '[]');
+
+            if (buffer.length === 0) {
+                alert('선택된 상품이 없습니다. 먼저 상품을 담아주세요.');
+                return;
+            }
+
+            // Prepare Items for API (just productId/quantity)
+            const apiItems = buffer.map(i => ({ productId: i.productId, quantity: i.quantity }));
 
             try {
                 // 1. Try API Call
                 const response = await apiFetch('/api/quotes', {
                     method: 'POST',
-                    body: JSON.stringify({ items, message: 'Auto-generated from Catalog' })
+                    body: JSON.stringify({ items: apiItems, message: 'Created from Catalog' })
                 });
 
                 if (response.quote) {
+                    sessionStorage.removeItem('quoteBuffer'); // Clear buffer
+                    updateProposalBadge();
+
                     try {
                         const confirmDownload = confirm('제안서가 생성되었습니다.\n엑셀 파일도 다운로드 하시겠습니까?');
                         if (confirmDownload) {
-                            // We need downloadFile helper. Since I failed to add it globally, I define it here or assume I add it later.
-                            // I'll define it inline or use a simple fetch-blob approach here directly to avoid global scope issues.
                             const token = localStorage.getItem('token');
                             const res = await fetch(`${API_BASE}/api/quotes/${response.quote.id}/download/excel`, {
                                 headers: { 'Authorization': `Bearer ${token}` }
@@ -832,57 +878,55 @@
                 console.warn('API Creation Failed, falling back to LocalStorage Mock', e);
             }
 
-            // Fallback Logic
+            // Fallback Logic (Local)
             const today = new Date();
             const dateStr = today.toISOString().split('T')[0];
             const randomId = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
 
-            // Try to scrape real info from the card
-            let pName = 'Selected Catalog Items (Bundle)';
-            let pImage = 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=100&auto=format&fit=crop';
-            let pPriceStr = '0원';
+            // Create Multi-Item Proposal Object
+            const localId = `PROP-${dateStr.replace(/-/g, '')}-${randomId}`;
 
-            if (firstCard) {
-                // traverse up to .product-card
-                const card = firstCard.closest('.product-card');
-                if (card) {
-                    const nameEl = card.querySelector('h3');
-                    const priceEl = card.querySelector('.b2b-price'); // Changed from .price to .b2b-price
-                    const imgEl = card.querySelector('img');
-                    if (nameEl) pName = nameEl.innerText;
-                    if (priceEl) pPriceStr = priceEl.innerText;
-                    if (imgEl) pImage = imgEl.src;
-                }
-            }
+            // Calculate total amount
+            const totalAmt = buffer.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
             const newProposal = {
-                id: `PROP-${dateStr.replace(/-/g, '')}-${randomId}`,
+                id: localId,
                 date: dateStr,
+                // We store the full item list now for local usage
+                items: buffer.map(i => ({
+                    productId: i.productId,
+                    name: i.name,
+                    image: i.image,
+                    price: i.price,
+                    quantity: i.quantity
+                })),
+                // Legacy fields for list view (just show first item info)
                 product: {
-                    name: pName,
-                    image: pImage
+                    name: buffer[0].name + (buffer.length > 1 ? ` 외 ${buffer.length - 1}건` : ''),
+                    image: buffer[0].image
                 },
-                qty: Math.floor(Math.random() * 10) + 1,
+                qty: buffer.reduce((s, i) => s + i.quantity, 0),
                 client: 'New Client Co.',
-                amount: pPriceStr,
-                status: 'new' // 'new' maps to '제안중'
+                amount: totalAmt + '원',
+                status: 'new'
             };
 
             let proposals = JSON.parse(localStorage.getItem('scm_proposals') || '[]');
-            proposals.unshift(newProposal); // Add to top
+            proposals.unshift(newProposal);
             localStorage.setItem('scm_proposals', JSON.stringify(proposals));
+            sessionStorage.removeItem('quoteBuffer');
+            updateProposalBadge();
 
             alert('제안서가 출력되었습니다 (로컬 모드).\n제안 관리 리스트에 등록되었습니다.');
+
             try {
                 if (confirm('엑셀 파일도 다운로드 하시겠습니까? (로컬 생성)')) {
                     const wb = XLSX.utils.book_new();
 
-                    // Header Info
                     const headerInfo = [
                         ['RIUM', '', '', '', '당사가 운영하는 모든 상품은 폐쇄몰을 제외한 온라인 판매를 급하며, 판매 시 상품 공급이 중단됩니다.', '', '', '', '', '', '', '', '', `(리움)_제안_${new Date().toISOString().split('T')[0]}`]
                     ];
 
-                    // Columns
                     const columns = [
                         '순번', '품절여부', '고유번호', '상품명', '상품이미지',
                         '모델명', '옵션', '실명', '제조일', '원산지',
@@ -890,12 +934,13 @@
                         '대표이미지', '상세이미지', '비고'
                     ];
 
-                    const dataRow = [
-                        1,
+                    // Generate Rows for ALL items
+                    const dataRows = newProposal.items.map((item, idx) => [
+                        idx + 1,
                         '',
-                        newProposal.id.split('-').pop(),
-                        newProposal.product.name,
-                        '',
+                        item.productId,
+                        item.name,
+                        item.image || '', // Column E: Image URL
                         '-',
                         '',
                         '',
@@ -903,15 +948,15 @@
                         '중국',
                         1,
                         1,
-                        parseInt(newProposal.amount.replace(/[^0-9]/g, '')) * 1.5,
-                        parseInt(newProposal.amount.replace(/[^0-9]/g, '')),
+                        item.price * 1.5,
+                        item.price,
                         0,
-                        newProposal.product.image || '',
-                        `<img src="${newProposal.product.image || ''}">`,
+                        item.image || '', // Column O: URL
+                        `<img src="${item.image || ''}">`, // Column P: HTML
                         ''
-                    ];
+                    ]);
 
-                    const wsData = [...headerInfo, columns, dataRow];
+                    const wsData = [...headerInfo, columns, ...dataRows];
                     const ws = XLSX.utils.aoa_to_sheet(wsData);
 
                     if (!ws['!merges']) ws['!merges'] = [];

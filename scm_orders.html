@@ -557,29 +557,54 @@
                 ];
 
                 // Data Rows
-                // Mock properties might be missing, so we use defaults.
-                const dataRow = [
-                    1, // 순번
-                    '', // 품절여부 (Available)
-                    prop.id.split('-').pop(), // 고유번호 (Fake)
-                    prop.product.name, // 상품명
-                    '', // 상품이미지
-                    '-', // 모델명
-                    '', // 옵션
-                    '', // 실명
-                    '', // 제조일
-                    '중국', // 원산지
-                    1, // 카톤입수량
-                    1, // 기본수량
-                    parseInt(prop.amount.replace(/[^0-9]/g, '')) * 1.5, // 소비자가 (Fake)
-                    parseInt(prop.amount.replace(/[^0-9]/g, '')), // 공급가
-                    0, // 배송비
-                    prop.product.image || '', // 대표이미지
-                    `<img src="${prop.product.image || ''}">`, // 상세이미지
-                    '' // 비고
-                ];
+                let dataRows = [];
+                if (prop.items && prop.items.length > 0) {
+                    // Multi-item structure
+                    dataRows = prop.items.map((item, idx) => [
+                        idx + 1,
+                        '',
+                        item.productId || prop.id.split('-').pop(),
+                        item.name,
+                        item.image || '', // Image URL in Col E
+                        '-',
+                        '',
+                        '',
+                        '',
+                        '중국',
+                        1,
+                        1,
+                        item.price * 1.5,
+                        item.price,
+                        0,
+                        item.image || '', // Image URL in Col O
+                        `<img src="${item.image || ''}">`,
+                        ''
+                    ]);
+                } else {
+                    // Legacy Single-Item Fallback
+                    dataRows = [[
+                        1,
+                        '',
+                        prop.id.split('-').pop(),
+                        prop.product.name,
+                        prop.product.image || '',
+                        '-',
+                        '',
+                        '',
+                        '',
+                        '중국',
+                        1,
+                        1,
+                        parseInt(prop.amount.replace(/[^0-9]/g, '')) * 1.5,
+                        parseInt(prop.amount.replace(/[^0-9]/g, '')),
+                        0,
+                        prop.product.image || '',
+                        `<img src="${prop.product.image || ''}">`,
+                        ''
+                    ]];
+                }
 
-                const wsData = [...headerInfo, columns, dataRow];
+                const wsData = [...headerInfo, columns, ...dataRows];
                 const ws = XLSX.utils.aoa_to_sheet(wsData);
 
                 // Merge A1:D1
