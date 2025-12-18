@@ -1040,7 +1040,7 @@
                 if (currentProducts && currentProducts[index]) {
                     const p = currentProducts[index];
                     if (p.id) {
-                        window.open(`product_detail.html?id=${p.id}`, '_blank');
+                        window.open(`product_detail.html?id=${p.id}&from=scm`, '_blank');
                     } else {
                         alert('상품 ID를 찾을 수 없습니다.');
                     }
