@@ -1,5 +1,5 @@
 import express from 'express';
-import { getProducts, getProductById, createProduct, updateProduct, deleteProduct } from '../controllers/productController.js';
+import { getProducts, getProductById, createProduct, updateProduct, deleteProduct, toggleNewStatus } from '../controllers/productController.js';
 import { authenticateToken, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -15,6 +15,7 @@ router.get('/:id', getProductById);
 
 router.post('/', createProduct);
 router.put('/:id', updateProduct);
+router.patch('/:id/new-status', toggleNewStatus);
 router.delete('/:id', deleteProduct);
 
 export default router;

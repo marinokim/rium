@@ -86,7 +86,7 @@ export const createProduct = async (req: Request, res: Response) => {
             shippingFee, shippingFeeIndividual, shippingFeeCarton,
             manufacturer, origin, isTaxFree,
             imageUrl, detailUrl, productSpec, productOptions, remarks,
-            categoryId, isAvailable
+            categoryId, isAvailable, isNew
         } = req.body;
 
         const newProduct = await prisma.product.create({
@@ -112,7 +112,8 @@ export const createProduct = async (req: Request, res: Response) => {
                 productOptions,
                 remarks,
                 categoryId: Number(categoryId),
-                isAvailable: isAvailable !== undefined ? isAvailable : true
+                isAvailable: isAvailable !== undefined ? isAvailable : true,
+                isNew: isNew !== undefined ? isNew : false
             }
         });
         res.status(201).json({ message: "Product created", product: newProduct });
@@ -136,7 +137,7 @@ export const updateProduct = async (req: Request, res: Response) => {
             shippingFee, shippingFeeIndividual, shippingFeeCarton,
             manufacturer, origin, isTaxFree,
             imageUrl, detailUrl, productSpec, productOptions, remarks,
-            categoryId, isAvailable
+            categoryId, isAvailable, isNew
         } = req.body;
 
         const updatedProduct = await prisma.product.update({
@@ -163,7 +164,8 @@ export const updateProduct = async (req: Request, res: Response) => {
                 productOptions,
                 remarks,
                 categoryId: categoryId ? Number(categoryId) : undefined,
-                isAvailable
+                isAvailable,
+                isNew
             }
         });
         res.json({ message: "Product updated", product: updatedProduct });
