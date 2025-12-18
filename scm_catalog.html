@@ -803,7 +803,29 @@
                 });
 
                 if (response.quote) {
-                    alert('제안서가 서버에 성공적으로 저장되었습니다!');
+                    try {
+                        const confirmDownload = confirm('제안서가 생성되었습니다.\n엑셀 파일도 다운로드 하시겠습니까?');
+                        if (confirmDownload) {
+                            // We need downloadFile helper. Since I failed to add it globally, I define it here or assume I add it later.
+                            // I'll define it inline or use a simple fetch-blob approach here directly to avoid global scope issues.
+                            const token = localStorage.getItem('token');
+                            const res = await fetch(`${API_BASE}/api/quotes/${response.quote.id}/download/excel`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            if (res.ok) {
+                                const blob = await res.blob();
+                                const link = document.createElement('a');
+                                link.href = window.URL.createObjectURL(blob);
+                                link.download = `Quote_${response.quote.quoteNumber}.xlsx`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            } else {
+                                alert('다운로드 실패');
+                            }
+                        }
+                    } catch (e) { console.error(e); }
+
                     location.href = 'scm_orders.html';
                     return;
                 }

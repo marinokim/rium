@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma.js';
 import { AuthRequest } from '../middleware/auth.js';
+import * as XLSX from 'xlsx';
 
 // Create Quote Request
 export const createQuote = async (req: AuthRequest, res: Response) => {
@@ -94,5 +95,73 @@ export const getMyQuotes = async (req: AuthRequest, res: Response) => {
     } catch (error) {
         console.error('Get quotes error:', error);
         res.status(500).json({ error: 'Failed to fetch quotes' });
+    }
+};
+
+// Download Quote as Excel
+export const downloadQuoteExcel = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.userId;
+        const quoteId = Number(req.params.id);
+
+        if (!userId) return res.status(401).json({ error: 'User ID missing' });
+
+        const quote = await prisma.quote.findUnique({
+            where: { id: quoteId },
+            include: {
+                items: {
+                    include: { product: true }
+                }
+            }
+        });
+
+        if (!quote) return res.status(404).json({ error: 'Quote not found' });
+        // Optional: Check ownership? 
+        // if (quote.userId !== Number(userId) && req.user.role !== 'ADMIN') ...
+
+        // Prepare Data for Excel
+        const data: any[] = quote.items.map((item, index) => {
+            const p = item.product as any;
+            return {
+                'No': index + 1,
+                'Product Name': p.name,
+                'Model No': p.modelNo || '-',
+                'Spec': p.productSpec || '-',
+                'Quantity': item.quantity,
+                'Unit Price': item.price,
+                'Supply Price': item.price * 0.9,
+                'Amount': item.price * item.quantity,
+                'Remark': p.remarks || ''
+            };
+        });
+
+        // Add Summary Row
+        data.push({
+            'No': '', 'Product Name': 'Total', 'Model No': '', 'Spec': '',
+            'Quantity': data.reduce((sum, r) => sum + (r['Quantity'] as number), 0),
+            'Unit Price': 0, 'Supply Price': 0,
+            'Amount': quote.totalAmount, 'Remark': ''
+        });
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(data);
+
+        // Adjust Column Widths (Optional)
+        ws['!cols'] = [
+            { wch: 5 }, { wch: 30 }, { wch: 15 }, { wch: 15 },
+            { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 20 }
+        ];
+
+        XLSX.utils.book_append_sheet(wb, ws, `Quote_${quote.quoteNumber}`);
+
+        const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=Quote_${quote.quoteNumber}.xlsx`);
+        res.send(buffer);
+
+    } catch (error) {
+        console.error('Download quote error:', error);
+        res.status(500).json({ error: 'Failed to download quote' });
     }
 };

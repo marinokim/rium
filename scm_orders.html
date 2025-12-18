@@ -506,6 +506,30 @@
             return res.json();
         }
 
+        // Download Excel Helper
+        async function downloadExcel(quoteId, quoteNumber) {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_BASE}/api/quotes/${quoteId}/download/excel`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = `Quote_${quoteNumber}.xlsx`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else {
+                    alert('다운로드 실패 (서버 오류)');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('다운로드 중 오류가 발생했습니다.');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             const tbody = document.querySelector('tbody');
 
@@ -515,8 +539,7 @@
                 const quotes = data.quotes || [];
 
                 if (quotes.length > 0) {
-                    // Clear mock data if we have real data? Or prepend?
-                    // Let's prepend real data.
+                    // Prepend real data.
                     quotes.forEach(quote => {
                         const firstItem = quote.items[0];
                         const productImg = firstItem?.product?.imageUrl || 'https://via.placeholder.com/40';
@@ -538,14 +561,19 @@
                             <td>${quote.userId} (Client)</td>
                             <td>${quote.totalAmount.toLocaleString()}원</td>
                             <td><span class="scm-status status-new" style="background: #e3f2fd; color: #1565c0;">${quote.status}</span></td>
-                            <td><button class="scm-btn scm-btn-outline" style="padding: 2px 8px; font-size: 0.8rem;">제안서 보기</button></td>
+                            <td>
+                                <button class="scm-btn scm-btn-outline" style="padding: 2px 8px; font-size: 0.8rem;">제안서 보기</button>
+                                <button class="scm-btn scm-btn-outline" style="padding: 2px 8px; font-size: 0.8rem; margin-left: 5px;" 
+                                        onclick="downloadExcel(${quote.id}, '${quote.quoteNumber}')" title="Excel Download">
+                                    <i class="fas fa-file-excel"></i>
+                                </button>
+                            </td>
                         `;
                         // Insert at top
                         if (tbody.firstChild) tbody.insertBefore(row, tbody.firstChild);
                         else tbody.appendChild(row);
                     });
-                    return; // If successful, maybe skip localStorage? Or merge? 
-                    // Let's merge for now so user sees their "Local Only" creations too.
+                    return;
                 }
             } catch (err) {
                 console.log('API Fetch failed, using LocalStorage only', err);
@@ -570,7 +598,10 @@
                     <td>${prop.client}</td>
                     <td>${prop.amount}</td>
                     <td><span class="scm-status status-new" style="background: #e3f2fd; color: #1565c0;">제안중</span></td>
-                    <td><button class="scm-btn scm-btn-outline" style="padding: 2px 8px; font-size: 0.8rem;">제안서 보기</button></td>
+                    <td>
+                        <button class="scm-btn scm-btn-outline" style="padding: 2px 8px; font-size: 0.8rem;">제안서 보기</button>
+                        <!-- No download for mock data yet, or could simulate -->
+                    </td>
                 `;
                 if (tbody.firstChild) {
                     tbody.insertBefore(row, tbody.firstChild);
