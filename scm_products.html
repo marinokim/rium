@@ -1193,18 +1193,14 @@
                         ${detailContentHtml}
                     </div>` : '';
 
-                // sticky header logic handled by CSS sticky? 
-                // We are inside .scm-content which scrolls. So sticky top needs to be 0 or relative to scm-content.
-                // SCM Header is outside .scm-content. 
-                // So top: 0 inside .scm-content makes it sticky to the top of the scrollable area.
-
+                // Sticky Header: Centered Button (Match Homepage) - Full Width
                 detailView.innerHTML = `
-                    <div style="position: sticky; top: 0; margin: -2rem -2rem 2rem -2rem; padding: 1rem 2rem; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); border-bottom: 1px solid #eee; z-index: 100; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                         <button onclick="closeProductDetail()" style="padding: 8px 20px; background: #333; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                             <i class="fas fa-arrow-left"></i> 목록으로 돌아가기
-                         </button>
-                         <div style="font-weight: 600; font-size: 1.1rem; color: #333;">${productName}</div>
-                         <div style="width: 100px;"></div> <!-- Spacer for center alignment -->
+                    <div style="position: sticky; top: 0; width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 0; border-bottom: 1px solid #eee; z-index: 999; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                         <div style="max-width: 1000px; margin: 0 auto;">
+                             <button onclick="closeProductDetail()" style="padding: 10px 40px; background: #333; color: white; border: none; border-radius: 30px; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                 <i class="fas fa-list"></i> 목록으로 돌아가기
+                             </button>
+                         </div>
                     </div>
 
                     <div style="max-width: 1000px; margin: 0 auto; padding: 3rem 2rem;">
@@ -1246,6 +1242,10 @@
 
                         listContainer.style.display = 'none';
                         detailContainer.style.display = 'block';
+
+                        // Temporarily remove padding from main scroll container
+                        scmContent.style.padding = '0';
+
                         // scroll to top for detail view
                         scmContent.scrollTop = 0;
 
@@ -1266,6 +1266,9 @@
 
                 detailContainer.style.display = 'none';
                 listContainer.style.display = 'block';
+
+                // Restore Padding
+                scmContent.style.padding = '2rem';
 
                 // Restore Scroll
                 scmContent.scrollTop = lastScrollTop;
