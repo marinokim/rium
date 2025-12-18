@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <link rel="icon" type="image/png" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>주문 관리 - RIUM SCM</title>
+    <title>제안/주문/견적관리 - RIUM SCM</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -359,23 +359,25 @@
             </a>
             <a href="scm_orders.html" class="scm-menu-item active">
                 <i class="fas fa-shopping-cart"></i>
-                <span>주문 관리</span>
+                <span>제안/주문/견적관리</span>
             </a>
             <a href="#" class="scm-menu-item">
                 <i class="fas fa-exchange-alt"></i>
                 <span>반품/교환</span>
             </a>
-            <a href="#" class="scm-menu-item">
+            <a href="javascript:void(0)" class="scm-menu-item"
+                style="opacity: 0.5; pointer-events: none; cursor: default;">
                 <i class="fas fa-calculator"></i>
-                <span>정산 관리</span>
+                <span>매출통계</span>
             </a>
             <a href="#" class="scm-menu-item">
                 <i class="fas fa-bullhorn"></i>
                 <span>공지사항</span>
             </a>
-            <a href="scm_admin.html" class="scm-menu-item">
+            <a href="javascript:void(0)" class="scm-menu-item"
+                style="opacity: 0.5; pointer-events: none; cursor: default;">
                 <i class="fas fa-cog"></i>
-                <span>설정</span>
+                <span>시스템설정</span>
             </a>
         </nav>
         <div class="scm-user-profile">
@@ -398,9 +400,10 @@
     <!-- Main Content -->
     <main class="scm-main">
         <!-- Header -->
+        <!-- Header -->
         <header class="scm-header">
             <div class="scm-breadcrumb">
-                <i class="fas fa-home"></i> Home > 주문 관리
+                <i class="fas fa-home"></i> Home > 제안/주문/견적관리
             </div>
             <div class="scm-header-actions">
                 <div class="scm-icon-btn">
@@ -416,7 +419,7 @@
 
         <!-- Content -->
         <div class="scm-content">
-            <h2 style="margin-bottom: 1.5rem; font-size: 1.5rem;">주문 관리 (Order Management)</h2>
+            <h2 style="margin-bottom: 1.5rem; font-size: 1.5rem;">제안/주문/견적관리 (Proposal/Order/Quote Management)</h2>
 
             <!-- Filter Bar -->
             <div class="scm-filter-bar">
@@ -430,37 +433,40 @@
                     <label>상태</label>
                     <select class="scm-select">
                         <option value="all">전체</option>
-                        <option value="new">신규주문</option>
-                        <option value="processing">배송준비</option>
-                        <option value="shipped">배송중</option>
-                        <option value="completed">배송완료</option>
+                        <option value="new">제안중</option>
+                        <option value="processing">수주성공</option>
+                        <option value="shipped">계약완료</option>
+                        <option value="completed">제안실패</option>
                     </select>
                 </div>
                 <div class="scm-input-group" style="margin-left: auto;">
-                    <input type="text" class="scm-input" placeholder="주문번호/주문자명 검색">
+                    <input type="text" class="scm-input" placeholder="제안번호/고객사 검색">
                     <button class="scm-btn">검색</button>
                 </div>
             </div>
 
-            <!-- Order Table -->
+            <!-- Proposal List Table -->
             <div class="scm-card">
-                <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem;">
-                    <button class="scm-btn scm-btn-outline">발주확인</button>
-                    <button class="scm-btn scm-btn-outline">송장출력</button>
-                    <button class="scm-btn scm-btn-outline">발송처리</button>
-                    <button class="scm-btn scm-btn-outline" style="color: #d32f2f; border-color: #d32f2f;">주문취소</button>
+                <div
+                    style="margin-bottom: 1rem; display: flex; gap: 0.5rem; align-items: center; justify-content: space-between;">
+                    <h3 style="margin: 0; font-size: 1.1rem; color: #333;">제안 관리 리스트</h3>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="scm-btn scm-btn-outline">제안서 작성</button>
+                        <button class="scm-btn scm-btn-outline"
+                            style="color: #d32f2f; border-color: #d32f2f;">삭제</button>
+                    </div>
                 </div>
                 <div class="scm-table-container">
                     <table class="scm-table">
                         <thead>
                             <tr>
                                 <th><input type="checkbox"></th>
-                                <th>주문번호</th>
-                                <th>주문일시</th>
-                                <th>상품정보</th>
+                                <th>제안번호</th>
+                                <th>제안일자</th>
+                                <th>제안상품</th>
                                 <th>수량</th>
-                                <th>주문자</th>
-                                <th>결제금액</th>
+                                <th>고객사</th>
+                                <th>제안금액</th>
                                 <th>상태</th>
                                 <th>관리</th>
                             </tr>
@@ -468,8 +474,8 @@
                         <tbody>
                             <tr>
                                 <td><input type="checkbox"></td>
-                                <td>20231206-0001</td>
-                                <td>2023-12-06 14:30</td>
+                                <td>PROP-20231206-001</td>
+                                <td>2023-12-06</td>
                                 <td>
                                     <div style="display: flex; align-items: center; gap: 10px;">
                                         <img src="https://images.unsplash.com/photo-1614630687884-699709d22445?q=80&w=100&auto=format&fit=crop"
@@ -478,11 +484,12 @@
                                     </div>
                                 </td>
                                 <td>1</td>
-                                <td>김철수</td>
+                                <td>(주)대한유통</td>
                                 <td>450,000원</td>
-                                <td><span class="scm-status status-new">신규주문</span></td>
+                                <td><span class="scm-status status-new"
+                                        style="background: #e3f2fd; color: #1565c0;">제안중</span></td>
                                 <td><button class="scm-btn scm-btn-outline"
-                                        style="padding: 2px 8px; font-size: 0.8rem;">상세</button></td>
+                                        style="padding: 2px 8px; font-size: 0.8rem;">제안서 보기</button></td>
                             </tr>
                             <tr>
                                 <td><input type="checkbox"></td>
