@@ -31,9 +31,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // 2. Handle relative paths
-        if (cleanUrl.startsWith('/')) {
-            cleanUrl = `${API_BASE_URL}${cleanUrl}`;
+        // 2. Handle relative paths (even without leading slash if it looks like a path)
+        if (cleanUrl.startsWith('/') || cleanUrl.match(/^(uploads|assets|images)\//)) {
+            // Ensure leading slash for concatenation
+            const path = cleanUrl.startsWith('/') ? cleanUrl : `/${cleanUrl}`;
+            cleanUrl = `${API_BASE_URL}${path}`;
         }
 
         const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -553,6 +555,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchProductDetail(id) {
         try {
+            // Define timeout promise
+            const timeout = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Request timed out')), 5000)
+            );
+
             const res = await Promise.race([
                 fetch(`${API_BASE_URL}/api/products/${id}`),
                 timeout
