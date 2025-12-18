@@ -961,13 +961,13 @@
 
                         const id = e.target.dataset.id;
                         try {
-                            const response = await fetch(`${API_BASE_URL}/products/${id}/availability`, {
+                            // Use apiFetch helper instead of direct fetch + undefined API_BASE_URL
+                            await apiFetch(`/api/products/${id}/availability`, {
                                 method: 'PATCH',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ isAvailable: newStatus })
                             });
 
-                            if (!response.ok) throw new Error('Status update failed');
                             // No need to reload, optimistic update is enough
                         } catch (err) {
                             console.error(err);
