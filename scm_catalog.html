@@ -377,6 +377,59 @@
             border-color: var(--primary-color);
         }
 
+        /* Filter Bar - Sticky */
+        .scm-filter-bar {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border: 1px solid #eee;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            align-items: center;
+            /* Hide Scrollbar */
+            scrollbar-width: none;
+            /* Firefox */
+            -ms-overflow-style: none;
+            /* IE/Edge */
+        }
+
+        .filter-group::-webkit-scrollbar {
+            display: none;
+            /* Chrome/Safari */
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .scm-sidebar {
@@ -396,45 +449,8 @@
 
             /* Filter Bar - Sticky */
             .scm-filter-bar {
-                background: white;
-                padding: 1rem 1.5rem;
-                border-radius: 8px;
-                margin-bottom: 1.5rem;
-                display: flex;
-                gap: 1rem;
-                align-items: center;
-                flex-wrap: wrap;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                position: sticky;
-                top: 0;
-                z-index: 10;
-                border: 1px solid #eee;
-            }
-
-            .filter-group {
-                display: flex;
-                gap: 0.5rem;
-                overflow-x: auto;
-                align-items: center;
-            }
-
-            .filter-btn {
-                padding: 0.5rem 1rem;
-                border: 1px solid #ddd;
-                border-radius: 20px;
-                background: white;
-                cursor: pointer;
-                transition: all 0.2s;
-                white-space: nowrap;
-                font-size: 0.9rem;
-                color: #666;
-            }
-
-            .filter-btn:hover,
-            .filter-btn.active {
-                background: var(--primary-color);
-                color: white;
-                border-color: var(--primary-color);
+                /* Adjust for mobile header if needed */
+                top: 70px;
             }
 
             .scm-header {
