@@ -576,9 +576,10 @@
                 }
 
                 products.forEach(product => {
-                    const imageUrl = product.images && product.images.length > 0
-                        ? product.images[0]
-                        : 'https://via.placeholder.com/600x400?text=No+Image';
+                    // Prioritize product.imageUrl (Admin logic) -> then product.images array -> then placeholder
+                    const imageUrl = product.imageUrl
+                        ? product.imageUrl
+                        : (product.images && product.images.length > 0 ? product.images[0] : 'https://placehold.co/600x400?text=No+Image');
 
                     const brandName = product.brand || 'RIUM'; // Default brand if missing
 
@@ -586,7 +587,7 @@
                     card.className = 'product-card';
                     card.innerHTML = `
                         <div class="product-img-wrapper">
-                            <img src="${imageUrl}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/600x400?text=Error'">
+                            <img src="${imageUrl}" alt="${product.name}" onerror="this.src='https://placehold.co/600x400?text=Error'">
                             <button class="heart-btn" title="제안서에 추가" onclick="toggleHeart(this)"><i class="far fa-heart"></i></button>
                         </div>
                         <div class="product-info">
