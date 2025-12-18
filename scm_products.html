@@ -436,91 +436,102 @@
 
         <!-- Content -->
         <div class="scm-content">
-            <!-- Page Title Area -->
-            <div style="margin-bottom: 1.5rem;">
-                <h2 style="font-size: 1.8rem; color: #001f3f; margin: 0; font-weight: 800;">상품 관리</h2>
+            <!-- List View Container -->
+            <div id="productListView">
+                <!-- Page Title Area -->
+                <div style="margin-bottom: 1.5rem;">
+                    <h2 style="font-size: 1.8rem; color: #001f3f; margin: 0; font-weight: 800;">상품 관리</h2>
+                </div>
+
+                <!-- Complex Action Toolbar -->
+                <div class="scm-action-bar">
+                    <!-- Group 1: Server Source Replace -->
+                    <div class="scm-action-group" style="padding-right: 1.5rem; border-right: 1px solid #ddd;">
+                        <span style="font-weight: 600;">서버 원본 교체:</span>
+                        <input type="file" id="serverSourceFile" style="display: none;" accept=".xlsx, .xls">
+                        <button class="scm-btn scm-btn-outline"
+                            onclick="document.getElementById('serverSourceFile').click()">파일 선택</button>
+                        <span id="serverSourceFileName"
+                            style="font-size: 0.85rem; color: #666; max-width: 150px; overflow: hidden; white-space: nowrap;">선택된
+                            파일 없음</span>
+                        <button class="scm-btn btn-teal" id="replaceSourceBtn">파일 교체</button>
+                    </div>
+
+                    <!-- Group 2: Excel Register Range -->
+                    <div class="scm-action-group" style="padding-right: 1.5rem; border-right: 1px solid #ddd;">
+                        <span style="font-weight: 600;">서버 엑셀 등록:</span>
+                        <input type="number" id="rangeStart" class="scm-input" placeholder="시작"
+                            style="width: 60px; text-align: center;">
+                        <span>~</span>
+                        <input type="number" id="rangeEnd" class="scm-input" placeholder="종료"
+                            style="width: 60px; text-align: center;">
+                        <button class="scm-btn btn-blue" id="registerRangeBtn">범위 등록</button>
+                    </div>
+
+                    <!-- Group 3: Right Aligned Actions -->
+                    <div class="scm-action-group" style="margin-left: auto;">
+                        <button class="scm-btn btn-teal" id="btnDownloadAll">전체 다운로드</button>
+                        <button class="scm-btn btn-green" id="btnTemplate">양식</button>
+                        <button class="scm-btn btn-red" id="btnDeleteRange">구간 삭제</button>
+
+                        <!-- Excel Upload Logic -->
+                        <input type="file" id="excelUploadInput" style="display: none;" accept=".xlsx, .xls">
+                        <button class="scm-btn btn-cyan" id="excelUploadBtn">엑셀 업로드</button>
+
+                        <!-- Only Excel Upload implemented via Input -->
+
+                        <button class="scm-btn btn-cyan">카테고리 관리</button>
+                        <button class="scm-btn btn-navy"><i class="fas fa-plus"></i> 신규 등록</button>
+                    </div>
+                </div>
+
+                <!-- Filter Options Row (Optional, kept for utility but styled minimally) -->
+                <div style="margin-bottom: 1rem; text-align: right;">
+                    <select class="scm-select">
+                        <option>전체 카테고리</option>
+                    </select>
+                    <button class="scm-btn btn-cyan">+ 카테고리 추가</button>
+                </div>
+
+                <!-- Product Table -->
+                <div class="scm-card">
+                    <div class="scm-table-container">
+                        <table class="scm-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">No.</th>
+                                    <th style="width: 80px;">IMG</th>
+                                    <th>브랜드</th>
+                                    <th>상품명/모델명/옵션</th>
+                                    <th>실판매가</th>
+                                    <th>공급가</th>
+                                    <th>재고</th>
+                                    <th>배송비</th>
+                                    <th>제조사/원산지/등록일</th>
+                                    <th>상태/관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productTableBody">
+                                <!-- Rows will be populated by JS -->
+                                <tr>
+                                    <td colspan="10" style="text-align: center; padding: 2rem;">Loading products...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <!-- Pagination -->
+                    <div class="scm-pagination"></div>
+                </div> <!-- Close scm-card -->
+            </div> <!-- Close productListView -->
+
+            <!-- Detail View Container -->
+            <div id="productDetailView"
+                style="display: none; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+                <!-- Detail Content -->
             </div>
-
-            <!-- Complex Action Toolbar -->
-            <div class="scm-action-bar">
-                <!-- Group 1: Server Source Replace -->
-                <div class="scm-action-group" style="padding-right: 1.5rem; border-right: 1px solid #ddd;">
-                    <span style="font-weight: 600;">서버 원본 교체:</span>
-                    <input type="file" id="serverSourceFile" style="display: none;" accept=".xlsx, .xls">
-                    <button class="scm-btn scm-btn-outline"
-                        onclick="document.getElementById('serverSourceFile').click()">파일 선택</button>
-                    <span id="serverSourceFileName"
-                        style="font-size: 0.85rem; color: #666; max-width: 150px; overflow: hidden; white-space: nowrap;">선택된
-                        파일 없음</span>
-                    <button class="scm-btn btn-teal" id="replaceSourceBtn">파일 교체</button>
-                </div>
-
-                <!-- Group 2: Excel Register Range -->
-                <div class="scm-action-group" style="padding-right: 1.5rem; border-right: 1px solid #ddd;">
-                    <span style="font-weight: 600;">서버 엑셀 등록:</span>
-                    <input type="number" id="rangeStart" class="scm-input" placeholder="시작"
-                        style="width: 60px; text-align: center;">
-                    <span>~</span>
-                    <input type="number" id="rangeEnd" class="scm-input" placeholder="종료"
-                        style="width: 60px; text-align: center;">
-                    <button class="scm-btn btn-blue" id="registerRangeBtn">범위 등록</button>
-                </div>
-
-                <!-- Group 3: Right Aligned Actions -->
-                <div class="scm-action-group" style="margin-left: auto;">
-                    <button class="scm-btn btn-teal" id="btnDownloadAll">전체 다운로드</button>
-                    <button class="scm-btn btn-green" id="btnTemplate">양식</button>
-                    <button class="scm-btn btn-red" id="btnDeleteRange">구간 삭제</button>
-
-                    <!-- Excel Upload Logic -->
-                    <input type="file" id="excelUploadInput" style="display: none;" accept=".xlsx, .xls">
-                    <button class="scm-btn btn-cyan" id="excelUploadBtn">엑셀 업로드</button>
-
-                    <!-- Only Excel Upload implemented via Input -->
-
-                    <button class="scm-btn btn-cyan">카테고리 관리</button>
-                    <button class="scm-btn btn-navy"><i class="fas fa-plus"></i> 신규 등록</button>
-                </div>
-            </div>
-
-            <!-- Filter Options Row (Optional, kept for utility but styled minimally) -->
-            <div style="margin-bottom: 1rem; text-align: right;">
-                <select class="scm-select">
-                    <option>전체 카테고리</option>
-                </select>
-                <button class="scm-btn btn-cyan">+ 카테고리 추가</button>
-            </div>
-
-            <!-- Product Table -->
-            <div class="scm-card">
-                <div class="scm-table-container">
-                    <table class="scm-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 50px;">No.</th>
-                                <th style="width: 80px;">IMG</th>
-                                <th>브랜드</th>
-                                <th>상품명/모델명/옵션</th>
-                                <th>실판매가</th>
-                                <th>공급가</th>
-                                <th>재고</th>
-                                <th>배송비</th>
-                                <th>제조사/원산지/등록일</th>
-                                <th>상태/관리</th>
-                            </tr>
-                        </thead>
-                        <tbody id="productTableBody">
-                            <!-- Rows will be populated by JS -->
-                            <tr>
-                                <td colspan="10" style="text-align: center; padding: 2rem;">Loading products...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pagination -->
-                <!-- Pagination -->
-                <div class="scm-pagination"></div>
+        </div> <!-- Close scm-content -->
     </main>
 
     <!-- --------------------------------------------------- -->
@@ -984,7 +995,7 @@
                         e.preventDefault();
                         const id = e.target.dataset.id;
                         pTitle.innerText = '상품 수정';
-                        loadCategories();
+                        await loadCategories();
                         try {
                             const data = await apiFetch(`/api/products/${id}`);
                             const p = data.product;
@@ -1112,16 +1123,152 @@
                 paginationContainer.appendChild(nextBtn);
             };
 
-            // Open Product Detail Page
-            window.openProductDetail = (index) => {
-                if (currentProducts && currentProducts[index]) {
-                    const p = currentProducts[index];
-                    if (p.id) {
-                        window.open(`product_detail.html?id=${p.id}&from=scm`, '_blank');
-                    } else {
-                        alert('상품 ID를 찾을 수 없습니다.');
+            // --- IN-PAGE DETAIL VIEW LOGIC ---
+
+            // 1. Helper: Secure Image URL (Duplicated from script.js)
+            const getSecureImageUrl = (url, width = 0) => {
+                if (!url) return '';
+                let cleanUrl = url.trim();
+
+                if (cleanUrl.match(/https?:\/\/(localhost|127\.0\.0\.1)/)) {
+                    try {
+                        const urlObj = new URL(cleanUrl);
+                        cleanUrl = `${API_BASE}${urlObj.pathname}${urlObj.search}`;
+                    } catch (e) {
+                        const path = cleanUrl.replace(/https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, '');
+                        cleanUrl = `${API_BASE}${path}`;
                     }
                 }
+                // Handle protocol-relative
+                if (cleanUrl.startsWith('//')) cleanUrl = `https:${cleanUrl}`;
+
+                if (cleanUrl.startsWith('/') || cleanUrl.match(/^(uploads|assets|images)\//)) {
+                    const path = cleanUrl.startsWith('/') ? cleanUrl : `/${cleanUrl}`;
+                    cleanUrl = `${API_BASE}${path}`;
+                }
+
+                const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                if (cleanUrl.startsWith('data:') || (isLocalEnv && cleanUrl.includes('localhost'))) return cleanUrl;
+
+                if (cleanUrl.startsWith('http://') || (width > 0 && cleanUrl.startsWith('https://'))) {
+                    if (cleanUrl.startsWith('https://') && width === 0) return cleanUrl;
+                    const encoded = encodeURIComponent(cleanUrl);
+                    let proxyUrl = `https://wsrv.nl/?url=${encoded}&output=webp`;
+                    if (width > 0) proxyUrl += `&w=${width}`;
+                    return proxyUrl;
+                }
+                return cleanUrl;
+            };
+
+            // 2. Render Detail View In-Page
+            const renderScmProductDetail = (product) => {
+                const detailView = document.getElementById('productDetailView');
+
+                // Normalize data
+                const imageUrl = getSecureImageUrl(product.imageUrl || product.image_url, 800);
+                const detailUrl = product.detailUrl || product.detail_url;
+                const modelName = product.modelNo || product.model_name || '';
+                const productName = product.name || product.product_name || 'No Name';
+                const brandName = product.brand || 'Brand';
+                const categoryName = product.category ? product.category.name : (product.category_name || '-');
+
+                // Image HTML
+                const imageHtml = `<img src="${imageUrl}" alt="${productName}" style="width: 100%; max-width: 600px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin: 0 auto; display: block;">`;
+
+                // Detail Content Processing
+                let detailContentHtml = '';
+                if (detailUrl) {
+                    const secureHtml = (html) => html.replace(/src=["'](http:\/\/[^"']+)["']/g, (m, p1) => `src="${getSecureImageUrl(p1)}"`);
+
+                    if (detailUrl.trim().startsWith('<')) {
+                        detailContentHtml = `<div class="product-detail-content" style="text-align: center; display: flex; flex-direction: column; align-items: center; width: 100%;">${secureHtml(detailUrl)}</div>`;
+                    } else {
+                        detailContentHtml = `<div class="product-detail-content" style="text-align: center; width: 100%;"><img src="${getSecureImageUrl(detailUrl)}" alt="Detail" style="max-width: 100%; margin: 0 auto; display: block;"></div>`;
+                    }
+                }
+
+                const detailSection = detailContentHtml ? `
+                    <div style="margin-top: 60px; border-top: 1px solid #eee; padding-top: 40px;">
+                        <h3 style="font-size: 1.5rem; margin-bottom: 30px; text-align: center; color: #333;">상세 정보</h3>
+                        ${detailContentHtml}
+                    </div>` : '';
+
+                // sticky header logic handled by CSS sticky? 
+                // We are inside .scm-content which scrolls. So sticky top needs to be 0 or relative to scm-content.
+                // SCM Header is outside .scm-content. 
+                // So top: 0 inside .scm-content makes it sticky to the top of the scrollable area.
+
+                detailView.innerHTML = `
+                    <div style="position: sticky; top: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 2rem; border-bottom: 1px solid #eee; z-index: 100; display: flex; align-items: center; justify-content: space-between;">
+                         <button onclick="closeProductDetail()" style="padding: 8px 20px; background: #333; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                             <i class="fas fa-arrow-left"></i> 목록으로 돌아가기
+                         </button>
+                         <div style="font-weight: 600; font-size: 1.1rem; color: #333;">${productName}</div>
+                         <div style="width: 100px;"></div> <!-- Spacer for center alignment -->
+                    </div>
+
+                    <div style="max-width: 1000px; margin: 0 auto; padding: 3rem 2rem;">
+                         <div style="text-align: center; margin-bottom: 2rem;">
+                            ${imageHtml}
+                        </div>
+                        <div style="padding: 20px; text-align: center; max-width: 800px; margin: 0 auto;">
+                            <span style="background: #f0f0f0; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; color: #666; display: inline-block; margin-bottom: 1rem;">${categoryName}</span>
+                            <h2 style="font-size: 1.5rem; color: var(--primary-color); margin-bottom: 0.5rem; font-weight: 600;">${brandName}</h2>
+                            <h1 style="font-size: 2.2rem; margin-bottom: 1rem; font-weight: 700; color: #333;">${productName}</h1>
+                            <p style="font-size: 1.1rem; color: #888; margin-bottom: 2rem;">${modelName}</p>
+                            
+                            <p style="font-size: 1.1rem; line-height: 1.8; color: #555; margin-bottom: 30px; word-break: keep-all;">${product.description || ''}</p>
+                        </div>
+                        ${detailSection}
+                    </div>
+                `;
+            };
+
+            // Global State for Scroll Position
+            let lastScrollTop = 0;
+
+            // Updated Open Function
+            window.openProductDetail = async (index) => {
+                const listContainer = document.getElementById('productListView');
+                const detailContainer = document.getElementById('productDetailView');
+                const scmContent = document.querySelector('.scm-content');
+
+                if (currentProducts && currentProducts[index]) {
+                    // Save Scroll Position
+                    lastScrollTop = scmContent.scrollTop;
+
+                    const simpleProduct = currentProducts[index];
+
+                    // Fetch Full Detail to ensure we have detailUrl etc.
+                    try {
+                        // Show loading?
+                        detailContainer.innerHTML = '<div style="padding:50px; text-align:center;">Loading...</div>';
+
+                        listContainer.style.display = 'none';
+                        detailContainer.style.display = 'block';
+                        // scroll to top for detail view
+                        scmContent.scrollTop = 0;
+
+                        const data = await apiFetch(`/api/products/${simpleProduct.id}`);
+                        renderScmProductDetail(data.product);
+                    } catch (e) {
+                        alert('상세 정보 로드 실패: ' + e.message);
+                        closeProductDetail();
+                    }
+                }
+            };
+
+            // Close Function
+            window.closeProductDetail = () => {
+                const listContainer = document.getElementById('productListView');
+                const detailContainer = document.getElementById('productDetailView');
+                const scmContent = document.querySelector('.scm-content');
+
+                detailContainer.style.display = 'none';
+                listContainer.style.display = 'block';
+
+                // Restore Scroll
+                scmContent.scrollTop = lastScrollTop;
             };
 
             // Init
