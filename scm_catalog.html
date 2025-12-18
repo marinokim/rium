@@ -264,6 +264,8 @@
             overflow: hidden;
             display: -webkit-box;
             -webkit-line-clamp: 2;
+            line-clamp: 2;
+            /* Standard property */
             -webkit-box-orient: vertical;
         }
 
@@ -671,12 +673,28 @@
             location.href = `scm_product_detail.html?id=${productId}`;
         };
 
+        // Helper: Optimize Image URL using wsrv.nl proxy
+        function getSecureImageUrl(url, width = 0) {
+            if (!url) return '';
+            if (url.startsWith('https://') || url.startsWith('/') || url.startsWith('data:')) return url;
+
+            if (url.startsWith('http://')) {
+                const encoded = encodeURIComponent(url);
+                let proxyUrl = `https://wsrv.nl/?url=${encoded}&output=webp`;
+                if (width > 0) proxyUrl += `&w=${width}`;
+                return proxyUrl;
+            }
+            return url;
+        }
+
         // Load Products
         const loadProducts = async () => {
             const grid = document.getElementById('productGrid');
+            grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 2rem;"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
+
             try {
                 // Build Query String
-                let query = `/api/products?limit=50&page=1`;
+                let query = `/api/products?isAvailable=true`;
                 if (currentCategoryId) query += `&categoryId=${currentCategoryId}`;
                 if (currentSearchQuery) query += `&search=${encodeURIComponent(currentSearchQuery)}`;
 
@@ -692,9 +710,12 @@
 
                 products.forEach(product => {
                     // Prioritize product.imageUrl (Admin logic) -> then product.images array -> then placeholder
-                    const imageUrl = product.imageUrl
+                    let imageUrl = product.imageUrl
                         ? product.imageUrl
                         : (product.images && product.images.length > 0 ? product.images[0] : 'https://placehold.co/600x400?text=No+Image');
+
+                    // Optimize image: Resize to 400px width for grid
+                    imageUrl = getSecureImageUrl(imageUrl, 400);
 
                     const brandName = product.brand || 'RIUM'; // Default brand if missing
 
@@ -711,7 +732,7 @@
 
                     card.innerHTML = `
                         <div class="product-img-wrapper">
-                            <img src="${imageUrl}" alt="${product.name}" onerror="this.src='https://placehold.co/600x400?text=Error'">
+                            <img src="${imageUrl}" alt="${product.name}" loading="lazy" onerror="this.src='https://placehold.co/600x400?text=Error'">
                             <button class="heart-btn" title="제안서에 추가" onclick="toggleHeart(this)"><i class="far fa-heart"></i></button>
                         </div>
                         <div class="product-info">

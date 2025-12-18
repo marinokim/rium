@@ -503,8 +503,8 @@
 
             // Images
             let imgUrl = p.imageUrl || (p.images && p.images[0]) || 'https://placehold.co/600x400?text=No+Image';
-            // Secure the main image
-            imgUrl = getSecureImageUrl(imgUrl);
+            // Secure the main image & resize
+            imgUrl = getSecureImageUrl(imgUrl, 800);
             document.getElementById('mainImage').src = imgUrl;
 
             // Info
