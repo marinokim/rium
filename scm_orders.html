@@ -579,6 +579,39 @@
         </div>
     </main>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tbody = document.querySelector('tbody');
+            const proposals = JSON.parse(localStorage.getItem('scm_proposals') || '[]');
+
+            proposals.forEach(prop => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><input type="checkbox"></td>
+                    <td>${prop.id}</td>
+                    <td>${prop.date}</td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <img src="${prop.product.image}"
+                                style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                            <span>${prop.product.name}</span>
+                        </div>
+                    </td>
+                    <td>${prop.qty}</td>
+                    <td>${prop.client}</td>
+                    <td>${prop.amount}</td>
+                    <td><span class="scm-status status-new" style="background: #e3f2fd; color: #1565c0;">제안중</span></td>
+                    <td><button class="scm-btn scm-btn-outline" style="padding: 2px 8px; font-size: 0.8rem;">제안서 보기</button></td>
+                `;
+                // Insert as first child
+                if (tbody.firstChild) {
+                    tbody.insertBefore(row, tbody.firstChild);
+                } else {
+                    tbody.appendChild(row);
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>

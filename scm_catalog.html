@@ -571,7 +571,11 @@
                 <div class="filter-group" id="categoryFilters">
                     <!-- Categories will be loaded here -->
                 </div>
-                <div style="margin-left: auto;">
+                <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+                    <button class="filter-btn" style="background: #333; color: white; border: none;"
+                        onclick="createMockProposal()">
+                        <i class="fas fa-print"></i> 제안서 출력
+                    </button>
                     <input type="text" id="searchInput" placeholder="상품명 검색"
                         style="padding: 0.5rem 1rem; border: 1px solid #ddd; border-radius: 20px; outline: none; width: 200px;">
                 </div>
@@ -772,6 +776,35 @@
 
         function addToQuote(productId) {
             alert(`상품 ID ${productId}가 견적서에 담겼습니다.`);
+        }
+
+        // Mock Proposal Creation
+        function createMockProposal() {
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            const randomId = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+
+            // Create a mock proposal item
+            const newProposal = {
+                id: `PROP-${dateStr.replace(/-/g, '')}-${randomId}`,
+                date: dateStr,
+                product: {
+                    name: 'Selected Catalog Items (Bundle)',
+                    image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=100&auto=format&fit=crop'
+                },
+                qty: Math.floor(Math.random() * 10) + 1,
+                client: 'New Client Co.',
+                amount: (Math.floor(Math.random() * 50) + 10) * 10000 + '원',
+                status: 'new' // 'new' maps to '제안중'
+            };
+
+            // Save to LocalStorage
+            let proposals = JSON.parse(localStorage.getItem('scm_proposals') || '[]');
+            proposals.unshift(newProposal); // Add to top
+            localStorage.setItem('scm_proposals', JSON.stringify(proposals));
+
+            alert('제안서가 출력되었습니다.\n제안 관리 리스트에 자동 등록됩니다.');
+            location.href = 'scm_orders.html';
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
