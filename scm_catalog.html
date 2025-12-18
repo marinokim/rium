@@ -18,8 +18,10 @@
         body.scm-body {
             background-color: #f5f7fa;
             display: flex;
-            min-height: 100vh;
-            overflow-x: hidden;
+            height: 100vh;
+            /* Fixed height for sticky layout */
+            overflow: hidden;
+            /* Prevent body scroll */
         }
 
         /* Sidebar */
@@ -167,6 +169,8 @@
         .scm-content {
             padding: 2rem;
             overflow-y: auto;
+            flex: 1;
+            /* Take remaining space */
         }
 
         /* Catalog Grid */
