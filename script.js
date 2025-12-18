@@ -107,6 +107,27 @@ document.addEventListener('DOMContentLoaded', () => {
         loadPublicProducts();
     };
 
+    // Generic Image Error Handler
+    window.handleImageError = (img, originalUrl) => {
+        img.onerror = null; // Prevent infinite loop
+
+        // If we are currently showing the proxy or some processed URL, and it failed
+        // Try the original URL if it's different and safe (HTTPS or relative)
+        if (originalUrl && img.src !== originalUrl) {
+            if (originalUrl.startsWith('https://') || originalUrl.startsWith('/') || originalUrl.startsWith('data:')) {
+                img.src = originalUrl;
+                // If the original also fails, set final fallback
+                img.onerror = () => {
+                    img.src = 'https://placehold.co/400x400?text=No+Image';
+                };
+                return;
+            }
+        }
+
+        // Default fallback
+        img.src = 'https://placehold.co/400x400?text=No+Image';
+    };
+
     // Load Public Products
     async function loadPublicProducts() {
         if (!publicGrid) return;
@@ -129,17 +150,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             products.forEach(product => {
-                const imageUrl = getSecureImageUrl(product.imageUrl || product.images?.[0] || '', 400);
+                const originalUrl = product.imageUrl || product.images?.[0] || '';
+                const imageUrl = getSecureImageUrl(originalUrl, 400);
                 const brandName = product.brand || 'RIUM';
 
                 const card = document.createElement('div');
                 card.className = 'product-card';
                 card.onclick = () => window.location.href = `product_detail.html?id=${product.id}`;
 
+                // Escape originalUrl for HTML attribute
+                const safeOriginalUrl = originalUrl.replace(/'/g, "\\'");
+
                 // NO PRICE shown, as requested
                 card.innerHTML = `
                     <div class="product-img-wrapper">
-                        <img src="${imageUrl}" alt="${product.name}" loading="lazy" onerror="this.src='https://placehold.co/400x400?text=No+Image'">
+                        <img src="${imageUrl}" alt="${product.name}" loading="lazy" onerror="window.handleImageError(this, '${safeOriginalUrl}')">
                     </div>
                     <div class="product-info">
                         <div class="product-brand">${brandName}</div>
