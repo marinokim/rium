@@ -624,7 +624,7 @@
             if (userStr) {
                 const user = JSON.parse(userStr);
                 // If Admin, show Admin Mode button
-                if (user.role === 'ADMIN') {
+                if (user.role === 'ADMIN' || user.role === 'admin' || user.isAdmin === true) {
                     const btn = document.getElementById('btnAdminMode');
                     if (btn) btn.style.display = 'flex';
                 }
