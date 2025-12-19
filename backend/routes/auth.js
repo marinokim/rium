@@ -50,44 +50,31 @@ router.post('/register', async (req, res) => {
 // Login
 router.post('/login', async (req, res) => {
     try {
-        const { businessNumber: rawBusinessNumber, password } = req.body
-        const businessNumber = rawBusinessNumber.replace(/-/g, '')
+        const { email, businessNumber: rawBusinessNumber, password } = req.body
 
-        // Get user
-        let result = await pool.query('SELECT * FROM users WHERE business_number = $1', [businessNumber])
-        let user = result.rows[0]
+        let user = null;
 
-        // Fallback: If not found by business number, try finding admin by email
-        // This handles the case where migration might not have run or business number is missing
-        if (!user) {
-            const adminCheck = await pool.query("SELECT * FROM users WHERE email = 'admin@arontec.com'")
-            const adminUser = adminCheck.rows[0]
+        // 1. Try finding by Email (Priority as Frontend uses Email)
+        if (email) {
+            const result = await pool.query('SELECT * FROM users WHERE email = $1', [email])
+            user = result.rows[0]
+        }
 
-            if (adminUser) {
-                // Check if password matches
-                const validPassword = await bcrypt.compare(password, adminUser.password_hash)
-                if (validPassword) {
-                    // Update admin's business number to the one provided (or default)
-                    // Only if the provided one is '0000000000' or similar to ensure security? 
-                    // Actually, let's just force update it to '0000000000' to be safe and consistent.
-                    await pool.query("UPDATE users SET business_number = '0000000000' WHERE id = $1", [adminUser.id])
-                    user = adminUser // Set user to adminUser to proceed
-                    user.business_number = '0000000000' // Update local object
-                }
-            }
+        // 2. If not found by Email, and BusinessNumber provided, try that
+        if (!user && rawBusinessNumber) {
+            const businessNumber = rawBusinessNumber.replace(/-/g, '')
+            const result = await pool.query('SELECT * FROM users WHERE business_number = $1', [businessNumber])
+            user = result.rows[0]
         }
 
         if (!user) {
-            return res.status(401).json({ error: '사업자번호 또는 비밀번호가 잘못되었습니다' })
+            return res.status(401).json({ error: '사용자 정보가 없거나 비밀번호가 잘못되었습니다' })
         }
 
-        // Check password (if not already checked in fallback)
-        // We need to check again if we found the user by business_number initially
-        // If we found via fallback, we already checked password.
-        // Let's simplify: just check password for the found 'user' object.
+        // Check password
         const validPassword = await bcrypt.compare(password, user.password_hash)
         if (!validPassword) {
-            return res.status(401).json({ error: '사업자번호 또는 비밀번호가 잘못되었습니다' })
+            return res.status(401).json({ error: '사용자 정보가 없거나 비밀번호가 잘못되었습니다' })
         }
 
         // Check if approved
@@ -110,7 +97,8 @@ router.post('/login', async (req, res) => {
                 contactPerson: user.contact_person,
                 isAdmin: user.is_admin,
                 businessNumber: user.business_number,
-                phone: user.phone
+                phone: user.phone,
+                role: user.is_admin ? 'ADMIN' : 'USER'
             }
         })
     } catch (error) {
