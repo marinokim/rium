@@ -954,8 +954,8 @@
                 });
 
                 if (response.quote) {
-                    sessionStorage.removeItem('quoteBuffer'); // Clear buffer
-                    updateProposalBadge();
+                    sessionStorage.removeItem('proposalItems'); // Clear buffer
+                    updateBadges();
 
                     try {
                         const confirmDownload = confirm('제안서가 생성되었습니다.\n엑셀 파일도 다운로드 하시겠습니까?');
