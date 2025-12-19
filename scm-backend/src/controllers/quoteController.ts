@@ -234,7 +234,7 @@ export const downloadQuoteExcel = async (req: AuthRequest, res: Response) => {
                         const res = await fetch(p.imageUrl);
                         if (res.ok) {
                             const arrayBuffer = await res.arrayBuffer();
-                            imageBuffer = Buffer.from(arrayBuffer);
+                            imageBuffer = Buffer.from(arrayBuffer as any);
                         }
                     }
 
@@ -246,8 +246,8 @@ export const downloadQuoteExcel = async (req: AuthRequest, res: Response) => {
                         });
 
                         worksheet.addImage(imageId, {
-                            tl: { col: 4, row: i + 2 }, // Column E (index 4)
-                            br: { col: 5, row: i + 3 },
+                            tl: { col: 4, row: i + 2 } as any, // Column E (index 4)
+                            br: { col: 5, row: i + 3 } as any,
                             editAs: 'oneCell'
                         });
                     } else {
