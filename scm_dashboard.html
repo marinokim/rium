@@ -452,60 +452,81 @@
 
             <a href="#" style="color: #333; font-size: 0.9rem; text-decoration: none;">신규 입점 파트너 가이드</a>
 
-            <!-- Recent Orders -->
+            <!-- Recent Orders (Now Proposal History) -->
             <div class="scm-card" style="margin-top: 2rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <h3 style="font-size: 1.1rem;">최근 주문 내역</h3>
-                    <a href="scm_quote.html"
+                    <h3 style="font-size: 1.1rem;">견적 의뢰 내역</h3>
+                    <a href="scm_orders.html"
                         style="font-size: 0.85rem; color: var(--primary-color); text-decoration: none;">전체보기 ></a>
                 </div>
                 <table class="scm-table">
                     <thead>
                         <tr>
-                            <th>주문번호</th>
-                            <th>상품명</th>
-                            <th>주문자</th>
-                            <th>주문일자</th>
+                            <th>No</th>
+                            <th>제안서명</th>
+                            <th>상품수</th>
+                            <th>의뢰일자</th>
                             <th>상태</th>
-                            <th>금액</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="proposalList">
                         <tr>
-                            <td>ORD-20251201-001</td>
-                            <td>Smart Inverter Air Conditioner</td>
-                            <td>김철수</td>
-                            <td>2025-12-01</td>
-                            <td><span class="status-badge status-shipping">배송중</span></td>
-                            <td>₩450,000</td>
-                        </tr>
-                        <tr>
-                            <td>ORD-20251201-002</td>
-                            <td>Premium Bluetooth Speaker</td>
-                            <td>이영희</td>
-                            <td>2025-12-01</td>
-                            <td><span class="status-badge status-pending">결제대기</span></td>
-                            <td>₩120,000</td>
-                        </tr>
-                        <tr>
-                            <td>ORD-20251130-005</td>
-                            <td>Glass Food Container Set</td>
-                            <td>박민수</td>
-                            <td>2025-11-30</td>
-                            <td><span class="status-badge status-completed">배송완료</span></td>
-                            <td>₩35,000</td>
-                        </tr>
-                        <tr>
-                            <td>ORD-20251130-004</td>
-                            <td>Portable USB Fan</td>
-                            <td>최지우</td>
-                            <td>2025-11-30</td>
-                            <td><span class="status-badge status-completed">배송완료</span></td>
-                            <td>₩8,500</td>
+                            <td colspan="5" style="text-align: center; padding: 2rem;">데이터를 불러오는 중...</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+
+            <script>
+                async function loadMyProposals() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        // API Base
+                        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                            ? 'http://localhost:5000'
+                            : 'https://rium-scm-backend.onrender.com';
+
+                        const res = await fetch(`${API_BASE}/api/proposals/my`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (res.ok) {
+                            const data = await res.json();
+                            const list = data.history || [];
+                            const tbody = document.getElementById('proposalList');
+
+                            if (list.length === 0) {
+                                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">의뢰 내역이 없습니다.</td></tr>';
+                                return;
+                            }
+
+                            tbody.innerHTML = list.slice(0, 5).map((item, index) => {
+                                const date = new Date(item.created_at).toLocaleDateString();
+                                const items = JSON.parse(item.items || '[]');
+                                return `
+                                    <tr>
+                                        <td>${list.length - index}</td>
+                                        <td>${item.title || '제목 없음'}</td>
+                                        <td>${items.length}개</td>
+                                        <td>${date}</td>
+                                        <td><span class="status-badge status-pending">접수완료</span></td>
+                                    </tr>
+                                `;
+                            }).join('');
+
+                            // Update Stats (Optional)
+                            // document.querySelector('.scm-stat-card:first-child p').innerText = list.length;
+                        }
+                    } catch (e) {
+                        console.error('Failed to load proposals:', e);
+                        document.getElementById('proposalList').innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">불러오기 실패</td></tr>';
+                    }
+                }
+
+                document.addEventListener('DOMContentLoaded', loadMyProposals);
+            </script>
 
             <!-- Notices -->
             <div class="scm-card" style="margin-top: 2rem;">

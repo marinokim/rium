@@ -479,21 +479,124 @@
                                 <th>관리</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <!-- Data will be loaded via script -->
+                        <tbody id="proposalTableBody">
+                            <tr>
+                                <td colspan="9" style="text-align: center; padding: 2rem;">데이터를 불러오는 중...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Pagination -->
-                <div class="pagination">
-                    <a href="#" class="page-item"><i class="fas fa-chevron-left"></i></a>
-                    <a href="#" class="page-item active">1</a>
-                    <a href="#" class="page-item">2</a>
-                    <a href="#" class="page-item">3</a>
-                    <a href="#" class="page-item"><i class="fas fa-chevron-right"></i></a>
-                </div>
+                <script>
+                    async function loadProposals() {
+                        const tbody = document.getElementById('proposalTableBody');
+                        try {
+                            const token = localStorage.getItem('token');
+                            const userStr = localStorage.getItem('scm_user');
+                            if (!token || !userStr) {
+                                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">로그인이 필요합니다.</td></tr>';
+                                return;
+                            }
+
+                            const user = JSON.parse(userStr);
+                            const isAdmin = user.role === 'ADMIN';
+
+                            // API Base
+                            const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                                ? 'http://localhost:5000'
+                                : 'https://rium-scm-backend.onrender.com';
+
+                            // Determine Endpoint
+                            const endpoint = isAdmin ? '/api/proposals/all' : '/api/proposals/my';
+
+                            const res = await fetch(`${API_BASE}${endpoint}`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+
+                            if (res.ok) {
+                                const data = await res.json();
+                                const list = data.history || [];
+
+                                if (list.length === 0) {
+                                    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 2rem;">제안 내역이 없습니다.</td></tr>';
+                                    return;
+                                }
+
+                                tbody.innerHTML = list.map(item => {
+                                    const date = new Date(item.created_at).toLocaleDateString();
+                                    const items = JSON.parse(item.items || '[]');
+
+                                    // Calculate Total Amount & Qty
+                                    // Assuming items have supplyPrice (B2B) or we use quantity
+                                    const totalQty = items.reduce((sum, i) => sum + (parseInt(i.quantity) || 0), 0);
+                                    // Total amount calculation depends on item data structure from Catalog
+                                    // Catalog sends: productId, quantity. Wait, it doesn't send price?
+                                    // Ah, createProposal in catalog sends { productId, quantity }.
+                                    // It does NOT send price snapshot.
+                                    // So to show price, we'd need to fetch product info or rely on what's saved?
+                                    // Proposal History only saves what we sent: { items: [...] }.
+                                    // If we didn't save price, we can't show it easily without re-fetching.
+                                    // For now, let's show "미정" (Pending) or calculate if data available.
+                                    // Refinement: Ideally Proposal History should snapshot price.
+                                    // But for now, let's just show headers.
+
+                                    // Product Prep
+                                    const firstItem = items[0] || {};
+                                    // We need product Name/Image. 
+                                    // Using a placeholder or if we saved metadata?
+                                    // Use 'items.length' logic for name if multiple.
+
+                                    // Client Name
+                                    const clientName = item.company_name || (user.company_name || '나');
+
+                                    return `
+                                        <tr>
+                                            <td><input type="checkbox" value="${item.id}"></td>
+                                            <td>${item.id}</td>
+                                            <td>${date}</td>
+                                            <td>
+                                                <div style="display: flex; align-items: center; gap: 10px;">
+                                                    <div style="width: 40px; height: 40px; background: #eee; border-radius: 4px; overflow: hidden;">
+                                                        <!-- Placeholder Image -->
+                                                        <img src="https://via.placeholder.com/40" style="width: 100%; height: 100%; object-fit: cover;">
+                                                    </div>
+                                                    <span>${item.title}</span>
+                                                </div>
+                                            </td>
+                                            <td>${totalQty}</td>
+                                            <td>${clientName}</td>
+                                            <td>-</td>
+                                            <td><span class="status-badge status-new">제안중</span></td>
+                                            <td>
+                                                <button class="scm-btn scm-btn-sm scm-btn-outline">제안서 보기</button>
+                                                <button class="scm-btn scm-btn-sm scm-btn-outline"><i class="fas fa-file-excel"></i></button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('');
+                            } else {
+                                throw new Error('API Failed');
+                            }
+                        } catch (e) {
+                            console.error(e);
+                            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: red;">데이터 로드 실패</td></tr>';
+                        }
+                    }
+
+                    document.addEventListener('DOMContentLoaded', loadProposals);
+                </script>
+                </table>
             </div>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <a href="#" class="page-item"><i class="fas fa-chevron-left"></i></a>
+                <a href="#" class="page-item active">1</a>
+                <a href="#" class="page-item">2</a>
+                <a href="#" class="page-item">3</a>
+                <a href="#" class="page-item"><i class="fas fa-chevron-right"></i></a>
+            </div>
+        </div>
         </div>
     </main>
 
