@@ -880,8 +880,8 @@
                 return;
             }
 
-            // Prepare Items for API (just productId/quantity)
-            const apiItems = buffer.map(i => ({ productId: i.productId, quantity: i.quantity }));
+            // Prepare Items for API (Use i.id first as standard frontend model usually puts PK in id)
+            const apiItems = buffer.map(i => ({ productId: i.id || i.productId, quantity: i.quantity }));
 
             try {
                 // 1. Try API Call
@@ -920,7 +920,9 @@
                     return;
                 }
             } catch (e) {
-                console.warn('API Creation Failed, falling back to LocalStorage Mock', e);
+                console.error('API Creation Failed:', e);
+                alert(`제안서 생성 중 서버 오류가 발생했습니다.\n${e.message || ''}\n(데이터를 가져오는데 실패했습니다.)`);
+                return; // Stop execution, do not run fallback
             }
 
             // Fallback Logic (Local)
