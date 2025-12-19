@@ -1017,7 +1017,9 @@
                                     const url = window.URL.createObjectURL(blob);
                                     const a = document.createElement('a');
                                     a.href = url;
-                                    a.download = `${historyItem.title || '제안서'}.xlsx`;
+                                    // Sanitize filename
+                                    const safeTitle = (historyItem.title || '제안서').replace(/[^a-zA-Z0-9가-힣\s-_]/g, '').trim();
+                                    a.download = `${safeTitle}.xls`;
                                     document.body.appendChild(a);
                                     a.click();
                                     a.remove();
