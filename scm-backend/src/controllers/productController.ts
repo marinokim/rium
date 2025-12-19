@@ -99,7 +99,7 @@ export const createProduct = async (req: Request, res: Response) => {
         const {
             name, brand, modelNo, description,
             price, consumerPrice, supplyPrice,
-            stockQuantity, quantityPerCarton,
+            stockQuantity, quantityPerCarton, defaultQuantity,
             shippingFee, shippingFeeIndividual, shippingFeeCarton,
             manufacturer, origin, isTaxFree,
             imageUrl, detailUrl, productSpec, productOptions, remarks,
@@ -117,6 +117,7 @@ export const createProduct = async (req: Request, res: Response) => {
                 supplyPrice: supplyPrice ? Number(supplyPrice) : 0,
                 stockQuantity: stockQuantity ? Number(stockQuantity) : 0,
                 quantityPerCarton: quantityPerCarton ? Number(quantityPerCarton) : 1,
+                defaultQuantity: defaultQuantity ? Number(defaultQuantity) : 1,
                 shippingFee: shippingFee ? Number(shippingFee) : 0,
                 shippingFeeIndividual: shippingFeeIndividual ? Number(shippingFeeIndividual) : 0,
                 shippingFeeCarton: shippingFeeCarton ? Number(shippingFeeCarton) : 0,
@@ -150,7 +151,7 @@ export const updateProduct = async (req: Request, res: Response) => {
         const {
             name, brand, modelNo, description,
             price, consumerPrice, supplyPrice,
-            stockQuantity, quantityPerCarton,
+            stockQuantity, quantityPerCarton, defaultQuantity,
             shippingFee, shippingFeeIndividual, shippingFeeCarton,
             manufacturer, origin, isTaxFree,
             imageUrl, detailUrl, productSpec, productOptions, remarks,
@@ -169,6 +170,7 @@ export const updateProduct = async (req: Request, res: Response) => {
                 supplyPrice: supplyPrice !== undefined ? Number(supplyPrice) : undefined,
                 stockQuantity: stockQuantity !== undefined ? Number(stockQuantity) : undefined,
                 quantityPerCarton: quantityPerCarton !== undefined ? Number(quantityPerCarton) : undefined,
+                defaultQuantity: defaultQuantity !== undefined ? Number(defaultQuantity) : undefined,
                 shippingFee: shippingFee !== undefined ? Number(shippingFee) : undefined,
                 shippingFeeIndividual: shippingFeeIndividual !== undefined ? Number(shippingFeeIndividual) : undefined,
                 shippingFeeCarton: shippingFeeCarton !== undefined ? Number(shippingFeeCarton) : undefined,

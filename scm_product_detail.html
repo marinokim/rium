@@ -442,6 +442,22 @@
                                     <td id="productCategory">-</td>
                                 </tr>
                                 <tr>
+                                    <th>브랜드</th>
+                                    <td id="productBrandInfo">-</td>
+                                </tr>
+                                <tr>
+                                    <th>제조사</th>
+                                    <td id="productManufacturer">-</td>
+                                </tr>
+                                <tr>
+                                    <th>원산지</th>
+                                    <td id="productOrigin">-</td>
+                                </tr>
+                                <tr>
+                                    <th>배송비</th>
+                                    <td id="productShipping">-</td>
+                                </tr>
+                                <tr>
                                     <th>재고상태</th>
                                     <td id="productStatus">Available</td>
                                 </tr>
@@ -527,6 +543,18 @@
             if (p.category) {
                 document.getElementById('productCategory').textContent = p.category.name;
             }
+            document.getElementById('productBrandInfo').textContent = p.brand || '-';
+            document.getElementById('productManufacturer').textContent = p.manufacturer || '-';
+            document.getElementById('productOrigin').textContent = p.origin || '-';
+
+            // Shipping Fee Logic
+            let shippingText = `기본: ${(p.shippingFee || 0).toLocaleString()}원`;
+            if (p.shippingFeeIndividual > 0) shippingText += ` / 개별: ${(p.shippingFeeIndividual).toLocaleString()}원`;
+            if (p.shippingFeeCarton > 0) shippingText += ` / 카톤: ${(p.shippingFeeCarton).toLocaleString()}원`;
+            if (p.isTaxFree) shippingText += ' (면세)';
+
+            document.getElementById('productShipping').textContent = shippingText;
+
             document.getElementById('productStatus').textContent = p.isAvailable ? '주문 가능' : '일시 품절';
 
             // Detail Image (Supported formats: URL or HTML string)

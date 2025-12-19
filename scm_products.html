@@ -589,6 +589,8 @@
                         <label>모델번호</label>
                         <input type="text" id="p_modelNo" class="scm-input" style="width: 100%;">
                     </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 10px;">
                     <div>
                         <label>브랜드</label>
                         <input type="text" id="p_brand" class="scm-input" style="width: 100%;">
@@ -599,6 +601,9 @@
                             <!-- Populated -->
                         </select>
                     </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 10px;">
                     <div>
                         <label>B2B 판매가 (필수)</label>
                         <input type="number" id="p_price" class="scm-input" style="width: 100%;" required>
@@ -611,12 +616,51 @@
                         <label>공급가</label>
                         <input type="number" id="p_supplyPrice" class="scm-input" style="width: 100%;">
                     </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 10px;">
                     <div>
                         <label>재고</label>
                         <input type="number" id="p_stockQuantity" class="scm-input" style="width: 100%;">
                     </div>
+                    <div>
+                        <label>기본수량(MOQ)</label>
+                        <input type="number" id="p_defaultQuantity" class="scm-input" value="1" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>카톤입수량</label>
+                        <input type="number" id="p_quantityPerCarton" class="scm-input" value="1" style="width: 100%;">
+                    </div>
                 </div>
-                <!-- More Fields -->
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 10px;">
+                    <div>
+                        <label>원산지</label>
+                        <input type="text" id="p_origin" class="scm-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>제조사</label>
+                        <input type="text" id="p_manufacturer" class="scm-input" style="width: 100%;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 10px;">
+                    <div>
+                        <label>기본배송비</label>
+                        <input type="number" id="p_shippingFee" class="scm-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>개별배송비</label>
+                        <input type="number" id="p_shippingFeeIndividual" class="scm-input" style="width: 100%;">
+                    </div>
+                </div>
+
+                <div style="margin-top: 1rem;">
+                    <label>상품 옵션 (콤마로 구분)</label>
+                    <input type="text" id="p_productOptions" class="scm-input" style="width: 100%;"
+                        placeholder="예: 블랙, 화이트, 레드">
+                </div>
+
                 <div style="margin-top: 1rem;">
                     <label>이미지 URL</label>
                     <input type="text" id="p_imageUrl" class="scm-input" style="width: 100%;">
@@ -624,8 +668,18 @@
                 <div style="margin-top: 1rem;">
                     <label>상세페이지 URL</label>
                     <input type="text" id="p_detailUrl" class="scm-input" style="width: 100%;">
-                    <!-- Or textarea -->
                 </div>
+
+                <div style="margin-top: 1rem;">
+                    <label>설명 (Description)</label>
+                    <textarea id="p_description" class="scm-input" style="width: 100%; height: 80px;"></textarea>
+                </div>
+
+                <div style="margin-top: 1rem;">
+                    <label>비고 (Internal Remarks)</label>
+                    <textarea id="p_remarks" class="scm-input" style="width: 100%; height: 60px;"></textarea>
+                </div>
+
                 <div style="margin-top: 1rem; display: flex; gap: 1rem;">
                     <label><input type="checkbox" id="p_isNew"> New (신상품)</label>
                     <label><input type="checkbox" id="p_isTaxFree"> 면세상품</label>
@@ -635,7 +689,6 @@
                 <div style="margin-top: 2rem; text-align: right;">
                     <button type="button" id="btnCloseProductModal" class="scm-btn btn-gray">취소</button>
                     <button type="submit" class="scm-btn btn-blue">저장</button>
-                    ```
                 </div>
             </form>
         </div>
@@ -861,8 +914,17 @@
                     consumerPrice: document.getElementById('p_consumerPrice').value,
                     supplyPrice: document.getElementById('p_supplyPrice').value,
                     stockQuantity: document.getElementById('p_stockQuantity').value,
+                    defaultQuantity: document.getElementById('p_defaultQuantity').value,
+                    quantityPerCarton: document.getElementById('p_quantityPerCarton').value,
                     imageUrl: document.getElementById('p_imageUrl').value,
                     detailUrl: document.getElementById('p_detailUrl').value,
+                    origin: document.getElementById('p_origin').value,
+                    manufacturer: document.getElementById('p_manufacturer').value,
+                    shippingFee: document.getElementById('p_shippingFee').value,
+                    shippingFeeIndividual: document.getElementById('p_shippingFeeIndividual').value,
+                    productOptions: document.getElementById('p_productOptions').value,
+                    description: document.getElementById('p_description').value,
+                    remarks: document.getElementById('p_remarks').value,
                     isTaxFree: document.getElementById('p_isTaxFree').checked,
                     isNew: document.getElementById('p_isNew').checked,
                     isAvailable: document.getElementById('p_isAvailable').checked
@@ -1015,6 +1077,17 @@
 
                             document.getElementById('p_supplyPrice').value = p.supplyPrice || '';
                             document.getElementById('p_stockQuantity').value = p.stockQuantity || '';
+                            document.getElementById('p_defaultQuantity').value = p.defaultQuantity || 1;
+                            document.getElementById('p_quantityPerCarton').value = p.quantityPerCarton || 1;
+
+                            document.getElementById('p_origin').value = p.origin || '';
+                            document.getElementById('p_manufacturer').value = p.manufacturer || '';
+                            document.getElementById('p_shippingFee').value = p.shippingFee || '';
+                            document.getElementById('p_shippingFeeIndividual').value = p.shippingFeeIndividual || '';
+                            document.getElementById('p_productOptions').value = p.productOptions || '';
+                            document.getElementById('p_description').value = p.description || '';
+                            document.getElementById('p_remarks').value = p.remarks || '';
+
                             document.getElementById('p_imageUrl').value = p.imageUrl || '';
                             document.getElementById('p_detailUrl').value = p.detailUrl || '';
                             document.getElementById('p_isTaxFree').checked = p.isTaxFree;

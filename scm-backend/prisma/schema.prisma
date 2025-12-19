@@ -52,6 +52,7 @@ model Product {
   // Stock & Shipping
   stockQuantity Int?    @map("stock_quantity")
   quantityPerCarton Int? @map("quantity_per_carton")
+  defaultQuantity Int?  @default(1) @map("default_quantity")
   shippingFee Float?    @map("shipping_fee") 
   shippingFeeIndividual Float? @map("shipping_fee_individual")
   shippingFeeCarton Float? @map("shipping_fee_carton")
