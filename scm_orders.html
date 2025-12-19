@@ -524,7 +524,20 @@
 
                                 tbody.innerHTML = list.map(item => {
                                     const date = new Date(item.created_at).toLocaleDateString();
-                                    const items = JSON.parse(item.items || '[]');
+                                    const date = new Date(item.created_at).toLocaleDateString();
+
+                                    // Safe Parse Items
+                                    let items = [];
+                                    try {
+                                        if (typeof item.items === 'string') {
+                                            items = JSON.parse(item.items);
+                                        } else if (typeof item.items === 'object') {
+                                            items = item.items || [];
+                                        }
+                                    } catch (e) {
+                                        console.error('JSON Parse Error for items:', item.items);
+                                        items = [];
+                                    }
 
                                     // Calculate Total Amount & Qty
                                     // Assuming items have supplyPrice (B2B) or we use quantity
@@ -542,12 +555,8 @@
 
                                     // Product Prep
                                     const firstItem = items[0] || {};
-                                    // We need product Name/Image. 
-                                    // Using a placeholder or if we saved metadata?
-                                    // Use 'items.length' logic for name if multiple.
-
-                                    // Client Name
                                     const clientName = item.company_name || (user.company_name || '나');
+                                    const proposalId = item.id;
 
                                     return `
                                         <tr>
@@ -557,8 +566,7 @@
                                             <td>
                                                 <div style="display: flex; align-items: center; gap: 10px;">
                                                     <div style="width: 40px; height: 40px; background: #eee; border-radius: 4px; overflow: hidden;">
-                                                        <!-- Placeholder Image -->
-                                                        <img src="https://via.placeholder.com/40" style="width: 100%; height: 100%; object-fit: cover;">
+                                                        <img src="${firstItem.imageUrl || firstItem.image_url || 'https://via.placeholder.com/40'}" style="width: 100%; height: 100%; object-fit: cover;">
                                                     </div>
                                                     <span>${item.title}</span>
                                                 </div>
@@ -568,12 +576,16 @@
                                             <td>-</td>
                                             <td><span class="status-badge status-new">제안중</span></td>
                                             <td>
-                                                <button class="scm-btn scm-btn-sm scm-btn-outline">제안서 보기</button>
-                                                <button class="scm-btn scm-btn-sm scm-btn-outline"><i class="fas fa-file-excel"></i></button>
+                                                <button class="scm-btn scm-btn-sm scm-btn-outline" onclick="viewProposal(${index})">제안서 보기</button>
+                                                <button class="scm-btn scm-btn-sm scm-btn-outline" onclick="downloadProposal(${index})"><i class="fas fa-file-excel"></i></button>
                                             </td>
                                         </tr>
                                     `;
                                 }).join('');
+
+                                // Save global
+                                window.currentProposals = list;
+
                             } else {
                                 throw new Error('API Failed');
                             }
@@ -581,6 +593,56 @@
                             console.error(e);
                             tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: red;">데이터 로드 실패</td></tr>';
                         }
+                    }
+
+                    // Download Proposal
+                    async function downloadProposal(index) {
+                        const item = window.currentProposals[index];
+                        if (!item) return;
+
+                        // Parse items safely
+                        let items = [];
+                        try {
+                            if (typeof item.items === 'string') items = JSON.parse(item.items);
+                            else if (typeof item.items === 'object') items = item.items || [];
+                        } catch (e) { items = []; }
+
+                        try {
+                            // Determine API BASE
+                            const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                                ? 'http://localhost:5003'
+                                : 'https://rium-scm-backend.onrender.com';
+
+                            const res = await fetch(`${API_BASE}/api/excel/download/proposal`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    title: item.title,
+                                    items: items
+                                })
+                            });
+
+                            if (res.ok) {
+                                const blob = await res.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `Proposal_${item.title}_${Date.now()}.xls`;
+                                document.body.appendChild(a);
+                                a.click();
+                                a.remove();
+                            } else {
+                                alert('Excel Download Failed');
+                            }
+                        } catch (e) {
+                            console.error(e);
+                            alert('Download Error: ' + e.message);
+                        }
+                    }
+
+                    // View Proposal (Placeholder)
+                    function viewProposal(index) {
+                        alert('제안서 미리보기 기능은 준비중입니다.');
                     }
 
                     document.addEventListener('DOMContentLoaded', loadProposals);

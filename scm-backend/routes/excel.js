@@ -521,7 +521,7 @@ router.post('/update-source', upload.single('file'), (req, res) => {
     }
 })
 
-// Generate Excel Proposal (Export)
+// Generate Excel Proposal (HTML Format for Images)
 router.post('/download/proposal', async (req, res) => {
     try {
         const { title, items } = req.body
@@ -530,41 +530,100 @@ router.post('/download/proposal', async (req, res) => {
             return res.status(400).json({ error: 'Items array is required' })
         }
 
-        // Map items to Korean headers
-        const excelData = items.map((p, index) => ({
-            'No': index + 1,
-            '상품명': p.name || '',
-            '모델명/코드': p.model || p.model_name || p.modelNo || '',
-            '브랜드': p.brand || '',
-            '수량': p.quantity || 1,
-            '단가(B2B)': p.price || 0,
-            '합계': p.totalAmount || ((p.price || 0) * (p.quantity || 1))
-        }))
+        // HTML Template for Excel
+        let html = `
+        <html>
+        <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+            <style>
+                table { border-collapse: collapse; width: 100%; }
+                th { background-color: #f0f0f0; border: 1px solid #000; padding: 10px; text-align: center; font-weight: bold; }
+                td { border: 1px solid #000; padding: 10px; vertical-align: middle; text-align: center; }
+                .text-left { text-align: left; }
+                .text-right { text-align: right; }
+                img { display: block; margin: 0 auto; }
+            </style>
+        </head>
+        <body>
+            <h2 style="text-align: center; margin: 20px 0;">${title || '제안서'}</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">순번</th>
+                        <th style="width: 80px;">품절여부</th>
+                        <th style="width: 80px;">고유번호</th>
+                        <th style="width: 300px;">상품명</th>
+                        <th style="width: 120px;">상품이미지</th>
+                        <th style="width: 150px;">모델명</th>
+                        <th style="width: 100px;">옵션</th>
+                        <th style="width: 120px;">제조원</th>
+                        <th style="width: 100px;">원산지</th>
+                        <th style="width: 80px;">카톤수량</th>
+                        <th style="width: 80px;">기본수량</th>
+                        <th style="width: 100px;">소비자가</th>
+                        <th style="width: 100px;">공급가 (VAT포함)</th>
+                        <th style="width: 300px;">대표이미지</th>
+                        <th style="width: 300px;">상세페이지</th>
+                        <th style="width: 150px;">비고</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `
 
-        const workbook = XLSX.utils.book_new()
-        const worksheet = XLSX.utils.json_to_sheet(excelData)
+        items.forEach((p, index) => {
+            const getVal = (v) => v || ''
+            const fmtNum = (v) => v ? Number(v).toLocaleString('ko-KR') : '0'
+            const imgUrl = p.imageUrl || p.image_url || ''
+            const detailUrl = p.detailUrl || p.detail_url || ''
 
-        // Adjust column widths
-        const wscols = [
-            { wch: 5 }, // No
-            { wch: 40 }, // Name
-            { wch: 20 }, // Model
-            { wch: 15 }, // Brand
-            { wch: 10 }, // Qty
-            { wch: 15 }, // Price
-            { wch: 15 } // Total
-        ]
-        worksheet['!cols'] = wscols
+            // Image Tag for Excel
+            const imgTag = imgUrl ? `<img src="${imgUrl}" width="100" height="100">` : ''
 
-        XLSX.utils.book_append_sheet(workbook, worksheet, '제안서')
+            // Detail HTML handling (User wants the HTML string or the image?)
+            // Screenshot showed HTML tag string for detailed image: <img src="...">
+            // But if it's a URL, we might want to show it as text or link.
+            // Based on screenshot column O, it shows actual HTML text like <img src="...">.
+            // So we escape it to show the code, or render it?
+            // "Column O: Detail Image (HTML)" and the cell content is `<img src=...>` TEXT.
+            // So we should output the text.
+            const detailHtmlText = detailUrl ? (detailUrl.includes('<') ? detailUrl : `<img src="${detailUrl}">`) : ''
+            // HTML Escape for text display
+            const escapeHtml = (text) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 
-        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
+            html += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${getVal(p.isAvailable === false ? '품절' : '')}</td>
+                    <td>${getVal(p.id)}</td>
+                    <td class="text-left">${getVal(p.name || p.product_name)}</td>
+                    <td>${imgTag}</td>
+                    <td>${getVal(p.modelName || p.model_name)}</td>
+                    <td>${getVal(p.productOptions || p.product_options)}</td>
+                    <td>${getVal(p.manufacturer)}</td>
+                    <td>${getVal(p.origin)}</td>
+                    <td>${getVal(p.quantityPerCarton || p.quantity_per_carton)}</td>
+                    <td>${getVal(p.defaultQuantity || 1)}</td>
+                    <td class="text-right">${fmtNum(p.consumerPrice || p.consumer_price)}</td>
+                    <td class="text-right">${fmtNum(p.price || p.supplyPrice || p.supply_price)}</td>
+                    <td class="text-left">${getVal(imgUrl)}</td>
+                    <td class="text-left">${escapeHtml(detailHtmlText)}</td>
+                    <td>${getVal(p.remarks)}</td>
+                </tr>
+            `
+        })
 
-        // Ensure headers are set for binary download
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        res.setHeader('Content-Disposition', `attachment; filename="Proposal.xlsx"`)
+        html += `
+                </tbody>
+            </table>
+        </body>
+        </html>
+        `
 
-        res.send(buffer)
+        // Send as Excel file
+        const filename = `Proposal_${Date.now()}.xls` // .xls for HTML format compatibility
+        res.setHeader('Content-Type', 'application/vnd.ms-excel')
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+        res.send(html)
 
     } catch (error) {
         console.error('Excel generation error:', error)
