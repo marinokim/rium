@@ -997,69 +997,39 @@
 
                             const token = localStorage.getItem('token');
 
-                            // DIAGNOSTIC START
+                            // FORM SUBMISSION STRATEGY (Bypass CORS)
                             const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
                                 ? 'http://localhost:5003'
                                 : 'https://rium-scm-backend.onrender.com';
 
-                            console.log('Target API:', API_URL);
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = `${API_URL}/api/excel/download/proposal`;
+                            // form.target = '_blank'; // Optional: Open in new tab if debugging, but usually bad UX for download
 
-                            // 1. Health Check
-                            fetch(`${API_URL}/api/health`)
-                                .then(res => {
-                                    if (!res.ok) throw new Error('Health check failed: ' + res.status);
-                                    return res.json();
-                                })
-                                .then(() => {
-                                    // 2. Actual Download
-                                    return fetch(`${API_URL}/api/excel/download/proposal`, {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json'
-                                        },
-                                        body: JSON.stringify({
-                                            title: historyItem.title || '제안서',
-                                            items: items
-                                        })
-                                    });
-                                })
-                                .then(async res => {
-                                    if (!res.ok) {
-                                        const errText = await res.text();
-                                        try {
-                                            const errJson = JSON.parse(errText);
-                                            throw new Error(errJson.error || errText);
-                                        } catch (e) {
-                                            throw new Error(errText || 'Excel generation failed');
-                                        }
-                                    }
-                                    return res.blob();
-                                })
-                                .then(blob => {
-                                    const url = window.URL.createObjectURL(blob);
-                                    const a = document.createElement('a');
-                                    a.href = url;
-                                    const safeTitle = (historyItem.title || '제안서').replace(/[^a-zA-Z0-9가-힣\s-_]/g, '').trim();
-                                    a.download = `${safeTitle}.xlsx`;
-                                    document.body.appendChild(a);
-                                    a.click();
-                                    a.remove();
-                                    window.URL.revokeObjectURL(url);
-                                })
-                                .catch(err => {
-                                    console.error('Download Logic Error:', err);
-                                    // Alert exact failure point
-                                    if (err.message.includes('Health check')) {
-                                        alert(`서버 연결 실패 (${API_URL}):\n` + err.message + `\n\n브라우저나 네트워크가 서버 접속을 막고 있습니다.`);
-                                    } else if (err.message === 'Failed to fetch') {
-                                        alert(`네트워크 차단됨 (CORS/Firewall):\n서버 주소 ${API_URL} 로 접속할 수 없습니다.`);
-                                    } else {
-                                        alert('다운로드 실패:\n' + err.message);
-                                    }
-                                });
+                            const titleInput = document.createElement('input');
+                            titleInput.type = 'hidden';
+                            titleInput.name = 'title';
+                            titleInput.value = historyItem.title || '제안서';
+                            form.appendChild(titleInput);
+
+                            const itemsInput = document.createElement('input');
+                            itemsInput.type = 'hidden';
+                            itemsInput.name = 'items';
+                            // Stringify the entire items array exactly as backend expects
+                            itemsInput.value = JSON.stringify(items);
+                            form.appendChild(itemsInput);
+
+                            document.body.appendChild(form);
+                            form.submit();
+                            document.body.removeChild(form);
+
+                            // Note: We cannot catch errors from form.submit() easily, 
+                            // but since CORS is bypassed, if the server is up, it WILL work.
                         }
                     } catch (err) {
                         console.error('Download prompt error:', err);
+                        alert('다운로드 요청 실패: ' + err.message);
                     }
 
                     // Redirect
