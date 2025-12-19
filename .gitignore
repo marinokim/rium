@@ -1,0 +1,7 @@
+excel.zip
+excel/
+backuptest/
+node_modules/
+.env
+.DS_Store
+db_backup/
