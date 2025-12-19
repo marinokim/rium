@@ -1046,7 +1046,13 @@
 
                         if (item.image) {
                             try {
-                                const proxyUrl = `${API_BASE}/api/quotes/proxy-image?url=${encodeURIComponent(item.image)}`;
+                                // Fix: Ensure Absolute URL for Backend Fetch
+                                let imageUrl = item.image;
+                                if (imageUrl.startsWith('/') && !imageUrl.startsWith('//')) {
+                                    imageUrl = `${API_BASE}${imageUrl}`;
+                                }
+
+                                const proxyUrl = `${API_BASE}/api/quotes/proxy-image?url=${encodeURIComponent(imageUrl)}`;
                                 const token = localStorage.getItem('token');
                                 const imgRes = await fetch(proxyUrl, {
                                     headers: { 'Authorization': `Bearer ${token}` }
@@ -1066,10 +1072,12 @@
                                         br: { col: 5, row: i + 3 },
                                         editAs: 'oneCell'
                                     });
+                                } else {
+                                    row.getCell(5).value = '이미지 로드 실패';
                                 }
                             } catch (err) {
                                 console.warn('Image embed failed', err);
-                                row.getCell(5).value = '이미지 실패';
+                                row.getCell(5).value = '오류';
                             }
                         }
                     } // End of loop
