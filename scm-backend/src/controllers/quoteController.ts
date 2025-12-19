@@ -213,3 +213,32 @@ export const deleteQuotes = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: 'Failed to delete quotes' });
     }
 };
+
+// Proxy Image for Excel embedding
+export const proxyImage = async (req: AuthRequest, res: Response) => {
+    try {
+        const imageUrl = req.query.url as string;
+        if (!imageUrl) {
+            return res.status(400).json({ error: 'URL is required' });
+        }
+
+        // Simple fetch using global fetch (Node 18+)
+        const response = await fetch(imageUrl);
+
+        if (!response.ok) {
+            return res.status(response.status).send('Failed to fetch image');
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (contentType) {
+            res.setHeader('Content-Type', contentType);
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        res.send(Buffer.from(arrayBuffer));
+
+    } catch (error) {
+        console.error('Proxy image error:', error);
+        res.status(500).json({ error: 'Failed to proxy image' });
+    }
+};
