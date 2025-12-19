@@ -88,38 +88,11 @@ router.post('/upload', upload.single('file'), async (req, res) => {
                 }
 
                 const imageUrl = extractUrl(row['ImageURL'] || row['이미지URL'])
-                const detailUrl = sanitize(row['DetailURL'] || row['상세페이지URL']) // Detail URL can be HTML, so keep consistent with sanitize or use extraction if it's meant to be a single image? 
-                // User requirement: Detail URL can be HTML. But if they upload <img src=...> in Detail URL column, do they want it as HTML or just the URL?
-                // Step 7004 user asked for *multiple* URLs to be converted to images.
-                // Step 7129 user asked for complex HTML to be rendered.
-                // So DetailURL *should* support raw HTML. But "Image URL" (Main image) must be a single URL.
-                // Therefore only imageUrl passes through extractUrl. Detail page URL logic is different.
-                // However, wait. If user provided <center><img...></center> for Detail URL, we want to KEEP it as HTML.
-                // So for detailUrl, we just use sanitize() which keeps the HTML tags (minus double quotes, which might break attributes...).
-                // WAIT. sanitize() removing double quotes `replace(/"/g, '')` BREAKS HTML attributes: <img src="url"> -> <img src=url>.
-                // This is risky for complex HTML.
-                // If DetailURL is HTML, we should NOT strip double quotes blindly.
-                // We should use a safer sanitize for DetailURL or skip it.
-                // For Excel upload, let's assume raw HTML should be preserved as much as possible but safe.
 
-                // Let's refine sanitize to NOT strip quotes if it looks like HTML, or just relax it for DetailURL.
-                // But `sanitize` function is defined globally in file. 
-                // Let's use a specific handling for DetailURL.
-
-                // For main ImageURL, it MUST be a URL.
-
-                // For DetailURL:
-                let rawDetail = row['DetailURL'] || row['상세페이지URL']
-                let detailUrlClean = ''
-                if (rawDetail) {
-                    // If it looks like HTML, preserve quotes but maybe trim
-                    if (String(rawDetail).trim().match(/^<.+>$/s) || String(rawDetail).includes('<img') || String(rawDetail).includes('<center')) {
-                        detailUrlClean = String(rawDetail).trim()
-                    } else {
-                        detailUrlClean = sanitize(rawDetail)
-                    }
-                }
-                const finalDetailUrl = detailUrlClean
+                // DetailURL: Preserve exactly as is (don't strip quotes), just trim whitespace.
+                // Using String() converts null/undefined to 'null'/'undefined' string if not careful, so use || '' first.
+                const rawDetail = row['DetailURL'] || row['상세페이지URL'] || ''
+                const finalDetailUrl = String(rawDetail).trim()
 
                 const manufacturer = sanitize(row['Manufacturer'] || row['제조사'])
                 const origin = sanitize(row['Origin'] || row['원산지'])
