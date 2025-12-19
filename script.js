@@ -632,8 +632,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Secure & Resize Main Image (800px)
         const imageUrl = getSecureImageUrl(product.imageUrl || product.image_url || product.image, 800);
         const detailUrl = product.detailUrl || product.detail_url;
-        const modelName = product.modelNo || product.model_name || product.model || '';
-        const productName = product.name || product.product_name || '제품명 없음';
+
+        // Correct Mapping per User Request:
+        // H1 (Title) -> model_name (Real Name). If "No Name", show empty.
+        const rawName = product.model_name || product.name || product.product_name || '';
+        const productName = (rawName === 'No Name') ? '' : rawName;
+
+        // Subtitle (Model Code) -> model_no
+        const modelName = product.model_no || product.modelNo || product.model || ''; // e.g. DA311
+
         const brandName = product.brand || 'Brand';
         const categoryName = product.category_name || product.category?.name || 'Category';
 
