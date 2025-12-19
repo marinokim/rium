@@ -525,8 +525,14 @@
 
             // Info
             document.getElementById('productBrand').textContent = p.brand || 'RIUM';
-            document.getElementById('productName').textContent = p.name;
-            document.getElementById('productModel').textContent = `Model: ${p.modelNo || '-'}`;
+
+            // Name Logic: Prioritize model_name, treat 'No Name' as empty
+            const rawName = p.model_name || p.name || '';
+            document.getElementById('productName').textContent = (rawName === 'No Name') ? '' : rawName;
+
+            // Model Number Logic: Handle snake_case
+            const modelNo = p.model_no || p.modelNo;
+            document.getElementById('productModel').textContent = modelNo ? `Model: ${modelNo}` : '';
 
             // Prices
             const price = p.price || 0;
