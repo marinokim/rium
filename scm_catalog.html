@@ -940,26 +940,29 @@
                     ];
 
                     // Generate Rows for ALL items
-                    const dataRows = newProposal.items.map((item, idx) => [
-                        idx + 1,
-                        '',
-                        item.productId,
-                        item.name,
-                        item.image || '', // Column E: Image URL
-                        '-',
-                        '',
-                        '',
-                        '',
-                        '중국',
-                        1,
-                        1,
-                        item.price * 1.5,
-                        item.price,
-                        0,
-                        item.image || '', // Column O: URL
-                        `<img src="${item.image || ''}">`, // Column P: HTML
-                        ''
-                    ]);
+                    const dataRows = newProposal.items.map((item, idx) => {
+                        const imgFormula = item.image ? { t: 'f', v: `IMAGE("${item.image}")` } : '';
+                        return [
+                            idx + 1,
+                            '',
+                            item.productId,
+                            item.name,
+                            imgFormula, // Column E: Image Formula
+                            '-',
+                            '',
+                            '',
+                            '',
+                            '상세페이지 참조', // Fixed Origin
+                            1,
+                            1,
+                            item.price * 1.5,
+                            item.price,
+                            0,
+                            item.image || '', // Column O: URL (Keep URL for reference or fallback)
+                            imgFormula,     // Column P: Image Formula
+                            ''
+                        ];
+                    });
 
                     const wsData = [...headerInfo, columns, ...dataRows];
                     const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -969,7 +972,7 @@
 
                     ws['!cols'] = [
                         { wch: 5 }, { wch: 8 }, { wch: 8 }, { wch: 40 }, { wch: 15 },
-                        { wch: 20 }, { wch: 10 }, { wch: 15 }, { wch: 10 }, { wch: 10 },
+                        { wch: 20 }, { wch: 10 }, { wch: 15 }, { wch: 10 }, { wch: 12 },
                         { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
                         { wch: 50 }, { wch: 50 }, { wch: 20 }
                     ];

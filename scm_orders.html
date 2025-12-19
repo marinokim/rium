@@ -560,46 +560,50 @@
                 let dataRows = [];
                 if (prop.items && prop.items.length > 0) {
                     // Multi-item structure
-                    dataRows = prop.items.map((item, idx) => [
-                        idx + 1,
-                        '',
-                        item.productId || prop.id.split('-').pop(),
-                        item.name,
-                        item.image || '', // Image URL in Col E
-                        '-',
-                        '',
-                        '',
-                        '',
-                        '중국',
-                        1,
-                        1,
-                        item.price * 1.5,
-                        item.price,
-                        0,
-                        item.image || '', // Image URL in Col O
-                        `<img src="${item.image || ''}">`,
-                        ''
-                    ]);
+                    dataRows = prop.items.map((item, idx) => {
+                        const imgFormula = item.image ? { t: 'f', v: `IMAGE("${item.image}")` } : '';
+                        return [
+                            idx + 1,
+                            '',
+                            item.productId || prop.id.split('-').pop(),
+                            item.name,
+                            imgFormula, // Image Formula
+                            '-',
+                            '',
+                            '',
+                            '',
+                            '상세페이지 참조',
+                            1,
+                            1,
+                            item.price * 1.5,
+                            item.price,
+                            0,
+                            item.image || '',
+                            imgFormula, // Image Formula 
+                            ''
+                        ];
+                    });
                 } else {
                     // Legacy Single-Item Fallback
+                    const imgFormula = prop.product.image ? { t: 'f', v: `IMAGE("${prop.product.image}")` } : '';
                     dataRows = [[
                         1,
                         '',
                         prop.id.split('-').pop(),
                         prop.product.name,
-                        prop.product.image || '',
+                        imgFormula,
                         '-',
                         '',
                         '',
                         '',
-                        '중국',
+                        '상세페이지 참조',
                         1,
                         1,
                         parseInt(prop.amount.replace(/[^0-9]/g, '')) * 1.5,
                         parseInt(prop.amount.replace(/[^0-9]/g, '')),
                         0,
                         prop.product.image || '',
-                        `<img src="${prop.product.image || ''}">`,
+                        imgFormula,
                         ''
                     ]];
                 }

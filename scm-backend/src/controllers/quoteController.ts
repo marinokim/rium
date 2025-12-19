@@ -136,24 +136,27 @@ export const downloadQuoteExcel = async (req: AuthRequest, res: Response) => {
         // Row 3+: Data
         const dataRows = quote.items.map((item, index) => {
             const p = item.product as any;
+            const imgFormula = p.imageUrl ? { t: 'f', v: `IMAGE("${p.imageUrl}")` } : '';
+            const detailImgFormula = p.detailUrl ? { t: 'f', v: `IMAGE("${p.detailUrl}")` } : '';
+
             return [
                 index + 1, // 순번
                 p.isAvailable ? '' : '품절', // 품절여부
                 p.id, // 고유번호
                 p.name, // 상품명
-                '', // 상품이미지 (Visual placeholder, empty due to tech limit)
+                imgFormula, // 상품이미지 (Formula)
                 p.modelNo || '-', // 모델명
                 p.productOptions || '', // 옵션
                 p.brand || '', // 실명
                 '', // 제조일
-                p.origin || '중국', // 원산지
+                p.origin || '상세페이지 참조', // 원산지 (Fixed)
                 p.quantityPerCarton || 1, // 카톤입수량
                 1, // 기본수량 (Typical MOQ)
                 p.consumerPrice || 0, // 소비자가
                 item.price, // 공급가
                 p.shippingFee || 0, // 배송비
                 p.imageUrl || '', // 대표이미지 (URL)
-                p.detailUrl ? `<img src="${p.detailUrl}">` : '', // 상세이미지 (HTML Tag style)
+                detailImgFormula, // 상세이미지 (Formula)
                 p.remarks || '' // 비고
             ];
         });
