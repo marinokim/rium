@@ -1037,6 +1037,11 @@
                             detailUrl: item.detailUrl || '',
                             remarks: ''
                         };
+
+                        // Fix: Set Row Height for Image
+                        row.height = 100;
+                        row.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+
                         if (item.image) {
                             try {
                                 const proxyUrl = `${API_BASE}/api/quotes/proxy-image?url=${encodeURIComponent(item.image)}`;
