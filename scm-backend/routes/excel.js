@@ -443,8 +443,17 @@ router.post('/update-source', upload.single('file'), (req, res) => {
 router.post('/download/proposal', async (req, res) => {
     try {
         const { title, items } = req.body
+        console.log('Download Proposal Request Body:', JSON.stringify(req.body, null, 2)) // DEBUG LOG
+
         if (!items || !Array.isArray(items)) {
+            console.error('Items is missing or not an array')
             return res.status(400).json({ error: 'Items array is required' })
+        }
+
+        if (items.length > 0) {
+            console.log('First Item Structure:', JSON.stringify(items[0], null, 2)) // DEBUG LOG
+        } else {
+            console.log('Items array is empty')
         }
 
         const workbook = new ExcelJS.Workbook()
@@ -510,23 +519,28 @@ router.post('/download/proposal', async (req, res) => {
             const row = worksheet.getRow(rowIndex)
 
             // Map frontend keys to internal keys
-            // Supports both 'image' and 'imageUrl' etc.
-            const imgUrl = item.imageUrl || item.image_url || item.image || ''
-            const modelName = item.modelName || item.model_name || item.model || item.modelNo || ''
-            const pName = item.productName || item.name || item.product_name || ''
-            const supplyPr = item.supplyPrice || item.supply_price || item.price || item.b2b_price
-            const consPr = item.consumerPrice || item.consumer_price
-            const dUrl = item.detailUrl || item.detail_url || ''
+            const imgUrl = item.imageUrl || item.image_url || item.image || item.ImageURL || ''
+            const modelName = item.modelName || item.model_name || item.model || item.modelNo || item.ModelName || ''
+            const pName = item.productName || item.name || item.product_name || item.Name || ''
+            const supplyPr = item.supplyPrice || item.supply_price || item.price || item.b2b_price || item.SupplyPrice
+            const consPr = item.consumerPrice || item.consumer_price || item.ConsumerPrice
+            const dUrl = item.detailUrl || item.detail_url || item.DetailURL || ''
+
+            // DEBUG PROBE: If name is missing, dump item to desc
+            let descVal = item.description || item.desc || ''
+            if (!pName && !modelName) {
+                descVal = 'DEBUG: ' + JSON.stringify(item)
+            }
 
             row.values = {
                 no: i + 1,
                 status: item.is_available === false ? '품절' : '',
                 id: item.id || '',
-                name: item.brand ? `[${item.brand}] ${modelName}` : modelName,
+                name: item.brand ? `[${item.brand}] ${modelName}` : (pName || modelName),
                 image: '', // Placeholder
                 model: modelName,
                 option: item.productOptions || item.product_options || item.option || '',
-                desc: item.description || '',
+                desc: descVal,
                 manufacturer: item.manufacturer || '',
                 origin: item.origin || '',
                 cartonQty: item.quantityPerCarton || item.quantity_per_carton || '',
