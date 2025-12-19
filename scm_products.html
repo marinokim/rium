@@ -1091,37 +1091,46 @@
                         pTitle.innerText = '상품 수정';
                         await loadCategories();
                         try {
+                            // Find product in local list first to save a call, or fetch fresh
+                            // Fetch fresh is safer
                             const data = await apiFetch(`/api/products/${id}`);
                             const p = data.product;
+
+                            // Edit Form Population (Map snake_case to IDs)
                             document.getElementById('p_id').value = p.id;
-                            document.getElementById('p_name').value = p.name;
-                            document.getElementById('p_modelNo').value = p.modelNo || '';
+                            document.getElementById('p_name').value = p.name || p.product_name || '';
+                            document.getElementById('p_modelNo').value = p.modelNo || p.model_no || '';
                             document.getElementById('p_brand').value = p.brand || '';
-                            document.getElementById('p_categoryId').value = p.categoryId;
-                            document.getElementById('p_price').value = p.price;
-                            document.getElementById('p_consumerPrice').value = p.consumerPrice || '';
+                            document.getElementById('p_categoryId').value = p.categoryId || p.category_id;
+                            document.getElementById('p_price').value = p.price || p.b2b_price || 0;
+                            document.getElementById('p_consumerPrice').value = p.consumerPrice || p.consumer_price || '';
 
                             // Handle snake_case is_new
                             const isNewVal = p.isNew !== undefined ? p.isNew : (p.is_new !== undefined ? p.is_new : false);
                             document.getElementById('p_isNew').checked = isNewVal;
 
-                            document.getElementById('p_supplyPrice').value = p.supplyPrice || '';
-                            document.getElementById('p_stockQuantity').value = p.stockQuantity || '';
-                            document.getElementById('p_defaultQuantity').value = p.defaultQuantity || 1;
-                            document.getElementById('p_quantityPerCarton').value = p.quantityPerCarton || 1;
+                            document.getElementById('p_supplyPrice').value = p.supplyPrice || p.supply_price || '';
+                            document.getElementById('p_stockQuantity').value = p.stockQuantity || p.stock_quantity || '';
+                            document.getElementById('p_defaultQuantity').value = p.defaultQuantity || p.default_quantity || 1;
+                            document.getElementById('p_quantityPerCarton').value = p.quantityPerCarton || p.quantity_per_carton || 1;
 
                             document.getElementById('p_origin').value = p.origin || '';
                             document.getElementById('p_manufacturer').value = p.manufacturer || '';
-                            document.getElementById('p_shippingFee').value = p.shippingFee || '';
-                            document.getElementById('p_shippingFeeIndividual').value = p.shippingFeeIndividual || '';
-                            document.getElementById('p_productOptions').value = p.productOptions || '';
+                            document.getElementById('p_shippingFee').value = p.shippingFee || p.shipping_fee || '';
+                            document.getElementById('p_shippingFeeIndividual').value = p.shippingFeeIndividual || p.shipping_fee_individual || '';
+                            document.getElementById('p_productOptions').value = p.productOptions || p.product_options || '';
                             document.getElementById('p_description').value = p.description || '';
                             document.getElementById('p_remarks').value = p.remarks || '';
 
-                            document.getElementById('p_imageUrl').value = p.imageUrl || '';
-                            document.getElementById('p_detailUrl').value = p.detailUrl || '';
-                            document.getElementById('p_isTaxFree').checked = p.isTaxFree;
-                            document.getElementById('p_isAvailable').checked = p.isAvailable;
+                            document.getElementById('p_imageUrl').value = p.imageUrl || p.image_url || '';
+                            document.getElementById('p_detailUrl').value = p.detailUrl || p.detail_url || '';
+
+                            const isTaxFreeVal = p.isTaxFree !== undefined ? p.isTaxFree : (p.is_tax_free || false);
+                            document.getElementById('p_isTaxFree').checked = isTaxFreeVal;
+
+                            const isAvailableVal = p.isAvailable !== undefined ? p.isAvailable : (p.is_available !== undefined ? p.is_available : true);
+                            document.getElementById('p_isAvailable').checked = isAvailableVal;
+
                             productModal.style.display = 'flex';
                         } catch (e) { alert(e.message); }
                     };
