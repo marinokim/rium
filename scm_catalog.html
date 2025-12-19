@@ -1002,6 +1002,7 @@
                     // User asked to "Change Recent Order History to Proposal Request History" on DASHBOARD.
                     // So maybe redirect to Dashboard?
                     location.href = 'scm_dashboard.html';
+                    return;
 
                 } else {
                     throw new Error(response.error || 'Failed to create proposal');
@@ -1012,11 +1013,6 @@
                 alert(`제안서 생성 중 서버 오류가 발생했습니다.\n${e.message || ''}\n(데이터를 가져오는데 실패했습니다.)`);
                 return; // Stop execution, do not run fallback
             }
-
-            // Fallback Logic REMOVED
-            console.error('Unexpected execution path: Fallback should not be reached');
-            alert('시스템 오류: 서버 연결에 실패했습니다. (Fallback blocked)');
-            return;
         }
 
         // generateExcelProposal removed (Legacy fallback)
