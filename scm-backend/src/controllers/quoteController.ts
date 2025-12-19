@@ -277,6 +277,35 @@ export const downloadQuoteExcel = async (req: AuthRequest, res: Response) => {
             row.height = 100;
         } // End Loop
 
+        // ... existing main sheet logic ...
+
+        // --- DEBUG SHEET ---
+        const debugSheet = workbook.addWorksheet('Debug Info');
+        debugSheet.columns = [
+            { header: 'Item Index', key: 'idx', width: 10 },
+            { header: 'Product ID', key: 'id', width: 10 },
+            { header: 'Raw Data (JSON)', key: 'raw', width: 100 },
+            { header: 'Image Path Check', key: 'imgPath', width: 50 },
+            { header: 'Fetched Buffer Size', key: 'bufSize', width: 20 }
+        ];
+
+        quote.items.forEach((item, i) => {
+            const p = item.product;
+            let pathCheck = 'N/A';
+            if (p.imageUrl && !p.imageUrl.startsWith('http')) {
+                pathCheck = `CWD: ${process.cwd()}, Path: ${p.imageUrl}, Exists: ${fs.existsSync(path.join(process.cwd(), p.imageUrl))}`;
+            }
+
+            debugSheet.addRow({
+                idx: i + 1,
+                id: p.id,
+                raw: JSON.stringify(p),
+                imgPath: pathCheck,
+                bufSize: 'Check Main Sheet'
+            });
+        });
+        // -------------------
+
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename=Quote_${quote.quoteNumber}.xlsx`);
 

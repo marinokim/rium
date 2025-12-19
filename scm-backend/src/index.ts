@@ -26,7 +26,18 @@ app.use('/api/quotes', quoteRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/notifications', notificationRoutes);
+import path from 'path';
+
+// ...
+
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/excel', excelRoutes);
+
+// Serve Static Files
+const __dirname = path.resolve();
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'src/uploads'))); // fallback
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'))); // fallback for potential cwd mismatch
 
 // Basic Route
 app.get('/', (req: Request, res: Response) => {
