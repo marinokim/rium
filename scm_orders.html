@@ -627,10 +627,13 @@
                                 const url = window.URL.createObjectURL(blob);
                                 const a = document.createElement('a');
                                 a.href = url;
-                                a.download = `Proposal_${item.title}_${Date.now()}.xls`;
+                                // Sanitize title for filename
+                                const safeTitle = (item.title || 'Proposal').replace(/[^a-zA-Z0-9가-힣\s-_]/g, '').trim();
+                                a.download = `Proposal_${safeTitle}_${Date.now()}.xls`;
                                 document.body.appendChild(a);
                                 a.click();
                                 a.remove();
+                                window.URL.revokeObjectURL(url);
                             } else {
                                 alert('Excel Download Failed');
                             }
