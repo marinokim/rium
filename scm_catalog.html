@@ -997,22 +997,32 @@
 
                             const token = localStorage.getItem('token');
 
-                            // Use API_BASE from global/scope if available, or redefine
-                            const DOWNLOAD_API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                            // DIAGNOSTIC START
+                            const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
                                 ? 'http://localhost:5003'
                                 : 'https://rium-scm-backend.onrender.com';
 
-                            fetch(`${DOWNLOAD_API_BASE}/api/excel/download/proposal`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                    // 'Authorization': `Bearer ${token}` // Auth not required for this route, removing to fix CORS
-                                },
-                                body: JSON.stringify({
-                                    title: historyItem.title || '제안서',
-                                    items: items
+                            console.log('Target API:', API_URL);
+
+                            // 1. Health Check
+                            fetch(`${API_URL}/api/health`)
+                                .then(res => {
+                                    if (!res.ok) throw new Error('Health check failed: ' + res.status);
+                                    return res.json();
                                 })
-                            })
+                                .then(() => {
+                                    // 2. Actual Download
+                                    return fetch(`${API_URL}/api/excel/download/proposal`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            title: historyItem.title || '제안서',
+                                            items: items
+                                        })
+                                    });
+                                })
                                 .then(async res => {
                                     if (!res.ok) {
                                         const errText = await res.text();
@@ -1029,7 +1039,6 @@
                                     const url = window.URL.createObjectURL(blob);
                                     const a = document.createElement('a');
                                     a.href = url;
-                                    // Sanitize filename
                                     const safeTitle = (historyItem.title || '제안서').replace(/[^a-zA-Z0-9가-힣\s-_]/g, '').trim();
                                     a.download = `${safeTitle}.xlsx`;
                                     document.body.appendChild(a);
@@ -1038,8 +1047,15 @@
                                     window.URL.revokeObjectURL(url);
                                 })
                                 .catch(err => {
-                                    console.error('Excel Download Error:', err);
-                                    alert('오류가 발생했습니다: ' + err.message);
+                                    console.error('Download Logic Error:', err);
+                                    // Alert exact failure point
+                                    if (err.message.includes('Health check')) {
+                                        alert(`서버 연결 실패 (${API_URL}):\n` + err.message + `\n\n브라우저나 네트워크가 서버 접속을 막고 있습니다.`);
+                                    } else if (err.message === 'Failed to fetch') {
+                                        alert(`네트워크 차단됨 (CORS/Firewall):\n서버 주소 ${API_URL} 로 접속할 수 없습니다.`);
+                                    } else {
+                                        alert('다운로드 실패:\n' + err.message);
+                                    }
                                 });
                         }
                     } catch (err) {
