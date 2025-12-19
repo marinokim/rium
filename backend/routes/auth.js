@@ -72,6 +72,7 @@ router.post('/login', async (req, res) => {
                 businessNumber: user.business_number,
                 phone: user.phone,
                 // ... other fields
+                role: user.is_admin ? 'ADMIN' : 'USER'
             }
         })
     } catch (error) {
