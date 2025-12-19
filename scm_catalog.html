@@ -897,21 +897,8 @@
                     try {
                         const confirmDownload = confirm('제안서가 생성되었습니다.\n엑셀 파일도 다운로드 하시겠습니까?');
                         if (confirmDownload) {
-                            const token = localStorage.getItem('token');
-                            const res = await fetch(`${API_BASE}/api/quotes/${response.quote.id}/download/excel`, {
-                                headers: { 'Authorization': `Bearer ${token}` }
-                            });
-                            if (res.ok) {
-                                const blob = await res.blob();
-                                const link = document.createElement('a');
-                                link.href = window.URL.createObjectURL(blob);
-                                link.download = `Quote_${response.quote.quoteNumber}.xlsx`;
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                            } else {
-                                alert('다운로드 실패');
-                            }
+                            // Use Frontend Generation with Buffer Data (Preserves full details)
+                            await generateExcelProposal(buffer, response.quote.quoteNumber);
                         }
                     } catch (e) { console.error(e); }
 
@@ -1097,6 +1084,136 @@
             }
 
             location.href = 'scm_orders.html';
+        }
+
+        // Shared Excel Generation Function
+        async function generateExcelProposal(items, proposalId) {
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('제안서');
+
+            // Define columns
+            worksheet.columns = [
+                { header: '순번', key: 'no', width: 5 },
+                { header: '품절여부', key: 'status', width: 10 },
+                { header: '고유번호', key: 'id', width: 10 },
+                { header: '상품명', key: 'name', width: 40 },
+                { header: '상품이미지', key: 'image', width: 20 },
+                { header: '모델명', key: 'model', width: 15 },
+                { header: '옵션', key: 'option', width: 10 },
+                { header: '설명', key: 'desc', width: 40 },
+                { header: '제조원', key: 'manufacturer', width: 15 },
+                { header: '원산지', key: 'origin', width: 10 },
+                { header: '카톤입수량', key: 'cartonQty', width: 10 },
+                { header: '기본수량', key: 'defaultQty', width: 10 },
+                { header: '소비자가', key: 'consumerPrice', width: 12 },
+                { header: '공급가(부가세포함)', key: 'supplyPrice', width: 15 },
+                { header: '개별배송비(부가세포함)', key: 'shipping', width: 15 },
+                { header: '대표이미지', key: 'imageUrl', width: 30 },
+                { header: '상세이미지', key: 'detailUrl', width: 30 },
+                { header: '비고', key: 'remarks', width: 20 },
+            ];
+
+            // Insert Title Row
+            worksheet.insertRow(1, []);
+            worksheet.mergeCells('A1:C1');
+            worksheet.mergeCells('D1:R1');
+
+            const titleCell = worksheet.getCell('A1');
+            titleCell.value = 'RIUM';
+            titleCell.font = { name: 'Arial', size: 20, bold: true, color: { argb: '003366' } };
+            titleCell.alignment = { vertical: 'middle', horizontal: 'left' };
+
+            const warningCell = worksheet.getCell('D1');
+            warningCell.value = '■ 당사가 운영하는 모든 상품은 폐쇄몰을 제외한 온라인 판매를 금하며, 판매 시 상품 공급이 중단됩니다.';
+            warningCell.font = { name: 'Malgun Gothic', size: 12, bold: true, color: { argb: 'FF0000' } };
+            warningCell.alignment = { vertical: 'middle', horizontal: 'left' };
+
+            worksheet.getRow(1).height = 30;
+
+            // Style Header (Row 2)
+            const headerRow = worksheet.getRow(2);
+            headerRow.font = { bold: true };
+            headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'CCE5FF' } };
+            headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+            // Add Data Rows
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                const row = worksheet.getRow(i + 3);
+
+                row.values = {
+                    no: i + 1,
+                    status: '',
+                    id: item.productId,
+                    name: item.name,
+                    image: '', // Visual Image
+                    model: item.model || '-',
+                    option: '',
+                    desc: item.description || '',
+                    manufacturer: item.manufacturer || '',
+                    origin: item.origin || '상세페이지 참조',
+                    cartonQty: 1, // Default
+                    defaultQty: 1, // Default
+                    consumerPrice: item.consumerPrice || item.price * 1.5,
+                    supplyPrice: item.price,
+                    shipping: 0,
+                    imageUrl: item.image || '',
+                    detailUrl: item.detailUrl || '',
+                    remarks: ''
+                };
+
+                // Fix: Set Row Height for Image
+                row.height = 100;
+                row.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+
+                if (item.image) {
+                    try {
+                        // Fix: Ensure Absolute URL for Backend Fetch
+                        let imageUrl = item.image;
+                        if (imageUrl.startsWith('/') && !imageUrl.startsWith('//')) {
+                            imageUrl = `${API_BASE}${imageUrl}`;
+                        }
+
+                        const proxyUrl = `${API_BASE}/api/quotes/proxy-image?url=${encodeURIComponent(imageUrl)}`;
+                        const token = localStorage.getItem('token');
+                        const imgRes = await fetch(proxyUrl, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (imgRes.ok) {
+                            const imgBuffer = await imgRes.arrayBuffer();
+                            const extension = item.image.toLowerCase().endsWith('.png') ? 'png' : 'jpeg';
+
+                            const imageId = workbook.addImage({
+                                buffer: imgBuffer,
+                                extension: extension,
+                            });
+
+                            worksheet.addImage(imageId, {
+                                tl: { col: 4, row: i + 2 }, // Column E (index 4)
+                                br: { col: 5, row: i + 3 },
+                                editAs: 'oneCell'
+                            });
+                        } else {
+                            row.getCell(5).value = '이미지 로드 실패';
+                        }
+                    } catch (err) {
+                        console.warn('Image embed failed', err);
+                        row.getCell(5).value = '오류';
+                    }
+                }
+            } // End of loop
+
+            // Save
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = `Quote_${proposalId}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
