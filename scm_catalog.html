@@ -984,46 +984,58 @@
                     try {
                         const confirmDownload = confirm('제안서가 생성되었습니다.\n관리자 확인 후 제안서 목록에서 확인 가능합니다.\n엑셀 파일도 지금 다운로드 하시겠습니까?');
                         if (confirmDownload) {
+                            // Excel Download (Backend)
                             const historyItem = response.history;
                             let items = historyItem.items || [];
                             if (typeof items === 'string') {
                                 try { items = JSON.parse(items); } catch (e) { items = []; }
                             }
 
-                            // CSV Header
-                            let csv = '\uFEFF';
-                            csv += "No,상품명,모델명/코드,수량,단가(B2B),합계\n";
+                            const token = localStorage.getItem('token');
 
-                            items.forEach((p, i) => {
-                                const name = (p.name || '').replace(/,/g, ' ');
-                                const model = (p.model || '').replace(/,/g, ' '); // Map appropriately (model_name/model_no was mapped to model in fetchProductData?)
-                                // Check fetchProductData: model: product.model_name || product.modelNo.
-                                // So p.model is correct.
-                                const qty = p.quantity || 1;
-                                const price = p.price || 0;
-                                const total = price * qty;
-                                csv += `${i + 1},${name},${model},${qty},${price},${total}\n`;
-                            });
+                            // Use API_BASE from global/scope if available, or redefine
+                            const DOWNLOAD_API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                                ? 'http://localhost:5003'
+                                : 'https://rium-scm-backend.onrender.com';
 
-                            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                            const url = URL.createObjectURL(blob);
-                            const link = document.createElement('a');
-                            link.href = url;
-                            link.setAttribute('download', `${historyItem.title || '제안서'}.csv`);
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
+                            fetch(`${DOWNLOAD_API_BASE}/api/excel/download/proposal`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify({
+                                    title: historyItem.title || '제안서',
+                                    items: items
+                                })
+                            })
+                                .then(res => {
+                                    if (!res.ok) throw new Error('Excel generation failed');
+                                    return res.blob();
+                                })
+                                .then(blob => {
+                                    const url = window.URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `${historyItem.title || '제안서'}.xlsx`;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    a.remove();
+                                    window.URL.revokeObjectURL(url);
+                                })
+                                .catch(err => {
+                                    console.error('Excel Download Error:', err);
+                                    alert('엑셀 파일 생성 중 오류가 발생했습니다.');
+                                });
                         }
                     } catch (err) {
-                        console.error('Download error:', err);
+                        console.error('Download prompt error:', err);
                     }
 
-                    // Redirect to Admin/List? User said "Changes to admin screen...".
-                    // If user is User, maybe they shouldn't go to Admin.
-                    // But maybe "Proposal Management" page `scm_orders.html` is accessible to filtered users?
-                    // User asked to "Change Recent Order History to Proposal Request History" on DASHBOARD.
-                    // So maybe redirect to Dashboard?
-                    location.href = 'scm_dashboard.html';
+                    // Redirect
+                    setTimeout(() => {
+                        location.href = 'scm_dashboard.html';
+                    }, 500); // Small delay to allow download to start
                     return;
 
                 } else {

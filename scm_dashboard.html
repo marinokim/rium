@@ -478,8 +478,8 @@
             </div>
 
             <script>
-                // CSV Download Helper
-                window.downloadProposalCsv = function (index) {
+                // Excel Download Helper (via Backend)
+                window.downloadProposalExcel = async function (index) {
                     const item = window.recentProposals && window.recentProposals[index];
                     if (!item) return;
 
@@ -488,28 +488,40 @@
                         try { items = JSON.parse(items); } catch (e) { items = []; }
                     }
 
-                    // CSV Header
-                    let csv = '\uFEFF'; // BOM for Korean support in Excel
-                    csv += "No,상품명,모델명/코드,수량,단가(B2B),합계\n";
+                    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                        ? 'http://localhost:5003'
+                        : 'https://rium-scm-backend.onrender.com';
 
-                    items.forEach((p, i) => {
-                        const name = (p.name || '').replace(/,/g, ' '); // Clean comma
-                        const model = (p.model || '').replace(/,/g, ' ');
-                        const qty = p.quantity || 1;
-                        const price = p.price || 0;
-                        const total = price * qty;
-                        csv += `${i + 1},${name},${model},${qty},${price},${total}\n`;
-                    });
+                    try {
+                        const token = localStorage.getItem('token');
+                        const res = await fetch(`${API_BASE}/api/excel/download/proposal`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                                title: item.title || '제안서',
+                                items: items
+                            })
+                        });
 
-                    // Download
-                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.setAttribute('download', `${item.title || '제안서'}.csv`);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                        if (!res.ok) throw new Error('Excel generation failed');
+
+                        const blob = await res.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `${item.title || '제안서'}.xlsx`;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        window.URL.revokeObjectURL(url);
+
+                    } catch (e) {
+                        console.error('Download failed:', e);
+                        alert('엑셀 다운로드에 실패했습니다.');
+                    }
                 };
 
                 async function loadMyProposals() {
@@ -548,7 +560,7 @@
                                 return `
                                     <tr>
                                         <td>${list.length - index}</td>
-                                        <td>${item.title || '제목 없음'} <i class="fas fa-file-excel" style="cursor:pointer; color:green; margin-left:5px;" onclick="downloadProposalCsv(${index})" title="Excel 다운로드"></i></td>
+                                        <td>${item.title || '제목 없음'} <i class="fas fa-file-excel" style="cursor:pointer; color:green; margin-left:5px;" onclick="downloadProposalExcel(${index})" title="Excel 다운로드"></i></td>
                                         <td>${items.length}개</td>
                                         <td>${date}</td>
                                         <td><span class="status-badge status-pending">접수완료</span></td>
