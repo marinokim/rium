@@ -12,7 +12,6 @@ const __dirname = path.dirname(__filename)
 const router = express.Router()
 
 // Configure multer for disk storage (safer for memory)
-// Use OS temp dir or /tmp
 const upload = multer({ dest: '/tmp/' })
 
 // Helper to sanitize string
@@ -51,7 +50,6 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
         for (const [index, row] of data.entries()) {
             try {
-                // Start a savepoint for this row to isolate errors
                 await client.query('SAVEPOINT row_savepoint')
 
                 // Map Excel columns to DB fields
@@ -65,13 +63,11 @@ router.post('/upload', upload.single('file'), async (req, res) => {
                 const consumerPrice = parsePrice(row['ConsumerPrice'] || row['소비자가'] || row['소가'])
                 const supplyPrice = parsePrice(row['SupplyPrice'] || row['공급가'] || row['매입가'] || 0)
 
-                // If supplyPrice is not provided (0), use b2bPrice (실판매가)
                 if (supplyPrice === 0 && b2bPrice > 0) {
                     supplyPrice = b2bPrice
                 }
                 const stockQuantity = parsePrice(row['Stock'] || row['재고'])
 
-                // Helper to extract URL from HTML if present
                 const extractUrl = (raw) => {
                     const str = sanitize(raw)
                     if (!str) return ''
@@ -85,7 +81,6 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
                 const imageUrl = extractUrl(row['ImageURL'] || row['이미지URL'])
 
-                // Detail URL logic
                 let rawDetail = row['DetailURL'] || row['상세페이지URL']
                 let detailUrlClean = ''
                 if (rawDetail) {
@@ -105,7 +100,6 @@ router.post('/upload', upload.single('file'), async (req, res) => {
                 const shippingFee = parsePrice(row['ShippingFee'] || row['배송비'])
                 let shippingFeeIndividual = parsePrice(row['ShippingFeeIndividual'] || row['개별배송비'])
 
-                // If individual shipping fee is missing, use general shipping fee
                 if (shippingFeeIndividual === 0 && shippingFee > 0) {
                     shippingFeeIndividual = shippingFee
                 }
@@ -118,14 +112,12 @@ router.post('/upload', upload.single('file'), async (req, res) => {
                     throw new Error('Model Name is required')
                 }
 
-                // Find or create category
                 let categoryId = null
                 if (categoryName) {
                     const catRes = await client.query('SELECT id FROM categories WHERE name = $1', [categoryName])
                     if (catRes.rows.length > 0) {
                         categoryId = catRes.rows[0].id
                     } else {
-                        // Create new category
                         const slug = categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
                         const newCatRes = await client.query(
                             'INSERT INTO categories (name, slug) VALUES ($1, $2) RETURNING id',
@@ -135,7 +127,6 @@ router.post('/upload', upload.single('file'), async (req, res) => {
                     }
                 }
 
-                // Check if product exists (by model_name or model_no)
                 let existingProduct = null
                 if (modelNo) {
                     const checkRes = await client.query('SELECT id FROM products WHERE model_no = $1', [modelNo])
@@ -148,7 +139,6 @@ router.post('/upload', upload.single('file'), async (req, res) => {
                 }
 
                 if (existingProduct) {
-                    // Update
                     const mode = req.body.mode || 'all'
                     if (mode === 'new') {
                         await client.query('RELEASE SAVEPOINT row_savepoint')
@@ -187,7 +177,6 @@ router.post('/upload', upload.single('file'), async (req, res) => {
                         ]
                     )
                 } else {
-                    // Insert
                     const mode = req.body.mode || 'all'
                     if (mode === 'update') {
                         await client.query('RELEASE SAVEPOINT row_savepoint')
@@ -234,7 +223,6 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         res.status(500).json({ error: 'Failed to process Excel file' })
     } finally {
         if (client) client.release()
-        // Cleanup temp file
         if (req.file && req.file.path) {
             try {
                 fs.unlinkSync(req.file.path)
@@ -289,14 +277,11 @@ router.post('/sync-shipping', async (req, res) => {
     }
 })
 
-
-
 // Swap b2b_price and consumer_price
 router.post('/swap-prices', async (req, res) => {
     const client = await pool.connect()
     try {
         await client.query('BEGIN')
-        // Swap where b2b_price > consumer_price (assuming this indicates a swap error)
         const result = await client.query(`
             UPDATE products 
             SET b2b_price = consumer_price, consumer_price = b2b_price 
@@ -318,39 +303,29 @@ router.post('/fix-data', async (req, res) => {
     const client = await pool.connect()
     try {
         await client.query('BEGIN')
-
-        // 1. Swap b2b_price and consumer_price where b2b_price > consumer_price
         const swapResult = await client.query(`
             UPDATE products 
             SET b2b_price = consumer_price, consumer_price = b2b_price 
             WHERE b2b_price > consumer_price AND consumer_price > 0
         `)
-
-        // 2. Sync supply_price with b2b_price (Actual Sales Price)
         const supplyResult = await client.query(`
             UPDATE products 
             SET supply_price = b2b_price 
             WHERE (supply_price = 0 OR supply_price IS NULL) 
             AND b2b_price > 0
         `)
-
-        // 3. Fix shipping_fee_individual (assuming < 100 is a parsing error like 3 -> 3000)
         const shippingResult = await client.query(`
             UPDATE products 
             SET shipping_fee_individual = shipping_fee_individual * 1000 
             WHERE shipping_fee_individual > 0 AND shipping_fee_individual < 100
         `)
-
-        // 4. Also ensure shipping_fee_individual is set from shipping_fee if 0
         const shippingSyncResult = await client.query(`
             UPDATE products 
             SET shipping_fee_individual = shipping_fee 
             WHERE (shipping_fee_individual = 0 OR shipping_fee_individual IS NULL) 
             AND shipping_fee > 0
         `)
-
         await client.query('COMMIT')
-
         res.json({
             message: 'Data fix completed',
             swapped: swapResult.rowCount,
@@ -367,30 +342,23 @@ router.post('/fix-data', async (req, res) => {
     }
 })
 
-// Delete products by ID range (Maintenance)
+// Delete products by ID range
 router.delete('/range', async (req, res) => {
     const client = await pool.connect()
     try {
         const { startId, endId } = req.query
-
         if (!startId || !endId) {
             return res.status(400).json({ error: 'Start ID and End ID are required' })
         }
-
         await client.query('BEGIN')
-
-        // Delete related quote items
         await client.query(`
             DELETE FROM quote_items 
             WHERE product_id IN (SELECT id FROM products WHERE id BETWEEN $1 AND $2)
         `, [startId, endId])
-
-        // Delete products
         const result = await client.query(`
             DELETE FROM products 
             WHERE id BETWEEN $1 AND $2
         `, [startId, endId])
-
         await client.query('COMMIT')
         res.json({ message: `Deleted ${result.rowCount} products with ID between ${startId} and ${endId}`, count: result.rowCount })
     } catch (error) {
@@ -407,15 +375,9 @@ router.post('/reset-sequence', async (req, res) => {
     const client = await pool.connect()
     try {
         await client.query('BEGIN')
-
-        // Get max ID
         const maxIdRes = await client.query('SELECT MAX(id) as max_id FROM products')
         const maxId = maxIdRes.rows[0].max_id || 0
-
-        // Reset sequence
-        // setval sets the current value, nextval will be maxId + 1
         await client.query("SELECT setval('products_id_seq', $1)", [maxId])
-
         await client.query('COMMIT')
         res.json({ message: `Sequence reset to ${maxId}. Next ID will be ${maxId + 1}.` })
     } catch (error) {
@@ -427,33 +389,20 @@ router.post('/reset-sequence', async (req, res) => {
     }
 })
 
-// Register products by row range (spawns Python script)
+// Register products by row range
 router.post('/register-range', async (req, res) => {
     const { startRow, endRow } = req.body
-
     if (!startRow || !endRow) {
         return res.status(400).json({ error: 'Start Row and End Row are required' })
     }
-
     try {
         const { spawn } = await import('child_process')
-        // Path to python script
         const pythonScript = path.join(__dirname, '..', 'register_range_generic.py')
-
-        // Spawn python process
         const pythonProcess = spawn('python3', [pythonScript, '--start', String(startRow), '--end', String(endRow)])
-
         let output = ''
         let errorOutput = ''
-
-        pythonProcess.stdout.on('data', (data) => {
-            output += data.toString()
-        })
-
-        pythonProcess.stderr.on('data', (data) => {
-            errorOutput += data.toString()
-        })
-
+        pythonProcess.stdout.on('data', (data) => { output += data.toString() })
+        pythonProcess.stderr.on('data', (data) => { errorOutput += data.toString() })
         pythonProcess.on('close', (code) => {
             if (code === 0) {
                 res.json({ message: 'Range registration completed', output })
@@ -463,39 +412,25 @@ router.post('/register-range', async (req, res) => {
                 res.status(500).json({ error: 'Range registration failed', details: errorOutput })
             }
         })
-
     } catch (error) {
         console.error('Register range error:', error)
         res.status(500).json({ error: 'Failed to initiate range registration' })
     }
 })
 
-// Update source Excel file (Overwrite master file)
+// Update source Excel file
 router.post('/update-source', upload.single('file'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' })
     }
-
     const targetDir = path.join(__dirname, '..', '..', 'excel')
     const targetPath = path.join(targetDir, 'aron_product_upload_consolidated.xlsx')
-
-    // Ensure directory exists
     if (!fs.existsSync(targetDir)) {
         fs.mkdirSync(targetDir, { recursive: true })
     }
-
     try {
-        // Move file since we use disk storage now
-        // But if we used buffer? 
-        // Wait, I changed upload to disk storage globally in this file.
-        // So req.file has path, not buffer.
-        // We must move or copy it.
-
         fs.copyFileSync(req.file.path, targetPath)
-
-        // Cleanup temp
         fs.unlinkSync(req.file.path)
-
         console.log(`Updated master Excel file at ${targetPath}`)
         res.json({ message: 'Server source Excel file updated successfully' })
     } catch (error) {
@@ -503,16 +438,14 @@ router.post('/update-source', upload.single('file'), (req, res) => {
     }
 })
 
-// Generate Excel Proposal (HTML Format for Images)
+// Generate Excel Proposal
 router.post('/download/proposal', async (req, res) => {
     try {
         const { title, items } = req.body
-
         if (!items || !Array.isArray(items)) {
             return res.status(400).json({ error: 'Items array is required' })
         }
 
-        // HTML Template for Excel
         let html = `
         <html>
         <head>
@@ -555,15 +488,11 @@ router.post('/download/proposal', async (req, res) => {
         items.forEach((p, index) => {
             const getVal = (v) => v || ''
             const fmtNum = (v) => v ? Number(v).toLocaleString('ko-KR') : '0'
-            const imgUrl = p.imageUrl || p.image_url || ''
+            const imgUrl = p.imageUrl || p.image_url || p.image || '' // Support various keys
             const detailUrl = p.detailUrl || p.detail_url || ''
 
-            // Image Tag for Excel
             const imgTag = imgUrl ? `<img src="${imgUrl}" width="100" height="100">` : ''
-
-            // Detail HTML handling
             const detailHtmlText = detailUrl ? (detailUrl.includes('<') ? detailUrl : `<img src="${detailUrl}">`) : ''
-            // HTML Escape for text display
             const escapeHtml = (text) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 
             html += `
@@ -571,9 +500,9 @@ router.post('/download/proposal', async (req, res) => {
                     <td>${index + 1}</td>
                     <td>${getVal(p.isAvailable === false ? '품절' : '')}</td>
                     <td>${getVal(p.id)}</td>
-                    <td class="text-left">${getVal(p.name || p.product_name)}</td>
+                    <td class="text-left">${getVal(p.name || p.product_name || p.productName)}</td>
                     <td>${imgTag}</td>
-                    <td>${getVal(p.modelName || p.model_name)}</td>
+                    <td>${getVal(p.modelName || p.model_name || p.model || p.modelNo)}</td>
                     <td>${getVal(p.productOptions || p.product_options)}</td>
                     <td>${getVal(p.manufacturer)}</td>
                     <td>${getVal(p.origin)}</td>
@@ -595,8 +524,7 @@ router.post('/download/proposal', async (req, res) => {
         </html>
         `
 
-        // Send as Excel file
-        const filename = `Proposal_${Date.now()}.xls` // .xls for HTML format compatibility
+        const filename = `Proposal_${Date.now()}.xls`
         res.setHeader('Content-Type', 'application/vnd.ms-excel')
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
         res.send(html)
