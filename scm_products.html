@@ -804,7 +804,11 @@
                     uploadBtn.innerText = '업로드 중...';
                     try {
                         const res = await apiFetch('/api/excel/upload', { method: 'POST', body: fd });
-                        alert(`업로드 완료: 성공 ${res.success}, 실패 ${res.failed}`);
+                        if (res.failed > 0) {
+                            alert(`업로드 완료: 성공 ${res.success}, 실패 ${res.failed}\n\n[실패 사유 (상위 5개)]\n${res.errors.slice(0, 5).join('\n')}`);
+                        } else {
+                            alert(`업로드 완료: 성공 ${res.success}, 실패 ${res.failed}`);
+                        }
                         loadProducts();
                     } catch (e) { alert('실패: ' + e.message); }
                     finally { uploadBtn.innerText = '엑셀 업로드'; fileInput.value = ''; }
