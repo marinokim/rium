@@ -780,10 +780,10 @@
                             <div class="product-brand">${brandName}</div>
                             <h3 class="product-title">${product.name}</h3>
                             <div class="price-row">
-                                <span class="consumer-price">₩${(product.consumerPrice || product.price * 1.3).toLocaleString()}</span>
+                                <span class="consumer-price">₩${(product.consumerPrice || (product.price || 0) * 1.3).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                                 <div>
                                     <span class="b2b-label">B2B</span>
-                                    <span class="b2b-price">₩${product.price.toLocaleString()}</span>
+                                    <span class="b2b-price">₩${(product.price || 0).toLocaleString()}</span>
                                 </div>
                             </div>
                             <button class="add-quote-btn add-cart-btn" onclick="addToCart('${product.id}')">견적 담기</button>
