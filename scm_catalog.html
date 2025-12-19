@@ -984,13 +984,35 @@
                     try {
                         const confirmDownload = confirm('제안서가 생성되었습니다.\n관리자 확인 후 제안서 목록에서 확인 가능합니다.\n엑셀 파일도 지금 다운로드 하시겠습니까?');
                         if (confirmDownload) {
-                            // Download using generic Excel endpoint or filtered list?
-                            // For now, let's stick to generating from the CLIENT data or a specific endpoint if exists.
-                            // The old `quotes/:id/download` worked on QUOTES table. 
-                            // We need a way to download `proposal_history` item.
-                            // Assuming /api/excel/download endpoint exists or I need to make one.
-                            // Let's assume for now we use a generic placeholder or I will fix backend next.
-                            alert('엑셀 다운로드 기능은 준비중입니다. (관리자 페이지에서 확인 가능)');
+                            const historyItem = response.history;
+                            let items = historyItem.items || [];
+                            if (typeof items === 'string') {
+                                try { items = JSON.parse(items); } catch (e) { items = []; }
+                            }
+
+                            // CSV Header
+                            let csv = '\uFEFF';
+                            csv += "No,상품명,모델명/코드,수량,단가(B2B),합계\n";
+
+                            items.forEach((p, i) => {
+                                const name = (p.name || '').replace(/,/g, ' ');
+                                const model = (p.model || '').replace(/,/g, ' '); // Map appropriately (model_name/model_no was mapped to model in fetchProductData?)
+                                // Check fetchProductData: model: product.model_name || product.modelNo.
+                                // So p.model is correct.
+                                const qty = p.quantity || 1;
+                                const price = p.price || 0;
+                                const total = price * qty;
+                                csv += `${i + 1},${name},${model},${qty},${price},${total}\n`;
+                            });
+
+                            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.setAttribute('download', `${historyItem.title || '제안서'}.csv`);
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
                         }
                     } catch (err) {
                         console.error('Download error:', err);
