@@ -194,12 +194,8 @@
                         localStorage.setItem('token', data.token);
                         localStorage.setItem('scm_user', JSON.stringify(data.user));
 
-                        alert('로그인 성공!');
-                        if (data.user.role === 'ADMIN') {
-                            window.location.href = 'scm_products.html'; // Admin Page
-                        } else {
-                            window.location.href = 'scm_dashboard.html'; // Partner Page
-                        }
+                        // No alert, redirect immediately to Dashboard for all users
+                        window.location.href = 'scm_dashboard.html';
                     } else {
                         alert('로그인 실패: ' + (data.error || '이메일 또는 비밀번호를 확인하세요.'));
                     }
