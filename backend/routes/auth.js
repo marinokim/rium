@@ -79,14 +79,7 @@ router.post('/login', async (req, res) => {
         res.status(500).json({ error: '로그인 중 오류가 발생했습니다' })
     }
 })
-role: user.is_admin ? 'ADMIN' : 'USER'
-            }
-        })
-    } catch (error) {
-    console.error('Login error:', error)
-    res.status(500).json({ error: '로그인 중 오류가 발생했습니다' })
-}
-})
+
 
 // Logout
 router.post('/logout', (req, res) => {
