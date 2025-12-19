@@ -558,9 +558,11 @@
                     <i class="fas fa-file-invoice-dollar"></i>
                     <span class="scm-badge" id="proposal-count" style="display: none;">0</span>
                 </div>
-                <div class="scm-icon-btn" onclick="alert('장바구니 기능은 준비중입니다.')" title="장바구니">
+                <div class="scm-icon-btn"
+                    onclick="alert('장바구니 기능은 준비중입니다. items: ' + (sessionStorage.getItem('cartItems') ? JSON.parse(sessionStorage.getItem('cartItems')).length : 0))"
+                    title="장바구니">
                     <i class="fas fa-shopping-cart"></i>
-                    <!-- <span class="scm-badge">0</span> -->
+                    <span class="scm-badge" id="cart-count" style="display: none; background-color: #ff9800;">0</span>
                 </div>
                 <div class="scm-icon-btn" onclick="alert('새로운 알림이 없습니다.')" title="알림">
                     <i class="fas fa-bell"></i>
@@ -723,6 +725,10 @@
                     return;
                 }
 
+                // Get Proposal Items for Heart State
+                const proposalItems = JSON.parse(sessionStorage.getItem('proposalItems') || '[]');
+                const proposalIds = new Set(proposalItems.map(i => i.productId));
+
                 products.forEach(product => {
                     // Prioritize product.imageUrl (Admin logic) -> then product.images array -> then placeholder
                     let imageUrl = product.imageUrl
@@ -733,6 +739,7 @@
                     imageUrl = getSecureImageUrl(imageUrl, 400);
 
                     const brandName = product.brand || 'RIUM'; // Default brand if missing
+                    const isHearted = proposalIds.has(String(product.id)) || proposalIds.has(product.id); // Handle string/int types
 
                     const card = document.createElement('div');
                     card.className = 'product-card';
@@ -741,14 +748,17 @@
                     // Add click event to card to go to detail
                     card.onclick = (e) => {
                         // Prevent click if clicking heart or button
-                        if (e.target.closest('.heart-btn') || e.target.closest('.add-quote-btn')) return;
+                        if (e.target.closest('.heart-btn') || e.target.closest('.add-cart-btn')) return;
                         goToDetail(product.id);
                     };
+
+                    const heartClass = isHearted ? 'fas' : 'far';
+                    const activeClass = isHearted ? 'active' : '';
 
                     card.innerHTML = `
                         <div class="product-img-wrapper">
                             <img src="${imageUrl}" alt="${product.name}" loading="lazy" onerror="this.src='https://placehold.co/600x400?text=Error'">
-                            <button class="heart-btn" title="제안서에 추가" onclick="toggleHeart(this)"><i class="far fa-heart"></i></button>
+                            <button class="heart-btn ${activeClass}" title="제안서 항목 선택" onclick="toggleProposal('${product.id}', this)"><i class="${heartClass} fa-heart"></i></button>
                         </div>
                         <div class="product-info">
                             <div class="product-brand">${brandName}</div>
@@ -760,7 +770,7 @@
                                     <span class="b2b-price">₩${product.price.toLocaleString()}</span>
                                 </div>
                             </div>
-                            <button class="add-quote-btn" onclick="addToQuote('${product.id}')">견적 담기</button>
+                            <button class="add-quote-btn add-cart-btn" onclick="addToCart('${product.id}')">견적 담기</button>
                         </div>
                     `;
                     grid.appendChild(card);
@@ -773,51 +783,22 @@
         };
 
         // Placeholder functions for interactions
-        function toggleHeart(btn) {
-            btn.classList.toggle('active');
-            const icon = btn.querySelector('i');
-            if (btn.classList.contains('active')) {
-                icon.classList.remove('far');
-                icon.classList.add('fas');
-            } else {
-                icon.classList.remove('fas');
-                icon.classList.add('far');
-            }
-        }
-
-        // Quote Buffer (Session Storage)
-        async function addToQuote(productId) {
-            let buffer = JSON.parse(sessionStorage.getItem('quoteBuffer') || '[]');
-            const existing = buffer.find(i => i.productId === productId);
-
-            if (existing) {
-                existing.quantity += 1;
-                sessionStorage.setItem('quoteBuffer', JSON.stringify(buffer));
-                alert(`상품이 추가되었습니다. (수량: ${existing.quantity})`);
-                updateProposalBadge();
-                return;
-            }
-
-            // Fetch Full Data from DB
+        // Helper to fetch product data (shared logic)
+        async function fetchProductData(productId, fallbackElement = null) {
             try {
-                // Try fetching full product details
-                // Assuming public API availability or token usage
                 const token = localStorage.getItem('token');
                 const headers = {};
                 if (token) headers['Authorization'] = `Bearer ${token}`;
 
                 const res = await fetch(`${API_BASE}/api/products/${productId}`, { headers });
-
                 if (res.ok) {
                     const data = await res.json();
-                    const product = data.product || data; // Handle potential response wrapper
-
-                    buffer.push({
+                    const product = data.product || data;
+                    return {
                         productId,
                         quantity: 1,
-                        // Store Full Data
                         name: product.name,
-                        image: product.image_url || product.image, // DB field often image_url
+                        image: product.image_url || product.image,
                         price: product.supply_price || product.price || 0,
                         consumerPrice: product.consumerPrice || product.consumer_price,
                         model: product.model_name || product.modelNo,
@@ -826,66 +807,131 @@
                         origin: product.origin,
                         manufacturer: product.manufacturer,
                         detailUrl: product.detail_url || product.detailUrl
-                    });
-                    // Fallback for visual feedback if scraping needed? No, DB is source of truth.
-                } else {
-                    console.warn('Failed to fetch product details from DB, falling back to scraping');
-                    throw new Error('Fetch failed'); // Trigger catch for fallback
+                    };
                 }
             } catch (e) {
-                // Fallback Scraping (Limit fields)
-                console.error(e);
-                const cardBtn = document.querySelector(`button[onclick="addToQuote('${productId}')"]`) ||
-                    document.querySelector(`button[onclick="addToQuote(${productId})"]`);
-
-                let pName = 'Unknown Product';
-                let pImage = '';
-                let pPrice = 0;
-
-                if (cardBtn) {
-                    const card = cardBtn.closest('.product-card');
-                    if (card) {
-                        pName = card.querySelector('h3')?.innerText || pName;
-                        pImage = card.querySelector('img')?.src || '';
-                        const priceText = card.querySelector('.b2b-price')?.innerText || '0';
-                        pPrice = parseInt(priceText.replace(/[^0-9]/g, '')) || 0;
-                    }
-                }
-
-                buffer.push({
-                    productId,
-                    quantity: 1,
-                    name: pName,
-                    image: pImage,
-                    price: pPrice,
-                    origin: '상세페이지 참조' // Default for fallback
-                });
+                console.error('Fetch error:', e);
             }
 
-            sessionStorage.setItem('quoteBuffer', JSON.stringify(buffer));
-            alert('상품이 견적서에 담겼습니다.');
-            updateProposalBadge();
+            // Fallback Scraping
+            let pName = 'Unknown Product';
+            let pImage = '';
+            let pPrice = 0;
+
+            if (fallbackElement) {
+                const card = fallbackElement.closest('.product-card');
+                if (card) {
+                    pName = card.querySelector('h3')?.innerText || pName;
+                    pImage = card.querySelector('img')?.src || '';
+                    const priceText = card.querySelector('.b2b-price')?.innerText || '0';
+                    pPrice = parseInt(priceText.replace(/[^0-9]/g, '')) || 0;
+                }
+            }
+
+            return {
+                productId,
+                quantity: 1,
+                name: pName,
+                image: pImage,
+                price: pPrice,
+                origin: '상세페이지 참조'
+            };
         }
 
-        function updateProposalBadge() {
-            const buffer = JSON.parse(sessionStorage.getItem('quoteBuffer') || '[]');
-            const count = buffer.reduce((sum, i) => sum + i.quantity, 0);
-            const badge = document.getElementById('proposal-count');
-            if (badge) {
-                badge.innerText = count;
-                badge.style.display = count > 0 ? 'inline-block' : 'none';
+        // Proposal Selection (Heart)
+        const toggleProposal = async (productId, btn) => {
+            // Prevent event bubbling if needed, handled in onclick
+
+            let buffer = JSON.parse(sessionStorage.getItem('proposalItems') || '[]');
+            const existingIndex = buffer.findIndex(i => i.productId == productId); // Flexible eq
+
+            if (existingIndex > -1) {
+                // Remove
+                buffer.splice(existingIndex, 1);
+                sessionStorage.setItem('proposalItems', JSON.stringify(buffer));
+                btn.classList.remove('active');
+                btn.querySelector('i').classList.remove('fas');
+                btn.querySelector('i').classList.add('far');
+            } else {
+                // Add
+                // We need data. Since toggle needs data for the proposal generation later.
+                // We show loading state on button? Maybe just instant optimistic UI?
+                // Let's optimistic UI toggle first
+                btn.classList.add('active');
+                btn.querySelector('i').classList.remove('far');
+                btn.querySelector('i').classList.add('fas');
+
+                const item = await fetchProductData(productId, btn);
+                // Re-read buffer in case user clicked unrelated things rapidly (unlikely but safe)
+                buffer = JSON.parse(sessionStorage.getItem('proposalItems') || '[]');
+                if (buffer.findIndex(i => i.productId == productId) === -1) {
+                    buffer.push(item);
+                    sessionStorage.setItem('proposalItems', JSON.stringify(buffer));
+                }
+            }
+            updateBadges();
+        };
+
+
+        // Shopping Cart (Old Quote Logic)
+        const addToCart = async (productId) => {
+            let buffer = JSON.parse(sessionStorage.getItem('cartItems') || '[]');
+            const existing = buffer.find(i => i.productId == productId);
+
+            if (existing) {
+                existing.quantity += 1;
+                sessionStorage.setItem('cartItems', JSON.stringify(buffer));
+                alert(`장바구니에 수량이 추가되었습니다. (총 ${existing.quantity}개)`);
+                updateBadges();
+                return;
+            }
+
+            // Find button for fallback scraping context
+            // Using a query selector since we don't have the reference passed easily without changing generic handler,
+            // but usually scraping falls back to defaults if not found.
+            // We can try to find the button in DOM:
+            const btn = document.querySelector(`button[onclick="addToCart('${productId}')"]`);
+
+            const item = await fetchProductData(productId, btn);
+            buffer.push(item);
+
+            sessionStorage.setItem('cartItems', JSON.stringify(buffer));
+
+            if (confirm('상품이 장바구니에 담겼습니다.\n장바구니로 이동하시겠습니까? (현재 준비중)')) {
+                // location.href = 'scm_cart.html'; 
+            }
+            updateBadges();
+        }
+
+        function updateBadges() {
+            // Proposal Badge (Hearts)
+            const proposalBuffer = JSON.parse(sessionStorage.getItem('proposalItems') || '[]');
+            const pCount = proposalBuffer.length;
+            const pBadge = document.getElementById('proposal-count');
+            if (pBadge) {
+                pBadge.innerText = pCount;
+                pBadge.style.display = pCount > 0 ? 'inline-block' : 'none';
+            }
+
+            // Cart Badge
+            const cartBuffer = JSON.parse(sessionStorage.getItem('cartItems') || '[]');
+            const cCount = cartBuffer.reduce((sum, i) => sum + i.quantity, 0);
+            const cBadge = document.getElementById('cart-count');
+            if (cBadge) {
+                cBadge.innerText = cCount;
+                cBadge.style.display = cCount > 0 ? 'inline-block' : 'none';
             }
         }
 
         // Init Badge
-        document.addEventListener('DOMContentLoaded', updateProposalBadge);
+        document.addEventListener('DOMContentLoaded', updateBadges);
 
 
         async function createProposal() {
-            const buffer = JSON.parse(sessionStorage.getItem('quoteBuffer') || '[]');
+            const buffer = JSON.parse(sessionStorage.getItem('proposalItems') || '[]');
 
             if (buffer.length === 0) {
-                alert('선택된 상품이 없습니다. 먼저 상품을 담아주세요.');
+                alert('제안서에 포함할 상품이 없습니다.\n상품 이미지의 하트 아이콘을 눌러 선택해주세요.');
                 return;
             }
 
