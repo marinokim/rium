@@ -880,6 +880,14 @@
                 return;
             }
 
+            // Check Authentication
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동합니다.');
+                location.href = 'scm_login.html';
+                return;
+            }
+
             // Prepare Items for API (Use i.id first as standard frontend model usually puts PK in id)
             const apiItems = buffer.map(i => ({ productId: i.id || i.productId, quantity: i.quantity }));
 
