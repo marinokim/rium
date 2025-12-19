@@ -1,50 +1,28 @@
 {
-  "name": "scm-backend",
-  "version": "1.0.0",
-  "description": "",
-  "type": "module",
-  "main": "dist/index.js",
-  "scripts": {
-    "start": "node dist/index.js",
-    "dev": "nodemon src/index.ts",
-    "build": "npx prisma db push --accept-data-loss && npx prisma generate && tsc",
-    "postinstall": "prisma generate",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@prisma/adapter-pg": "^7.1.0",
-    "@prisma/client": "^7.1.0",
-    "bcryptjs": "^3.0.3",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "exceljs": "^4.4.0",
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3",
-    "multer": "^1.4.5-lts.1",
-    "node-fetch": "^3.3.2",
-    "pg": "^8.16.3",
-    "prisma": "^7.1.0",
-    "xlsx": "^0.18.5"
-  },
-  "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
-    "@types/cors": "^2.8.19",
-    "@types/exceljs": "^0.5.3",
-    "@types/express": "^5.0.6",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/multer": "^1.4.11",
-    "@types/node": "^25.0.1",
-    "@types/node-fetch": "^2.6.13",
-    "@types/pg": "^8.16.0",
-    "@types/xlsx": "^0.0.36",
-    "nodemon": "^3.1.11",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
-  },
-  "prisma": {
-    "seed": "node --loader ts-node/esm prisma/seed.ts"
-  }
+    "name": "rium-scm-backend",
+    "version": "1.0.0",
+    "type": "module",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "nodemon server.js",
+        "migrate:fix": "node migrations_fix.js",
+        "test-backup": "node trigger_backup.js"
+    },
+    "dependencies": {
+        "bcryptjs": "^2.4.3",
+        "cloudinary": "^1.41.3",
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "express": "^4.18.2",
+        "express-session": "^1.17.3",
+        "jsonwebtoken": "^9.0.2",
+        "multer": "^2.0.2",
+        "multer-storage-cloudinary": "^4.0.0",
+        "pg": "^8.11.3",
+        "xlsx": "^0.18.5"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.2"
+    }
 }
