@@ -1013,8 +1013,16 @@
                                     items: items
                                 })
                             })
-                                .then(res => {
-                                    if (!res.ok) throw new Error('Excel generation failed');
+                                .then(async res => {
+                                    if (!res.ok) {
+                                        const errText = await res.text();
+                                        try {
+                                            const errJson = JSON.parse(errText);
+                                            throw new Error(errJson.error || errText);
+                                        } catch (e) {
+                                            throw new Error(errText || 'Excel generation failed');
+                                        }
+                                    }
                                     return res.blob();
                                 })
                                 .then(blob => {
@@ -1031,7 +1039,7 @@
                                 })
                                 .catch(err => {
                                     console.error('Excel Download Error:', err);
-                                    alert('엑셀 파일 생성 중 오류가 발생했습니다.');
+                                    alert('오류가 발생했습니다: ' + err.message);
                                 });
                         }
                     } catch (err) {
