@@ -237,9 +237,10 @@ router.delete('/range', requireAdmin, async (req, res) => {
 // Get all products with optional category filter (Public)
 router.get('/', async (req, res) => {
     try {
-        const { category, search, sort, isNew } = req.query
+        const { category, search, sort, isNew, page = 1, limit = 20 } = req.query
+        const offset = (page - 1) * limit
 
-        let query = `
+        let queryCode = `
       SELECT p.*, c.name as category_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
@@ -248,44 +249,61 @@ router.get('/', async (req, res) => {
         const params = []
 
         if (req.query.includeUnavailable !== 'true') {
-            query += ` AND p.is_available = true`
+            queryCode += ` AND p.is_available = true`
         }
 
         if (category) {
             params.push(category)
-            query += ` AND c.slug = $${params.length}`
+            queryCode += ` AND c.slug = $${params.length}`
         }
 
         if (isNew === 'true') {
-            query += ` AND p.is_new = true`
+            queryCode += ` AND p.is_new = true`
         }
 
         if (search) {
             params.push(`%${search}%`)
-            query += ` AND (p.brand ILIKE $${params.length} OR p.model_name ILIKE $${params.length} OR p.model_no ILIKE $${params.length})`
+            queryCode += ` AND (p.brand ILIKE $${params.length} OR p.model_name ILIKE $${params.length} OR p.model_no ILIKE $${params.length})`
         }
 
+        // --- Count Query for Pagination ---
+        const countQueryCode = queryCode.replace('SELECT p.*, c.name as category_name', 'SELECT COUNT(*)::int as total')
+        const countResult = await pool.query(countQueryCode, params)
+        const totalItems = countResult.rows[0].total
+
+        // --- Main Query with Sort and Limit ---
         if (sort === 'newest' || !sort) {
-            query += ' ORDER BY p.id DESC'
+            queryCode += ' ORDER BY p.id DESC'
         } else if (sort === 'display_order') {
-            query += ' ORDER BY p.display_order DESC, p.created_at DESC'
+            queryCode += ' ORDER BY p.display_order DESC, p.created_at DESC'
         } else if (sort === 'price_asc') {
-            query += ' ORDER BY p.b2b_price ASC NULLS LAST'
+            queryCode += ' ORDER BY p.b2b_price ASC NULLS LAST'
         } else if (sort === 'price_desc') {
-            query += ' ORDER BY p.b2b_price DESC NULLS LAST'
+            queryCode += ' ORDER BY p.b2b_price DESC NULLS LAST'
         } else {
-            query += ' ORDER BY p.id DESC'
+            queryCode += ' ORDER BY p.id DESC'
         }
 
-        const result = await pool.query(query, params)
+        queryCode += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`
+        params.push(limit, offset)
 
-        // Sanitize image URLs (remove leading/trailing spaces)
+        const result = await pool.query(queryCode, params)
+
+        // Sanitize image URLs
         const products = result.rows.map(p => ({
             ...p,
             image_url: p.image_url ? p.image_url.trim() : p.image_url
         }))
 
-        res.json({ products })
+        res.json({
+            products,
+            pagination: {
+                totalItems,
+                totalPages: Math.ceil(totalItems / limit),
+                currentPage: Number(page),
+                itemsPerPage: Number(limit)
+            }
+        })
     } catch (error) {
         console.error('Get products error:', error)
         res.status(500).json({ error: 'Failed to get products' })
