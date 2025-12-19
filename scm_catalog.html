@@ -611,7 +611,7 @@
     <script>
         // Common API Fetch Function
         const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://localhost:5000'
+            ? 'http://localhost:5003'
             : 'https://rium-scm-backend.onrender.com';
 
         async function apiFetch(url, options = {}) {
@@ -948,23 +948,14 @@
 
             try {
                 // 1. Try API Call (Save to Proposal History)
-                // [MOCK MODE] Use localStorage instead of API
-                // const response = await apiFetch('/api/proposals', { ... });
-
-                const user = JSON.parse(localStorage.getItem('scm_user') || '{}');
-                const mockHistory = JSON.parse(localStorage.getItem('scm_proposals_history') || '[]');
-                const newProposal = {
-                    id: `PROP-${Date.now()}`,
-                    user_id: user.id || 999,
-                    title: `제안서 - ${new Date().toLocaleDateString()}`,
-                    items: JSON.stringify(apiItems),
-                    created_at: new Date().toISOString(),
-                    company_name: user.company_name || 'My Company'
-                };
-                mockHistory.unshift(newProposal);
-                localStorage.setItem('scm_proposals_history', JSON.stringify(mockHistory));
-
-                const response = { success: true, history: newProposal };
+                const response = await apiFetch('/api/proposals', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        items: apiItems,
+                        title: `제안서 - ${new Date().toLocaleDateString()}`,
+                        message: 'Created from Catalog'
+                    })
+                });
 
                 if (response.success && response.history) {
                     sessionStorage.removeItem('proposalItems'); // Clear buffer
