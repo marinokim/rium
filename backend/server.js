@@ -4,6 +4,7 @@ import session from 'express-session'
 import dotenv from 'dotenv'
 import authRoutes from './routes/auth.js'
 import productRoutes from './routes/products.js'
+import categoryRoutes from './routes/categories.js'
 import cartRoutes from './routes/cart.js'
 import quoteRoutes from './routes/quotes.js'
 import dashboardRoutes from './routes/dashboard.js'
@@ -58,6 +59,7 @@ app.use(session({
 // Routes
 app.use('/api/auth', authRoutes)
 app.use('/api/products', productRoutes)
+app.use('/api/categories', categoryRoutes)
 app.use('/api/cart', cartRoutes)
 app.use('/api/quotes', quoteRoutes)
 app.use('/api/dashboard', dashboardRoutes)
