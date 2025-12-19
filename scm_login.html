@@ -147,30 +147,30 @@
         <script>
             // API Base configuration
             const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                ? 'http://localhost:5000'
+                ? 'http://localhost:5003'
                 : 'https://rium-scm-backend.onrender.com';
 
             async function doRegister() {
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
-                if(!email || !password) {
-                     alert('이메일과 비밀번호를 입력해주세요.');
-                     return;
+                if (!email || !password) {
+                    alert('이메일과 비밀번호를 입력해주세요.');
+                    return;
                 }
-                
+
                 try {
-                     const res = await fetch(`${API_BASE}/api/auth/register`, {
+                    const res = await fetch(`${API_BASE}/api/auth/register`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email, password, name: 'Partner', company: 'Partner Co' })
                     });
-                     const data = await res.json();
-                     if(res.ok) {
-                         alert('회원가입 완료! 로그인해주세요.');
-                     } else {
-                         alert('가입 실패: ' + (data.error || 'Unknown error'));
-                     }
-                } catch(e) {
+                    const data = await res.json();
+                    if (res.ok) {
+                        alert('회원가입 완료! 로그인해주세요.');
+                    } else {
+                        alert('가입 실패: ' + (data.error || 'Unknown error'));
+                    }
+                } catch (e) {
                     alert('서버 오류');
                 }
             }
@@ -190,10 +190,10 @@
                     const data = await response.json();
 
                     if (response.ok) {
-                         // Save Token
+                        // Save Token
                         localStorage.setItem('token', data.token);
                         localStorage.setItem('scm_user', JSON.stringify(data.user));
-                        
+
                         alert('로그인 성공!');
                         if (data.user.role === 'ADMIN') {
                             window.location.href = 'scm_products.html'; // Admin Page
