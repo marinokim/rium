@@ -492,7 +492,7 @@ router.post('/register-range', async (req, res) => {
 })
 
 // Update source Excel file (Overwrite master file)
-router.post('/update-source', upload.single('file'), (req, res) => {
+router.post('/replace-source', upload.single('file'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' })
     }
