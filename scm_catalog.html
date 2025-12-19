@@ -746,24 +746,28 @@
                 const proposalIds = new Set(proposalItems.map(i => i.productId));
 
                 products.forEach(product => {
-                    // Prioritize product.imageUrl (Admin logic) -> then product.images array -> then placeholder
-                    let imageUrl = product.imageUrl
-                        ? product.imageUrl
-                        : (product.images && product.images.length > 0 ? product.images[0] : 'https://placehold.co/600x400?text=No+Image');
+                    // Map DB fields (snake_case) to UI
+                    // Image: image_url
+                    let imageUrl = product.image_url || product.imageUrl
+                        || (product.images && product.images.length > 0 ? product.images[0] : 'https://placehold.co/600x400?text=No+Image');
 
-                    // Optimize image: Resize to 400px width for grid
                     imageUrl = getSecureImageUrl(imageUrl, 400);
 
-                    const brandName = product.brand || 'RIUM'; // Default brand if missing
-                    const isHearted = proposalIds.has(String(product.id)) || proposalIds.has(product.id); // Handle string/int types
+                    // Name: model_name (Schema has model_name, not name)
+                    const displayName = product.model_name || product.name || '상품명 없음';
+
+                    // Price: b2b_price (Schema) or price
+                    const price = product.b2b_price || product.supply_price || product.price || 0; // Ensure number
+                    const consumerPrice = product.consumer_price || product.consumerPrice || (price * 1.3);
+
+                    const brandName = product.brand || 'RIUM';
+                    const isHearted = proposalIds.has(String(product.id)) || proposalIds.has(product.id);
 
                     const card = document.createElement('div');
                     card.className = 'product-card';
                     card.style.cursor = 'pointer';
 
-                    // Add click event to card to go to detail
                     card.onclick = (e) => {
-                        // Prevent click if clicking heart or button
                         if (e.target.closest('.heart-btn') || e.target.closest('.add-cart-btn')) return;
                         goToDetail(product.id);
                     };
@@ -773,17 +777,17 @@
 
                     card.innerHTML = `
                         <div class="product-img-wrapper">
-                            <img src="${imageUrl}" alt="${product.name}" loading="lazy" onerror="this.src='https://placehold.co/600x400?text=Error'">
+                            <img src="${imageUrl}" alt="${displayName}" loading="lazy" onerror="this.src='https://placehold.co/600x400?text=Error'">
                             <button class="heart-btn ${activeClass}" title="제안서 항목 선택" onclick="toggleProposal('${product.id}', this)"><i class="${heartClass} fa-heart"></i></button>
                         </div>
                         <div class="product-info">
                             <div class="product-brand">${brandName}</div>
-                            <h3 class="product-title">${product.name}</h3>
+                            <h3 class="product-title">${displayName}</h3>
                             <div class="price-row">
-                                <span class="consumer-price">₩${(product.consumerPrice || (product.price || 0) * 1.3).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                <span class="consumer-price">₩${Number(consumerPrice).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                                 <div>
                                     <span class="b2b-label">B2B</span>
-                                    <span class="b2b-price">₩${(product.price || 0).toLocaleString()}</span>
+                                    <span class="b2b-price">₩${Number(price).toLocaleString()}</span>
                                 </div>
                             </div>
                             <button class="add-quote-btn add-cart-btn" onclick="addToCart('${product.id}')">견적 담기</button>
