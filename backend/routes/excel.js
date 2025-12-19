@@ -58,7 +58,8 @@ router.post('/upload', upload.single('file'), async (req, res) => {
                 // Expected columns: Brand, ModelName, ModelNo, Category, Description, B2BPrice, ConsumerPrice, Stock, ImageURL, DetailURL, Manufacturer, Origin, ProductSpec, ProductOptions
 
                 const brand = sanitize(row['Brand'] || row['브랜드'])
-                const modelName = sanitize(row['ModelName'] || row['모델명'])
+                // Added '상품명' support
+                const modelName = sanitize(row['ModelName'] || row['상품명'] || row['모델명'])
                 const modelNo = sanitize(row['ModelNo'] || row['모델번호'])
                 const categoryName = sanitize(row['Category'] || row['카테고리'])
                 const description = sanitize(row['Description'] || row['상세설명'])
