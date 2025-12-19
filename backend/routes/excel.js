@@ -144,17 +144,29 @@ router.post('/upload', upload.single('file'), async (req, res) => {
                 // Find or create category
                 let categoryId = null
                 if (categoryName) {
-                    const catRes = await client.query('SELECT id FROM categories WHERE name = $1', [categoryName])
+                    const slug = categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                    // Check by Name OR Slug to avoid duplicates
+                    const catRes = await client.query('SELECT id FROM categories WHERE name = $1 OR slug = $2', [categoryName, slug])
                     if (catRes.rows.length > 0) {
                         categoryId = catRes.rows[0].id
                     } else {
                         // Create new category
-                        const slug = categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-                        const newCatRes = await client.query(
-                            'INSERT INTO categories (name, slug) VALUES ($1, $2) RETURNING id',
-                            [categoryName, slug]
-                        )
-                        categoryId = newCatRes.rows[0].id
+                        try {
+                            const newCatRes = await client.query(
+                                'INSERT INTO categories (name, slug) VALUES ($1, $2) RETURNING id',
+                                [categoryName, slug]
+                            )
+                            categoryId = newCatRes.rows[0].id
+                        } catch (err) {
+                            // Race condition or edge case: if insert fails on unique constraint, try fetching again
+                            if (err.code === '23505') {
+                                const retryRes = await client.query('SELECT id FROM categories WHERE slug = $1', [slug])
+                                if (retryRes.rows.length > 0) categoryId = retryRes.rows[0].id
+                                else throw err
+                            } else {
+                                throw err
+                            }
+                        }
                     }
                 }
 
