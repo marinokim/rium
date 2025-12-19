@@ -451,13 +451,18 @@ router.post('/download/proposal', async (req, res) => {
         }
 
         // Helper to hydrate items if they are missing details (only have productId)
-        const productIdsToFetch = items.filter(item => (!item.name && !item.productName && !item.modelName) && (item.productId || item.id)).map(item => item.productId || item.id)
+        // Ensure IDs are integers for Postgres query
+        const productIdsToFetch = items
+            .filter(item => (!item.name && !item.productName && !item.modelName) && (item.productId || item.id))
+            .map(item => parseInt(item.productId || item.id, 10))
+            .filter(id => !isNaN(id))
 
         let productMap = {}
         if (productIdsToFetch.length > 0) {
             try {
                 // Fetch details for missing items
                 // Use a parameterized query with ANY for arrays
+                console.log(`Hydrating ${productIdsToFetch.length} products:`, productIdsToFetch)
                 const { rows } = await pool.query('SELECT * FROM products WHERE id = ANY($1::int[])', [productIdsToFetch])
                 rows.forEach(p => {
                     productMap[p.id] = p
@@ -465,6 +470,7 @@ router.post('/download/proposal', async (req, res) => {
                 console.log(`Hydrated ${rows.length} products from database`)
             } catch (err) {
                 console.error('Failed to hydrate products:', err)
+                // Do not fail the whole request, just log and continue
             }
         }
 
@@ -613,7 +619,7 @@ router.post('/download/proposal', async (req, res) => {
     } catch (error) {
         console.error('Excel generation error:', error)
         if (!res.headersSent) {
-            res.status(500).json({ error: 'Failed to generate Excel file' })
+            res.status(500).json({ error: 'Failed to generate Excel file: ' + error.message })
         }
     }
 })
