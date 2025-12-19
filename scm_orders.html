@@ -629,7 +629,7 @@
                                 a.href = url;
                                 // Sanitize title for filename
                                 const safeTitle = (item.title || 'Proposal').replace(/[^a-zA-Z0-9가-힣\s-_]/g, '').trim();
-                                a.download = `Proposal_${safeTitle}_${Date.now()}.xls`;
+                                a.download = `Proposal_${safeTitle}_${Date.now()}.xlsx`;
                                 document.body.appendChild(a);
                                 a.click();
                                 a.remove();

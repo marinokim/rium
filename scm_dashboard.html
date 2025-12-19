@@ -514,7 +514,7 @@
                         a.href = url;
                         // Sanitize filename
                         const safeTitle = (item.title || '제안서').replace(/[^a-zA-Z0-9가-힣\s-_]/g, '').trim();
-                        a.download = `${safeTitle}.xls`;
+                        a.download = `${safeTitle}.xlsx`;
                         document.body.appendChild(a);
                         a.click();
                         a.remove();

@@ -5,6 +5,7 @@ import pool from '../config/database.js'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
+import ExcelJS from 'exceljs' // Logic ported from Arontec-SCM
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -28,7 +29,7 @@ const parsePrice = (price) => {
     return parseInt(cleanPrice) || 0
 }
 
-// Process Excel Upload
+// Process Excel Upload (Existing Logic preserved)
 router.post('/upload', upload.single('file'), async (req, res) => {
     let client = null
     try {
@@ -438,7 +439,7 @@ router.post('/update-source', upload.single('file'), (req, res) => {
     }
 })
 
-// Generate Excel Proposal
+// Generate Excel Proposal (USING EXCELJS - Ported from Arontec-SCM Frontend Logic)
 router.post('/download/proposal', async (req, res) => {
     try {
         const { title, items } = req.body
@@ -446,92 +447,142 @@ router.post('/download/proposal', async (req, res) => {
             return res.status(400).json({ error: 'Items array is required' })
         }
 
-        let html = `
-        <html>
-        <head>
-            <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-            <style>
-                table { border-collapse: collapse; width: 100%; }
-                th { background-color: #f0f0f0; border: 1px solid #000; padding: 10px; text-align: center; font-weight: bold; }
-                td { border: 1px solid #000; padding: 10px; vertical-align: middle; text-align: center; }
-                .text-left { text-align: left; }
-                .text-right { text-align: right; }
-                img { display: block; margin: 0 auto; }
-            </style>
-        </head>
-        <body>
-            <h2 style="text-align: center; margin: 20px 0;">${title || '제안서'}</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 50px;">순번</th>
-                        <th style="width: 80px;">품절여부</th>
-                        <th style="width: 80px;">고유번호</th>
-                        <th style="width: 300px;">상품명</th>
-                        <th style="width: 120px;">상품이미지</th>
-                        <th style="width: 150px;">모델명</th>
-                        <th style="width: 100px;">옵션</th>
-                        <th style="width: 120px;">제조원</th>
-                        <th style="width: 100px;">원산지</th>
-                        <th style="width: 80px;">카톤수량</th>
-                        <th style="width: 80px;">기본수량</th>
-                        <th style="width: 100px;">소비자가</th>
-                        <th style="width: 100px;">공급가 (VAT포함)</th>
-                        <th style="width: 300px;">대표이미지</th>
-                        <th style="width: 300px;">상세페이지</th>
-                        <th style="width: 150px;">비고</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `
+        const workbook = new ExcelJS.Workbook()
+        const worksheet = workbook.addWorksheet('제안서')
 
-        items.forEach((p, index) => {
-            const getVal = (v) => v || ''
-            const fmtNum = (v) => v ? Number(v).toLocaleString('ko-KR') : '0'
-            const imgUrl = p.imageUrl || p.image_url || p.image || '' // Support various keys
-            const detailUrl = p.detailUrl || p.detail_url || ''
+        // Define columns matching Arontec-SCM
+        worksheet.columns = [
+            { header: '순번', key: 'no', width: 5 },
+            { header: '품절여부', key: 'status', width: 10 },
+            { header: '고유번호', key: 'id', width: 10 },
+            { header: '상품명', key: 'name', width: 40 },
+            { header: '상품이미지', key: 'image', width: 20 },
+            { header: '모델명', key: 'model', width: 15 },
+            { header: '옵션', key: 'option', width: 10 },
+            { header: '설명', key: 'desc', width: 40 },
+            { header: '제조원', key: 'manufacturer', width: 15 },
+            { header: '원산지', key: 'origin', width: 10 },
+            { header: '카톤입수량', key: 'cartonQty', width: 10 },
+            { header: '기본수량', key: 'defaultQty', width: 10 },
+            { header: '소비자가', key: 'consumerPrice', width: 12 },
+            { header: '공급가(부가세포함)', key: 'supplyPrice', width: 15 },
+            { header: '개별배송비(부가세포함)', key: 'shipping', width: 15 },
+            { header: '대표이미지', key: 'imageUrl', width: 30 },
+            { header: '상세이미지', key: 'detailUrl', width: 30 },
+            { header: '비고', key: 'remarks', width: 20 },
+        ]
 
-            const imgTag = imgUrl ? `<img src="${imgUrl}" width="100" height="100">` : ''
-            const detailHtmlText = detailUrl ? (detailUrl.includes('<') ? detailUrl : `<img src="${detailUrl}">`) : ''
-            const escapeHtml = (text) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        // Insert Title/Warning Row at the top
+        worksheet.insertRow(1, [])
+        worksheet.mergeCells('A1:D1')
+        worksheet.mergeCells('E1:L1')
+        worksheet.mergeCells('M1:P1')
 
-            html += `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${getVal(p.isAvailable === false ? '품절' : '')}</td>
-                    <td>${getVal(p.id)}</td>
-                    <td class="text-left">${getVal(p.name || p.product_name || p.productName)}</td>
-                    <td>${imgTag}</td>
-                    <td>${getVal(p.modelName || p.model_name || p.model || p.modelNo)}</td>
-                    <td>${getVal(p.productOptions || p.product_options)}</td>
-                    <td>${getVal(p.manufacturer)}</td>
-                    <td>${getVal(p.origin)}</td>
-                    <td>${getVal(p.quantityPerCarton || p.quantity_per_carton)}</td>
-                    <td>${getVal(p.defaultQuantity || 1)}</td>
-                    <td class="text-right">${fmtNum(p.consumerPrice || p.consumer_price)}</td>
-                    <td class="text-right">${fmtNum(p.price || p.supplyPrice || p.supply_price)}</td>
-                    <td class="text-left">${getVal(imgUrl)}</td>
-                    <td class="text-left">${escapeHtml(detailHtmlText)}</td>
-                    <td>${getVal(p.remarks)}</td>
-                </tr>
-            `
-        })
+        const titleCell = worksheet.getCell('A1')
+        titleCell.value = 'ARONTEC KOREA'
+        titleCell.font = { name: 'Arial', size: 20, bold: true, color: { argb: '003366' } }
+        titleCell.alignment = { vertical: 'middle', horizontal: 'left' }
 
-        html += `
-                </tbody>
-            </table>
-        </body>
-        </html>
-        `
+        const warningCell = worksheet.getCell('E1')
+        warningCell.value = '■ 당사가 운영하는 모든 상품은 폐쇄몰을 제외한 온라인 판매를 금하며, 판매 시 상품 공급이 중단됩니다.'
+        warningCell.font = { name: 'Malgun Gothic', size: 12, bold: true, color: { argb: 'FF0000' } }
+        warningCell.alignment = { vertical: 'middle', horizontal: 'left' }
 
-        const filename = `Proposal_${Date.now()}.xls`
-        res.setHeader('Content-Type', 'application/vnd.ms-excel')
+        const fileInfoCell = worksheet.getCell('M1')
+        fileInfoCell.value = title || `제안서_${new Date().toLocaleDateString()}`
+        fileInfoCell.font = { name: 'Malgun Gothic', size: 10, bold: true }
+        fileInfoCell.alignment = { vertical: 'middle', horizontal: 'right' }
+
+        worksheet.getRow(1).height = 30
+
+        const headerRow = worksheet.getRow(2)
+        headerRow.font = { bold: true, color: { argb: '000000' } }
+        headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'CCE5FF' } }
+        headerRow.alignment = { vertical: 'middle', horizontal: 'center' }
+
+        // Mappings helper
+        const getVal = (v) => v || ''
+        const getNum = (v) => v ? parseInt(v) : 0
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i]
+            const rowIndex = i + 3
+            const row = worksheet.getRow(rowIndex)
+
+            // Map frontend keys to internal keys
+            // Supports both 'image' and 'imageUrl' etc.
+            const imgUrl = item.imageUrl || item.image_url || item.image || ''
+            const modelName = item.modelName || item.model_name || item.model || item.modelNo || ''
+            const pName = item.productName || item.name || item.product_name || ''
+            const supplyPr = item.supplyPrice || item.supply_price || item.price || item.b2b_price
+            const consPr = item.consumerPrice || item.consumer_price
+            const dUrl = item.detailUrl || item.detail_url || ''
+
+            row.values = {
+                no: i + 1,
+                status: item.is_available === false ? '품절' : '',
+                id: item.id || '',
+                name: item.brand ? `[${item.brand}] ${modelName}` : modelName,
+                image: '', // Placeholder
+                model: modelName,
+                option: item.productOptions || item.product_options || item.option || '',
+                desc: item.description || '',
+                manufacturer: item.manufacturer || '',
+                origin: item.origin || '',
+                cartonQty: item.quantityPerCarton || item.quantity_per_carton || '',
+                defaultQty: item.defaultQuantity || 1,
+                consumerPrice: getNum(consPr),
+                supplyPrice: getNum(supplyPr),
+                shipping: getNum(item.shippingFee || item.shipping_fee || item.shipping),
+                imageUrl: imgUrl,
+                detailUrl: dUrl,
+                remarks: item.remarks || ''
+            }
+
+            row.height = 100
+            row.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+
+            // Embed Image
+            if (imgUrl && imgUrl.startsWith('http')) {
+                try {
+                    // Fetch image buffer
+                    const response = await fetch(imgUrl)
+                    if (response.ok) {
+                        const buffer = await response.arrayBuffer()
+                        let ext = 'jpeg'
+                        if (imgUrl.toLowerCase().includes('.png')) ext = 'png'
+                        if (imgUrl.toLowerCase().includes('.gif')) ext = 'gif'
+
+                        const imageId = workbook.addImage({
+                            buffer: Buffer.from(buffer),
+                            extension: ext,
+                        })
+
+                        worksheet.addImage(imageId, {
+                            tl: { col: 4, row: rowIndex - 1 }, // Column E (0-based: 4)
+                            br: { col: 5, row: rowIndex },
+                            editAs: 'oneCell'
+                        })
+                    }
+                } catch (err) {
+                    console.error('Failed to embed image:', err)
+                    // No fallback needed, cell will be empty
+                }
+            }
+        }
+
+        const filename = `Proposal_${Date.now()}.xlsx`
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
-        res.send(html)
+
+        await workbook.xlsx.write(res)
+        res.end()
 
     } catch (error) {
         console.error('Excel generation error:', error)
-        res.status(500).json({ error: 'Failed to generate Excel file' })
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'Failed to generate Excel file' })
+        }
     }
 })
 
