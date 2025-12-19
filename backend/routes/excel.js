@@ -508,4 +508,55 @@ router.post('/replace-source', upload.single('file'), (req, res) => {
     }
 })
 
+// Generate Excel Proposal (Export)
+router.post('/download/proposal', async (req, res) => {
+    try {
+        const { title, items } = req.body
+
+        if (!items || !Array.isArray(items)) {
+            return res.status(400).json({ error: 'Items array is required' })
+        }
+
+        // Map items to Korean headers
+        const excelData = items.map((p, index) => ({
+            'No': index + 1,
+            '상품명': p.name || '',
+            '모델명/코드': p.model || p.model_name || p.modelNo || '',
+            '브랜드': p.brand || '',
+            '수량': p.quantity || 1,
+            '단가(B2B)': p.price || 0,
+            '합계': p.totalAmount || ((p.price || 0) * (p.quantity || 1))
+        }))
+
+        const workbook = XLSX.utils.book_new()
+        const worksheet = XLSX.utils.json_to_sheet(excelData)
+
+        // Adjust column widths
+        const wscols = [
+            { wch: 5 }, // No
+            { wch: 40 }, // Name
+            { wch: 20 }, // Model
+            { wch: 15 }, // Brand
+            { wch: 10 }, // Qty
+            { wch: 15 }, // Price
+            { wch: 15 } // Total
+        ]
+        worksheet['!cols'] = wscols
+
+        XLSX.utils.book_append_sheet(workbook, worksheet, '제안서')
+
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
+
+        // Ensure headers are set for binary download
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        res.setHeader('Content-Disposition', `attachment; filename="Proposal.xlsx"`) // Filename handled by client blob usually, but good to have.
+
+        res.send(buffer)
+
+    } catch (error) {
+        console.error('Excel generation error:', error)
+        res.status(500).json({ error: 'Failed to generate Excel file' })
+    }
+})
+
 export default router
