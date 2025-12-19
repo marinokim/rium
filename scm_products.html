@@ -981,16 +981,31 @@
 
                     products.forEach((p, index) => {
                         const tr = document.createElement('tr');
-                        const date = new Date(p.createdAt).toLocaleDateString();
-                        const statusClass = p.isAvailable ? 'status-active' : 'status-inactive';
-                        const imgSrc = p.imageUrl || 'https://via.placeholder.com/60?text=No+Img';
-                        const categoryName = p.category ? p.category.name : '-';
+                        const date = new Date(p.createdAt || p.created_at).toLocaleDateString();
+                        // Handle snake_case vs camelCase
+                        const isAvailable = p.isAvailable !== undefined ? p.isAvailable : (p.is_available !== undefined ? p.is_available : true);
+                        const statusClass = isAvailable ? 'status-active' : 'status-inactive';
+                        const imgSrc = p.imageUrl || p.image_url || 'https://via.placeholder.com/60?text=No+Img';
+                        const categoryName = p.category ? p.category.name : (p.category_name || '-');
 
-                        // Handle snake_case from DB if camleCase not present
+                        const pName = p.name || p.product_name || 'No Name';
+                        const pModel = p.modelNo || p.model_no || '';
+                        const pPrice = p.price || p.b2b_price || 0;
+                        const pConsumer = p.consumerPrice || p.consumer_price || 0;
+                        const pSupply = p.supplyPrice || p.supply_price || 0;
+                        const pStock = p.stockQuantity || p.stock_quantity || 0;
+                        const pCarton = p.quantityPerCarton || p.quantity_per_carton || 1;
+                        const pIndividualFee = p.shippingFeeIndividual || p.shipping_fee_individual || 0;
+                        const pCartonFee = p.shippingFeeCarton || p.shipping_fee_carton || 0;
+                        const pBrand = p.brand || '-';
+                        const pManufacturer = p.manufacturer || '-';
+                        const pOrigin = p.origin || '-';
+                        const pTaxFree = p.isTaxFree !== undefined ? p.isTaxFree : (p.is_tax_free || false);
+
+                        // Handle snake_case is_new
                         const isNew = p.isNew !== undefined ? p.isNew : (p.is_new !== undefined ? p.is_new : false);
                         const newClass = isNew ? 'btn-green' : 'btn-gray';
 
-                        const isAvailable = p.isAvailable !== undefined ? p.isAvailable : true;
                         const availClass = isAvailable ? 'btn-green' : 'btn-red';
                         const availText = isAvailable ? 'Selling' : '중지';
 
@@ -998,17 +1013,17 @@
                             <td style="text-align: center;"><strong>${p.id}</strong></td>
                             <td style="text-align: center;">
                                 <div class="product-img-thumb" style="cursor: pointer;" onclick="openProductDetail(${index})">
-                                    <img src="${imgSrc}" style="width: 60px; height: 60px; object-fit: cover; border: 1px solid #ddd;" onerror="this.src='https://via.placeholder.com/60?text=Error'">
+                                    <img src="${imgSrc}" style="width: 60px; height: 60px; object-fit: cover; border: 1px solid #ddd;" onerror="this.src='https://placehold.co/60?text=Error'">
                                     <div style="font-size: 0.7rem; color: #007bff; margin-top: 2px;">상세보기</div>
                                 </div>
                             </td>
-                            <td><strong>${p.brand || '-'}</strong><br><small style="color:#007bff">${categoryName}</small></td>
-                            <td><strong>${p.name}</strong><br><small style="color:#666">${p.modelNo || ''}</small></td>
-                            <td style="text-align: right;"><strong style="color:#007bff">${(p.price || 0).toLocaleString()}</strong><br><span class="scm-status">${p.isTaxFree ? '면세' : '과세'}</span></td>
-                            <td><div style="display:grid;grid-template-columns:40px 1fr;gap:5px;font-size:0.85rem"><span style="color:#888">소가</span><span>${(p.consumerPrice || 0).toLocaleString()}</span><span style="color:#888">공급</span><strong>${(p.supplyPrice || 0).toLocaleString()}</strong></div></td>
-                            <td style="text-align:center;font-size:0.85rem">재고 ${(p.stockQuantity || 0).toLocaleString()}<br>카톤 ${p.quantityPerCarton || 1}</td>
-                            <td style="text-align:center;font-size:0.85rem">개별 ${(p.shippingFeeIndividual || 0).toLocaleString()}<br>카톤 ${(p.shippingFeeCarton || 0).toLocaleString()}</td>
-                            <td style="font-size:0.8rem;color:#555">제조: ${p.manufacturer || '-'}<br>원산: ${p.origin || '-'}<br>${date}</td>
+                            <td><strong>${pBrand}</strong><br><small style="color:#007bff">${categoryName}</small></td>
+                            <td><strong>${pName}</strong><br><small style="color:#666">${pModel}</small></td>
+                            <td style="text-align: right;"><strong style="color:#007bff">${(pPrice).toLocaleString()}</strong><br><span class="scm-status">${pTaxFree ? '면세' : '과세'}</span></td>
+                            <td><div style="display:grid;grid-template-columns:40px 1fr;gap:5px;font-size:0.85rem"><span style="color:#888">소가</span><span>${(pConsumer).toLocaleString()}</span><span style="color:#888">공급</span><strong>${(pSupply).toLocaleString()}</strong></div></td>
+                            <td style="text-align:center;font-size:0.85rem">재고 ${(pStock).toLocaleString()}<br>카톤 ${pCarton}</td>
+                            <td style="text-align:center;font-size:0.85rem">개별 ${(pIndividualFee).toLocaleString()}<br>카톤 ${(pCartonFee).toLocaleString()}</td>
+                            <td style="font-size:0.8rem;color:#555">제조: ${pManufacturer}<br>원산: ${pOrigin}<br>${date}</td>
                             <td style="text-align:center;">
                                 <button class="scm-btn ${newClass} btn-toggle-new" data-id="${p.id}" style="padding: 2px 8px; font-size: 0.75rem; margin-bottom: 5px;">${isNew ? 'New' : 'Normal'}</button>
                                 <br>
