@@ -998,15 +998,22 @@
                         const imgSrc = p.imageUrl || p.image_url || 'https://via.placeholder.com/60?text=No+Img';
                         const categoryName = p.category ? p.category.name : (p.category_name || '-');
 
-                        const pName = p.name || p.product_name || 'No Name';
+                        // Fix: Check model_name/modelName if name is missing
+                        const pName = p.name || p.product_name || p.model_name || p.modelName || 'No Name';
                         const pModel = p.modelNo || p.model_no || '';
-                        const pPrice = p.price || p.b2b_price || 0;
-                        const pConsumer = p.consumerPrice || p.consumer_price || 0;
-                        const pSupply = p.supplyPrice || p.supply_price || 0;
-                        const pStock = p.stockQuantity || p.stock_quantity || 0;
-                        const pCarton = p.quantityPerCarton || p.quantity_per_carton || 1;
-                        const pIndividualFee = p.shippingFeeIndividual || p.shipping_fee_individual || 0;
-                        const pCartonFee = p.shippingFeeCarton || p.shipping_fee_carton || 0;
+
+                        // Fix: Number formatting (Integer + Commas)
+                        const fmt = (val) => Math.floor(Number(val) || 0).toLocaleString('ko-KR');
+
+                        const pPrice = fmt(p.price || p.b2b_price);
+                        const pConsumer = fmt(p.consumerPrice || p.consumer_price);
+                        const pSupply = fmt(p.supplyPrice || p.supply_price);
+                        const pStock = fmt(p.stockQuantity || p.stock_quantity);
+                        const pCarton = Number(p.quantityPerCarton || p.quantity_per_carton || 1); // Keep raw number for carton count logic if needed, but display formatted
+
+                        const pIndividualFee = fmt(p.shippingFeeIndividual || p.shipping_fee_individual);
+                        const pCartonFee = fmt(p.shippingFeeCarton || p.shipping_fee_carton);
+
                         const pBrand = p.brand || '-';
                         const pManufacturer = p.manufacturer || '-';
                         const pOrigin = p.origin || '-';
@@ -1029,10 +1036,10 @@
                             </td>
                             <td><strong>${pBrand}</strong><br><small style="color:#007bff">${categoryName}</small></td>
                             <td><strong>${pName}</strong><br><small style="color:#666">${pModel}</small></td>
-                            <td style="text-align: right;"><strong style="color:#007bff">${(pPrice).toLocaleString()}</strong><br><span class="scm-status">${pTaxFree ? '면세' : '과세'}</span></td>
-                            <td><div style="display:grid;grid-template-columns:40px 1fr;gap:5px;font-size:0.85rem"><span style="color:#888">소가</span><span>${(pConsumer).toLocaleString()}</span><span style="color:#888">공급</span><strong>${(pSupply).toLocaleString()}</strong></div></td>
-                            <td style="text-align:center;font-size:0.85rem">재고 ${(pStock).toLocaleString()}<br>카톤 ${pCarton}</td>
-                            <td style="text-align:center;font-size:0.85rem">개별 ${(pIndividualFee).toLocaleString()}<br>카톤 ${(pCartonFee).toLocaleString()}</td>
+                            <td style="text-align: right;"><strong style="color:#007bff">${pPrice}</strong><br><span class="scm-status">${pTaxFree ? '면세' : '과세'}</span></td>
+                            <td><div style="display:grid;grid-template-columns:40px 1fr;gap:5px;font-size:0.85rem"><span style="color:#888">소가</span><span>${pConsumer}</span><span style="color:#888">공급</span><strong>${pSupply}</strong></div></td>
+                            <td style="text-align:center;font-size:0.85rem">재고 ${pStock}<br>카톤 ${pCarton}</td>
+                            <td style="text-align:center;font-size:0.85rem">개별 ${pIndividualFee}<br>카톤 ${pCartonFee}</td>
                             <td style="font-size:0.8rem;color:#555">제조: ${pManufacturer}<br>원산: ${pOrigin}<br>${date}</td>
                             <td style="text-align:center;">
                                 <button class="scm-btn ${newClass} btn-toggle-new" data-id="${p.id}" style="padding: 2px 8px; font-size: 0.75rem; margin-bottom: 5px;">${isNew ? 'New' : 'Normal'}</button>
