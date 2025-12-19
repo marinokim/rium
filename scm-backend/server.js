@@ -76,6 +76,11 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
+// Root route for Render health check
+app.get('/', (req, res) => {
+    res.status(200).send('Rium SCM Backend is running')
+})
+
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Arontec B2B SCM API is running' })
@@ -93,8 +98,9 @@ import { runMigrations } from './migrations.js'
 
 // Run migrations before starting server
 runMigrations().then(() => {
-    app.listen(PORT, () => {
-        console.log(`🚀 Server running on http://localhost:${PORT}`)
+    const HOST = '0.0.0.0'
+    app.listen(PORT, HOST, () => {
+        console.log(`🚀 Server running on http://${HOST}:${PORT}`)
         console.log(`📅 Server started at ${new Date().toISOString()}`)
     })
 })
