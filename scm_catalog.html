@@ -1005,8 +1005,8 @@
                             fetch(`${DOWNLOAD_API_BASE}/api/excel/download/proposal`, {
                                 method: 'POST',
                                 headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${token}`
+                                    'Content-Type': 'application/json'
+                                    // 'Authorization': `Bearer ${token}` // Auth not required for this route, removing to fix CORS
                                 },
                                 body: JSON.stringify({
                                     title: historyItem.title || '제안서',

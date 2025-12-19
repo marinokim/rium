@@ -24,22 +24,9 @@ const PORT = process.env.PORT || 5002
 
 // Middleware
 app.use(cors({
-    origin: [
-        'http://localhost:3000',
-        'http://localhost:5500',
-        'http://127.0.0.1:5500',
-        'http://localhost:8080',
-        'http://localhost:5003',
-        process.env.FRONTEND_URL,
-        'https://rium-homepage.onrender.com', // Rium Homepage
-        'https://rium-scm-backend.onrender.com',
-        'https://arontec-home.onrender.com',
-        'https://arontec.co.kr',
-        'https://www.arontec.co.kr',
-        'https://scm.arontec.co.kr',
-        'https://b2b.arontec.co.kr'
-    ].filter(Boolean),
-    credentials: true
+    origin: '*', // Allow ALL origins to fix "Failed to fetch"
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json({ limit: '50mb' }))
 app.use(express.urlencoded({ extended: true, limit: '50mb' }))
