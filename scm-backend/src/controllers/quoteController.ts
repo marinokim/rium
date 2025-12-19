@@ -119,25 +119,18 @@ export const downloadQuoteExcel = async (req: AuthRequest, res: Response) => {
 
         // Import ExcelJS dynamically or at top level (using require/import)
         // Since we are in module mode, we use import at top, but let's assume it's imported above or we import here if needed.
-        // For this file replacement I will assume `import ExcelJS from 'exceljs';` is added at top by previous developer or I need to add it.
-        // Actually, I should check imports. I'll use explicit require if needed or ensure imports are clean. 
-        // Current context has imports at top. I will add import statement in a separate edit if missing, 
-        // but for now I will assume I can replace the function and use `ExcelJS` if I add the import.
-        // Wait, I can't add import easily with `replace_file_content` targeting the function.
-        // I'll stick to `import * as ExcelJS from 'exceljs';` at the top if I could, but let's use `const ExcelJS = require('exceljs');` inside if imports fail, 
-        // OR better: I will replace the imports separately or use multi_replace.
-
-        // Let's rely on standard import. I will add the import in a subsequent small edit or assume I can do it here. 
-        // Actually, I'll use `import` at the top of the file in a separate step to be safe. 
-        // For now, let's implement the logic assuming `ExcelJS` is available.
-        // To be safe against "ExcelJS is not defined", I will use a dynamic import or require inside the function if possible, but ES modules...
-        // Let's assume I fix imports in next step.
+        // Dynamic imports for ExcelJS generation
+        let fetch: any;
+        try {
+            fetch = (await import('node-fetch')).default;
+        } catch (e) {
+            console.warn('node-fetch import failed, falling back to global fetch');
+            fetch = global.fetch;
+        }
 
         const ExcelJS = await import('exceljs');
-        // Dynamic import is safe in ES modules context if top-level is messy.
         const fs = await import('fs');
         const path = await import('path');
-        const fetch = (await import('node-fetch')).default; // Use node-fetch if valid, or global fetch if Node 18+
 
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('제안서');
