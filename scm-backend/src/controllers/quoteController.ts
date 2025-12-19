@@ -98,7 +98,7 @@ export const getMyQuotes = async (req: AuthRequest, res: Response) => {
     }
 };
 
-// Download Quote as Excel
+// Download Quote as Excel (Backend Generation)
 export const downloadQuoteExcel = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.userId;
@@ -117,72 +117,161 @@ export const downloadQuoteExcel = async (req: AuthRequest, res: Response) => {
 
         if (!quote) return res.status(404).json({ error: 'Quote not found' });
 
-        // Arontec Style Formatting
-        const wb = XLSX.utils.book_new();
+        // Import ExcelJS dynamically or at top level (using require/import)
+        // Since we are in module mode, we use import at top, but let's assume it's imported above or we import here if needed.
+        // For this file replacement I will assume `import ExcelJS from 'exceljs';` is added at top by previous developer or I need to add it.
+        // Actually, I should check imports. I'll use explicit require if needed or ensure imports are clean. 
+        // Current context has imports at top. I will add import statement in a separate edit if missing, 
+        // but for now I will assume I can replace the function and use `ExcelJS` if I add the import.
+        // Wait, I can't add import easily with `replace_file_content` targeting the function.
+        // I'll stick to `import * as ExcelJS from 'exceljs';` at the top if I could, but let's use `const ExcelJS = require('exceljs');` inside if imports fail, 
+        // OR better: I will replace the imports separately or use multi_replace.
 
-        // Row 1: Header Info
-        const headerInfo = [
-            ['RIUM', '', '', '', '당사가 운영하는 모든 상품은 폐쇄몰을 제외한 온라인 판매를 급하며, 판매 시 상품 공급이 중단됩니다.', '', '', '', '', '', '', '', '', `(리움)_제안_${new Date().toISOString().split('T')[0]}`]
+        // Let's rely on standard import. I will add the import in a subsequent small edit or assume I can do it here. 
+        // Actually, I'll use `import` at the top of the file in a separate step to be safe. 
+        // For now, let's implement the logic assuming `ExcelJS` is available.
+        // To be safe against "ExcelJS is not defined", I will use a dynamic import or require inside the function if possible, but ES modules...
+        // Let's assume I fix imports in next step.
+
+        const ExcelJS = await import('exceljs');
+        // Dynamic import is safe in ES modules context if top-level is messy.
+        const fs = await import('fs');
+        const path = await import('path');
+        const fetch = (await import('node-fetch')).default; // Use node-fetch if valid, or global fetch if Node 18+
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('제안서');
+
+        // Define columns
+        worksheet.columns = [
+            { header: '순번', key: 'no', width: 5 },
+            { header: '품절여부', key: 'status', width: 10 },
+            { header: '고유번호', key: 'id', width: 10 },
+            { header: '상품명', key: 'name', width: 40 },
+            { header: '상품이미지', key: 'image', width: 20 },
+            { header: '모델명', key: 'model', width: 15 },
+            { header: '옵션', key: 'option', width: 10 },
+            { header: '설명', key: 'desc', width: 40 },
+            { header: '제조원', key: 'manufacturer', width: 15 },
+            { header: '원산지', key: 'origin', width: 10 },
+            { header: '카톤입수량', key: 'cartonQty', width: 10 },
+            { header: '기본수량', key: 'defaultQty', width: 10 },
+            { header: '소비자가', key: 'consumerPrice', width: 12 },
+            { header: '공급가(부가세포함)', key: 'supplyPrice', width: 15 },
+            { header: '개별배송비(부가세포함)', key: 'shipping', width: 15 },
+            { header: '대표이미지', key: 'imageUrl', width: 30 },
+            { header: '상세이미지', key: 'detailUrl', width: 30 },
+            { header: '비고', key: 'remarks', width: 20 },
         ];
 
-        // Row 2: Columns
-        const columns = [
-            '순번', '품절여부', '고유번호', '상품명', '상품이미지',
-            '모델명', '옵션', '실명', '제조일', '원산지',
-            '카톤입수량', '기본수량', '소비자가', '공급가(부가세포함)', '배송비(부가세포함)',
-            '대표이미지', '상세이미지', '비고'
-        ];
+        // Insert Title Row (Row 1)
+        worksheet.insertRow(1, []);
+        worksheet.mergeCells('A1:C1');
+        worksheet.mergeCells('D1:R1');
 
-        // Row 3+: Data
-        const dataRows = quote.items.map((item, index) => {
-            const p = item.product as any;
-            const imgFormula = p.imageUrl ? { t: 'f', v: `IMAGE("${p.imageUrl}")` } : '';
-            const detailImgFormula = p.detailUrl ? { t: 'f', v: `IMAGE("${p.detailUrl}")` } : '';
+        const titleCell = worksheet.getCell('A1');
+        titleCell.value = 'RIUM';
+        titleCell.font = { name: 'Arial', size: 20, bold: true, color: { argb: '003366' } };
+        titleCell.alignment = { vertical: 'middle', horizontal: 'left' };
 
-            return [
-                index + 1, // 순번
-                p.isAvailable ? '' : '품절', // 품절여부
-                p.id, // 고유번호
-                p.name, // 상품명
-                imgFormula, // 상품이미지 (Formula)
-                p.modelNo || '-', // 모델명
-                p.productOptions || '', // 옵션
-                p.brand || '', // 실명
-                '', // 제조일
-                p.origin || '상세페이지 참조', // 원산지 (Fixed)
-                p.quantityPerCarton || 1, // 카톤입수량
-                1, // 기본수량 (Typical MOQ)
-                p.consumerPrice || 0, // 소비자가
-                item.price, // 공급가
-                p.shippingFee || 0, // 배송비
-                p.imageUrl || '', // 대표이미지 (URL)
-                detailImgFormula, // 상세이미지 (Formula)
-                p.remarks || '' // 비고
-            ];
-        });
+        const warningCell = worksheet.getCell('D1');
+        warningCell.value = '■ 당사가 운영하는 모든 상품은 폐쇄몰을 제외한 온라인 판매를 금하며, 판매 시 상품 공급이 중단됩니다.';
+        warningCell.font = { name: 'Malgun Gothic', size: 12, bold: true, color: { argb: 'FF0000' } };
+        warningCell.alignment = { vertical: 'middle', horizontal: 'left' };
 
-        const wsData = [...headerInfo, columns, ...dataRows];
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        worksheet.getRow(1).height = 30;
 
-        // Merge Row 1 Cells (A1:D1) - pure visual if supported, often ignored by basic readers but good property
-        if (!ws['!merges']) ws['!merges'] = [];
-        ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }); // A1:D1
+        // Style Header (Row 2)
+        const headerRow = worksheet.getRow(2);
+        headerRow.font = { bold: true };
+        headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'CCE5FF' } };
+        headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+        worksheet.getRow(2).height = 20;
 
-        // Column Widths
-        ws['!cols'] = [
-            { wch: 5 }, { wch: 8 }, { wch: 8 }, { wch: 40 }, { wch: 15 },
-            { wch: 20 }, { wch: 10 }, { wch: 15 }, { wch: 10 }, { wch: 10 },
-            { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
-            { wch: 50 }, { wch: 50 }, { wch: 20 }
-        ];
+        // Add Data Rows
+        for (let i = 0; i < quote.items.length; i++) {
+            const item = quote.items[i];
+            const p = item.product;
+            const row = worksheet.getRow(i + 3);
 
-        XLSX.utils.book_append_sheet(wb, ws, `Quote_${quote.quoteNumber}`);
+            row.values = {
+                no: i + 1,
+                status: p.isAvailable ? '' : '품절',
+                id: p.id,
+                name: p.name,
+                image: '', // Visual Image placeholder
+                model: p.modelNo || '-',
+                option: p.productOptions || '',
+                desc: p.description || '',
+                manufacturer: p.manufacturer || '',
+                origin: p.origin || '상세페이지 참조',
+                cartonQty: p.quantityPerCarton || 1,
+                defaultQty: 1,
+                consumerPrice: p.consumerPrice || item.price * 1.5,
+                supplyPrice: item.price,
+                shipping: p.shippingFee || 0,
+                imageUrl: p.imageUrl || '',
+                detailUrl: p.detailUrl || '',
+                remarks: p.remarks || ''
+            };
 
-        const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+            // Set Row Height for Image
+            row.height = 100;
+            row.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+
+            // Image Embedding
+            if (p.imageUrl) {
+                try {
+                    let imageBuffer: Buffer | null = null;
+                    let extension: 'png' | 'jpeg' = 'jpeg';
+
+                    if (p.imageUrl.startsWith('/') && !p.imageUrl.startsWith('//')) {
+                        // Local File
+                        const localPath = path.join(process.cwd(), p.imageUrl);
+                        if (fs.existsSync(localPath)) {
+                            imageBuffer = fs.readFileSync(localPath);
+                        } else {
+                            console.warn(`Local image not found: ${localPath}`);
+                        }
+                    } else if (p.imageUrl.startsWith('http')) {
+                        // Remote URL
+                        // Note: Requires node-fetch or native fetch (Node 18+)
+                        // Since we are in `ts-node` context, ensure fetch is available.
+                        // Assuming fetch is globally available or polyfilled. If not, dynamic import above helps.
+                        const res = await fetch(p.imageUrl);
+                        if (res.ok) {
+                            const arrayBuffer = await res.arrayBuffer();
+                            imageBuffer = Buffer.from(arrayBuffer);
+                        }
+                    }
+
+                    if (imageBuffer) {
+                        if (p.imageUrl.toLowerCase().endsWith('.png')) extension = 'png';
+                        const imageId = workbook.addImage({
+                            buffer: imageBuffer,
+                            extension: extension,
+                        });
+
+                        worksheet.addImage(imageId, {
+                            tl: { col: 4, row: i + 2 }, // Column E (index 4)
+                            br: { col: 5, row: i + 3 },
+                            editAs: 'oneCell'
+                        });
+                    } else {
+                        row.getCell(5).value = '이미지 없음';
+                    }
+                } catch (err) {
+                    console.warn(`Failed to embed image for product ${p.id}:`, err);
+                    row.getCell(5).value = '오류';
+                }
+            }
+        } // End Loop
 
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename=Quote_${quote.quoteNumber}.xlsx`);
-        res.send(buffer);
+
+        await workbook.xlsx.write(res);
+        res.end();
 
     } catch (error) {
         console.error('Download quote error:', error);

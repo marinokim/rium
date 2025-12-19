@@ -897,8 +897,22 @@
                     try {
                         const confirmDownload = confirm('제안서가 생성되었습니다.\n엑셀 파일도 다운로드 하시겠습니까?');
                         if (confirmDownload) {
-                            // Use Frontend Generation with Buffer Data (Preserves full details)
-                            await generateExcelProposal(buffer, response.quote.quoteNumber);
+                            const token = localStorage.getItem('token');
+                            const res = await fetch(`${API_BASE}/api/quotes/${response.quote.id}/download/excel`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+
+                            if (res.ok) {
+                                const blob = await res.blob();
+                                const link = document.createElement('a');
+                                link.href = window.URL.createObjectURL(blob);
+                                link.download = `Quote_${response.quote.quoteNumber}.xlsx`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            } else {
+                                alert('서버에서 엑셀을 생성하는 중 오류가 발생했습니다.');
+                            }
                         }
                     } catch (e) { console.error(e); }
 
