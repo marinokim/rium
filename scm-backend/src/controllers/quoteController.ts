@@ -215,7 +215,7 @@ export const downloadQuoteExcel = async (req: AuthRequest, res: Response) => {
             // Image Embedding
             if (p.imageUrl) {
                 try {
-                    let imageBuffer: Buffer | null = null;
+                    let imageBuffer: any = null; // Use any to bypass Buffer type mismatch
                     let extension: 'png' | 'jpeg' = 'jpeg';
 
                     if (p.imageUrl.startsWith('/') && !p.imageUrl.startsWith('//')) {
