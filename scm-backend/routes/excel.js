@@ -11,9 +11,9 @@ const __dirname = path.dirname(__filename)
 
 const router = express.Router()
 
-// Configure multer for memory storage
-const storage = multer.memoryStorage()
-const upload = multer({ storage: storage })
+// Configure multer for disk storage (safer for memory)
+// Use OS temp dir or /tmp
+const upload = multer({ dest: '/tmp/' })
 
 // Helper to sanitize string
 const sanitize = (str) => {
@@ -31,16 +31,16 @@ const parsePrice = (price) => {
 
 // Process Excel Upload
 router.post('/upload', upload.single('file'), async (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' })
-    }
-
-    const client = await pool.connect()
-
+    let client = null
     try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' })
+        }
+
+        client = await pool.connect()
         await client.query('BEGIN')
 
-        const workbook = XLSX.read(req.file.buffer, { type: 'buffer' })
+        const workbook = XLSX.readFile(req.file.path)
         const sheetName = workbook.SheetNames[0]
         const sheet = workbook.Sheets[sheetName]
         const data = XLSX.utils.sheet_to_json(sheet)
@@ -55,14 +55,12 @@ router.post('/upload', upload.single('file'), async (req, res) => {
                 await client.query('SAVEPOINT row_savepoint')
 
                 // Map Excel columns to DB fields
-                // Expected columns: Brand, ModelName, ModelNo, Category, Description, B2BPrice, ConsumerPrice, Stock, ImageURL, DetailURL, Manufacturer, Origin, ProductSpec, ProductOptions
-
                 const brand = sanitize(row['Brand'] || row['브랜드'])
                 const modelName = sanitize(row['ModelName'] || row['모델명'])
                 const modelNo = sanitize(row['ModelNo'] || row['모델번호'])
                 const categoryName = sanitize(row['Category'] || row['카테고리'])
                 const description = sanitize(row['Description'] || row['상세설명'])
-                // Swapped mapping based on user feedback (Corrected)
+
                 const b2bPrice = parsePrice(row['B2BPrice'] || row['실판매가'] || row['판매가'] || row['B2B가'])
                 const consumerPrice = parsePrice(row['ConsumerPrice'] || row['소비자가'] || row['소가'])
                 const supplyPrice = parsePrice(row['SupplyPrice'] || row['공급가'] || row['매입가'] || 0)
@@ -77,7 +75,6 @@ router.post('/upload', upload.single('file'), async (req, res) => {
                 const extractUrl = (raw) => {
                     const str = sanitize(raw)
                     if (!str) return ''
-                    // Check for <img ... src=...> pattern (quoted or unquoted, with optional spaces around =)
                     const imgMatch = str.match(/<img[^>]+src\s*=\s*(?:['"]([^'"]+)['"]|(\S+))/i)
                     if (imgMatch) {
                         let url = imgMatch[1] || imgMatch[2]
@@ -87,31 +84,11 @@ router.post('/upload', upload.single('file'), async (req, res) => {
                 }
 
                 const imageUrl = extractUrl(row['ImageURL'] || row['이미지URL'])
-                const detailUrl = sanitize(row['DetailURL'] || row['상세페이지URL']) // Detail URL can be HTML, so keep consistent with sanitize or use extraction if it's meant to be a single image? 
-                // User requirement: Detail URL can be HTML. But if they upload <img src=...> in Detail URL column, do they want it as HTML or just the URL?
-                // Step 7004 user asked for *multiple* URLs to be converted to images.
-                // Step 7129 user asked for complex HTML to be rendered.
-                // So DetailURL *should* support raw HTML. But "Image URL" (Main image) must be a single URL.
-                // Therefore only imageUrl passes through extractUrl. Detail page URL logic is different.
-                // However, wait. If user provided <center><img...></center> for Detail URL, we want to KEEP it as HTML.
-                // So for detailUrl, we just use sanitize() which keeps the HTML tags (minus double quotes, which might break attributes...).
-                // WAIT. sanitize() removing double quotes `replace(/"/g, '')` BREAKS HTML attributes: <img src="url"> -> <img src=url>.
-                // This is risky for complex HTML.
-                // If DetailURL is HTML, we should NOT strip double quotes blindly.
-                // We should use a safer sanitize for DetailURL or skip it.
-                // For Excel upload, let's assume raw HTML should be preserved as much as possible but safe.
 
-                // Let's refine sanitize to NOT strip quotes if it looks like HTML, or just relax it for DetailURL.
-                // But `sanitize` function is defined globally in file. 
-                // Let's use a specific handling for DetailURL.
-
-                // For main ImageURL, it MUST be a URL.
-
-                // For DetailURL:
+                // Detail URL logic
                 let rawDetail = row['DetailURL'] || row['상세페이지URL']
                 let detailUrlClean = ''
                 if (rawDetail) {
-                    // If it looks like HTML, preserve quotes but maybe trim
                     if (String(rawDetail).trim().match(/^<.+>$/s) || String(rawDetail).includes('<img') || String(rawDetail).includes('<center')) {
                         detailUrlClean = String(rawDetail).trim()
                     } else {
@@ -135,7 +112,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
                 const shippingFeeCarton = parsePrice(row['ShippingFeeCarton'] || row['카톤배송비'])
                 const isTaxFree = (row['IsTaxFree'] || row['면세여부']) === 'TRUE' || (row['IsTaxFree'] || row['면세여부']) === '면세'
-                const remarks = sanitize(row['Remark'] || row['remark'] || row['비고'])
+                const remarks = sanitize(row['Remark'] || row['비고'])
 
                 if (!modelName) {
                     throw new Error('Model Name is required')
@@ -159,7 +136,6 @@ router.post('/upload', upload.single('file'), async (req, res) => {
                 }
 
                 // Check if product exists (by model_name or model_no)
-                // Prefer model_no if available, otherwise model_name
                 let existingProduct = null
                 if (modelNo) {
                     const checkRes = await client.query('SELECT id FROM products WHERE model_no = $1', [modelNo])
@@ -173,10 +149,8 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
                 if (existingProduct) {
                     // Update
-                    // Check mode
                     const mode = req.body.mode || 'all'
                     if (mode === 'new') {
-                        // Skip update for existing product in 'new' mode
                         await client.query('RELEASE SAVEPOINT row_savepoint')
                         continue
                     }
@@ -214,10 +188,8 @@ router.post('/upload', upload.single('file'), async (req, res) => {
                     )
                 } else {
                     // Insert
-                    // Check mode
                     const mode = req.body.mode || 'all'
                     if (mode === 'update') {
-                        // Skip insert for new product in 'update' mode
                         await client.query('RELEASE SAVEPOINT row_savepoint')
                         continue
                     }
@@ -241,7 +213,6 @@ router.post('/upload', upload.single('file'), async (req, res) => {
                 await client.query('RELEASE SAVEPOINT row_savepoint')
                 successCount++
             } catch (err) {
-                // Rollback to savepoint if error occurs for this row
                 await client.query('ROLLBACK TO SAVEPOINT row_savepoint')
                 console.error(`Error processing row ${index + 2}:`, err)
                 errorCount++
@@ -258,11 +229,19 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         })
 
     } catch (error) {
-        await client.query('ROLLBACK')
+        if (client) await client.query('ROLLBACK')
         console.error('Excel upload error:', error)
         res.status(500).json({ error: 'Failed to process Excel file' })
     } finally {
-        client.release()
+        if (client) client.release()
+        // Cleanup temp file
+        if (req.file && req.file.path) {
+            try {
+                fs.unlinkSync(req.file.path)
+            } catch (e) {
+                console.error('Error deleting temp file:', e)
+            }
+        }
     }
 })
 
@@ -506,14 +485,17 @@ router.post('/update-source', upload.single('file'), (req, res) => {
     }
 
     try {
-        // Move/Overwrite file
-        // Since mutation of req.file depends on storage, we used memory storage? 
-        // Wait, upload.single('file') with default setup usually uses memory or temp.
-        // Checking multer config above... usually it's declared but let's check.
-        // Assuming req.file.buffer exists if memory storage, or path if disk.
-        // Just defining writeFileSync is safest if buffer is available.
+        // Move file since we use disk storage now
+        // But if we used buffer? 
+        // Wait, I changed upload to disk storage globally in this file.
+        // So req.file has path, not buffer.
+        // We must move or copy it.
 
-        fs.writeFileSync(targetPath, req.file.buffer)
+        fs.copyFileSync(req.file.path, targetPath)
+
+        // Cleanup temp
+        fs.unlinkSync(req.file.path)
+
         console.log(`Updated master Excel file at ${targetPath}`)
         res.json({ message: 'Server source Excel file updated successfully' })
     } catch (error) {
@@ -579,13 +561,7 @@ router.post('/download/proposal', async (req, res) => {
             // Image Tag for Excel
             const imgTag = imgUrl ? `<img src="${imgUrl}" width="100" height="100">` : ''
 
-            // Detail HTML handling (User wants the HTML string or the image?)
-            // Screenshot showed HTML tag string for detailed image: <img src="...">
-            // But if it's a URL, we might want to show it as text or link.
-            // Based on screenshot column O, it shows actual HTML text like <img src="...">.
-            // So we escape it to show the code, or render it?
-            // "Column O: Detail Image (HTML)" and the cell content is `<img src=...>` TEXT.
-            // So we should output the text.
+            // Detail HTML handling
             const detailHtmlText = detailUrl ? (detailUrl.includes('<') ? detailUrl : `<img src="${detailUrl}">`) : ''
             // HTML Escape for text display
             const escapeHtml = (text) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
