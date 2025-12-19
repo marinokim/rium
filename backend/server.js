@@ -28,12 +28,14 @@ app.use(cors({
         'http://localhost:5500',
         'http://127.0.0.1:5500',
         'http://localhost:8080',
+        'http://localhost:5003',
         process.env.FRONTEND_URL,
-        'https://arontec-home.onrender.com', // Homepage
-        'https://arontec.co.kr', // Main Homepage
+        'https://rium-homepage.onrender.com', // Rium Homepage
+        'https://arontec-home.onrender.com',
+        'https://arontec.co.kr',
         'https://www.arontec.co.kr',
-        'https://scm.arontec.co.kr', // SCM System
-        'https://b2b.arontec.co.kr' // Alternative SCM subdomain
+        'https://scm.arontec.co.kr',
+        'https://b2b.arontec.co.kr'
     ].filter(Boolean),
     credentials: true
 }));
@@ -42,14 +44,13 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 
 // Session
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'arontec-scm-secret-2024',
+    secret: process.env.SESSION_SECRET || 'rium-scm-secret-2025',
     resave: false,
     saveUninitialized: false,
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        sameSite: 'lax', // Use 'lax' for subdomain sharing
-        domain: process.env.NODE_ENV === 'production' ? '.arontec.co.kr' : undefined, // Share cookie across subdomains
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site (Render subdomains)
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
 }))
