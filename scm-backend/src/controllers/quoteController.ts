@@ -231,10 +231,18 @@ export const downloadQuoteExcel = async (req: AuthRequest, res: Response) => {
                         // Note: Requires node-fetch or native fetch (Node 18+)
                         // Since we are in `ts-node` context, ensure fetch is available.
                         // Assuming fetch is globally available or polyfilled. If not, dynamic import above helps.
-                        const res = await fetch(p.imageUrl);
-                        if (res.ok) {
-                            const arrayBuffer = await res.arrayBuffer();
-                            imageBuffer = Buffer.from(arrayBuffer as any);
+                        try {
+                            const res = await fetch(p.imageUrl);
+                            if (res.ok) {
+                                const arrayBuffer = await res.arrayBuffer();
+                                imageBuffer = Buffer.from(arrayBuffer as any);
+                            } else {
+                                console.warn(`Fetch failed ${p.imageUrl}: ${res.status}`);
+                                row.getCell(5).value = `HTTP ${res.status}: ${p.imageUrl}`;
+                            }
+                        } catch (fetchErr) {
+                            console.warn(`Fetch error ${p.imageUrl}:`, fetchErr);
+                            row.getCell(5).value = `Fetch Err: ${p.imageUrl}`;
                         }
                     }
 
@@ -250,14 +258,23 @@ export const downloadQuoteExcel = async (req: AuthRequest, res: Response) => {
                             br: { col: 5, row: i + 3 } as any,
                             editAs: 'oneCell'
                         });
+                        row.height = 100; // Re-force row height on success
                     } else {
-                        row.getCell(5).value = '이미지 없음';
+                        // If no image buffer, keep the text value set above for debugging
+                        if (!row.getCell(5).value) {
+                            row.getCell(5).value = `No Buffer: ${p.imageUrl}`;
+                        }
                     }
                 } catch (err) {
                     console.warn(`Failed to embed image for product ${p.id}:`, err);
-                    row.getCell(5).value = '오류';
+                    row.getCell(5).value = `Err: ${err}`;
                 }
+            } else {
+                row.getCell(5).value = 'No URL';
             }
+
+            // Force row height continuously
+            row.height = 100;
         } // End Loop
 
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
