@@ -483,18 +483,24 @@
                         const token = localStorage.getItem('token');
                         if (!token) return;
 
-                        // API Base
                         const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
                             ? 'http://localhost:5000'
                             : 'https://rium-scm-backend.onrender.com';
 
-                        const res = await fetch(`${API_BASE}/api/proposals/my`, {
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
+                        // [MOCK MODE] Use localStorage
+                        // const res = await fetch(`${API_BASE}/api/proposals/my`, { ... });
+
+                        const user = JSON.parse(localStorage.getItem('scm_user') || '{}');
+                        const allHistory = JSON.parse(localStorage.getItem('scm_proposals_history') || '[]');
+                        // Filter by user (assuming ID 999 if missing)
+                        const list = allHistory.filter(p => p.user_id === (user.id || 999));
+
+                        // Simulate API structure
+                        const res = { ok: true, json: async () => ({ history: list }) };
 
                         if (res.ok) {
-                            const data = await res.json();
-                            const list = data.history || [];
+                            // const data = await res.json(); // Already have list
+                            // const list = data.history || []; // Already have list
                             const tbody = document.getElementById('proposalList');
 
                             if (list.length === 0) {

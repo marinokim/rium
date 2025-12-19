@@ -506,12 +506,19 @@
                                 ? 'http://localhost:5000'
                                 : 'https://rium-scm-backend.onrender.com';
 
-                            // Determine Endpoint
-                            const endpoint = isAdmin ? '/api/proposals/all' : '/api/proposals/my';
+                            // Determine Endpoint (Mock)
+                            // const endpoint = isAdmin ? '/api/proposals/all' : '/api/proposals/my';
+                            // const res = await fetch(`${API_BASE}${endpoint}`, { ... });
 
-                            const res = await fetch(`${API_BASE}${endpoint}`, {
-                                headers: { 'Authorization': `Bearer ${token}` }
-                            });
+                            const allHistory = JSON.parse(localStorage.getItem('scm_proposals_history') || '[]');
+                            // If Mock, assume allHistory works.
+                            // Admin sees all, User sees own.
+                            // Note: user.id might be numeric or string, ensure comparison is loose or correct.
+                            const list = isAdmin
+                                ? allHistory
+                                : allHistory.filter(p => p.user_id == user.id || p.user_id === 999); // 999 fallback
+
+                            const res = { ok: true, json: async () => ({ history: list }) };
 
                             if (res.ok) {
                                 const data = await res.json();
