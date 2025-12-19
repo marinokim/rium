@@ -580,33 +580,33 @@ router.post('/download/proposal', async (req, res) => {
             row.height = 100
             row.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
 
-            // Embed Image - TEMPORARILY DISABLED FOR DEBUGGING (Suspected OOM)
-            // if (imgUrl && imgUrl.startsWith('http')) {
-            //     try {
-            //         // Fetch image buffer
-            //         const response = await fetch(imgUrl)
-            //         if (response.ok) {
-            //             const buffer = await response.arrayBuffer()
-            //             let ext = 'jpeg'
-            //             if (imgUrl.toLowerCase().includes('.png')) ext = 'png'
-            //             if (imgUrl.toLowerCase().includes('.gif')) ext = 'gif'
+            // Embed Image
+            if (imgUrl && imgUrl.startsWith('http')) {
+                try {
+                    // Fetch image buffer
+                    const response = await fetch(imgUrl)
+                    if (response.ok) {
+                        const buffer = await response.arrayBuffer()
+                        let ext = 'jpeg'
+                        if (imgUrl.toLowerCase().includes('.png')) ext = 'png'
+                        if (imgUrl.toLowerCase().includes('.gif')) ext = 'gif'
 
-            //             const imageId = workbook.addImage({
-            //                 buffer: Buffer.from(buffer),
-            //                 extension: ext,
-            //             })
+                        const imageId = workbook.addImage({
+                            buffer: Buffer.from(buffer),
+                            extension: ext,
+                        })
 
-            //             worksheet.addImage(imageId, {
-            //                 tl: { col: 4, row: rowIndex - 1 }, // Column E (0-based: 4)
-            //                 br: { col: 5, row: rowIndex },
-            //                 editAs: 'oneCell'
-            //             })
-            //         }
-            //     } catch (err) {
-            //         console.error('Failed to embed image:', err)
-            //         // No fallback needed, cell will be empty
-            //     }
-            // }
+                        worksheet.addImage(imageId, {
+                            tl: { col: 4, row: rowIndex - 1 }, // Column E (0-based: 4)
+                            br: { col: 5, row: rowIndex },
+                            editAs: 'oneCell'
+                        })
+                    }
+                } catch (err) {
+                    console.error('Failed to embed image:', err)
+                    // No fallback needed, cell will be empty
+                }
+            }
         }
 
         const filename = `Proposal_${Date.now()}.xlsx`
