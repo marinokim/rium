@@ -1,5 +1,14 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma.js';
+import fs from 'fs';
+import path from 'path';
+import ExcelJS from 'exceljs';
+import fetch from 'node-fetch'; // Requires allowSyntheticDefaultImports or esModuleInterop if CJS, but native usage is best.
+// If node-fetch gives issues in strict ESM, we can rely on global fetch (Node 18+).
+// Let's assume global fetch exists or use the import.
+
+
+
 import { AuthRequest } from '../middleware/auth.js';
 import * as XLSX from 'xlsx';
 
@@ -117,20 +126,7 @@ export const downloadQuoteExcel = async (req: AuthRequest, res: Response) => {
 
         if (!quote) return res.status(404).json({ error: 'Quote not found' });
 
-        // Import ExcelJS dynamically or at top level (using require/import)
-        // Since we are in module mode, we use import at top, but let's assume it's imported above or we import here if needed.
-        // Dynamic imports for ExcelJS generation
-        let fetch: any;
-        try {
-            fetch = (await import('node-fetch')).default;
-        } catch (e) {
-            console.warn('node-fetch import failed, falling back to global fetch');
-            fetch = global.fetch;
-        }
 
-        const ExcelJS = await import('exceljs');
-        const fs = await import('fs');
-        const path = await import('path');
 
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('제안서');
