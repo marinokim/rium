@@ -450,16 +450,34 @@ router.post('/download/proposal', async (req, res) => {
             return res.status(400).json({ error: 'Items array is required' })
         }
 
-        if (items.length > 0) {
-            console.log('First Item Structure:', JSON.stringify(items[0], null, 2)) // DEBUG LOG
-        } else {
-            console.log('Items array is empty')
+        // Helper to hydrate items if they are missing details (only have productId)
+        const productIdsToFetch = items.filter(item => (!item.name && !item.productName && !item.modelName) && (item.productId || item.id)).map(item => item.productId || item.id)
+
+        let productMap = {}
+        if (productIdsToFetch.length > 0) {
+            try {
+                // Fetch details for missing items
+                // Use a parameterized query with ANY for arrays
+                const { rows } = await pool.query('SELECT * FROM products WHERE id = ANY($1::int[])', [productIdsToFetch])
+                rows.forEach(p => {
+                    productMap[p.id] = p
+                })
+                console.log(`Hydrated ${rows.length} products from database`)
+            } catch (err) {
+                console.error('Failed to hydrate products:', err)
+            }
         }
 
         const workbook = new ExcelJS.Workbook()
         const worksheet = workbook.addWorksheet('제안서')
 
-        // Define columns matching Arontec-SCM
+        // ... (Columns definition skipped, same as before) ...
+        // We need to keep the columns definition here if we are replacing the block. 
+        // But since I'm using replace_file_content on a specific range, I should enable seeing the columns.
+        // Actually, let's just insert the hydration logic BEFORE the workbook creation.
+        // And then inside the loop, merge the DB data.
+
+        // Define columns based on user requirement matches Arontec-SCM
         worksheet.columns = [
             { header: '순번', key: 'no', width: 5 },
             { header: '품절여부', key: 'status', width: 10 },
@@ -481,42 +499,42 @@ router.post('/download/proposal', async (req, res) => {
             { header: '비고', key: 'remarks', width: 20 },
         ]
 
-        // Insert Title/Warning Row at the top
-        worksheet.insertRow(1, [])
-        worksheet.mergeCells('A1:D1')
-        worksheet.mergeCells('E1:L1')
-        worksheet.mergeCells('M1:P1')
-
-        const titleCell = worksheet.getCell('A1')
-        titleCell.value = 'ARONTEC KOREA'
-        titleCell.font = { name: 'Arial', size: 20, bold: true, color: { argb: '003366' } }
-        titleCell.alignment = { vertical: 'middle', horizontal: 'left' }
-
-        const warningCell = worksheet.getCell('E1')
-        warningCell.value = '■ 당사가 운영하는 모든 상품은 폐쇄몰을 제외한 온라인 판매를 금하며, 판매 시 상품 공급이 중단됩니다.'
-        warningCell.font = { name: 'Malgun Gothic', size: 12, bold: true, color: { argb: 'FF0000' } }
-        warningCell.alignment = { vertical: 'middle', horizontal: 'left' }
-
-        const fileInfoCell = worksheet.getCell('M1')
-        fileInfoCell.value = title || `제안서_${new Date().toLocaleDateString()}`
-        fileInfoCell.font = { name: 'Malgun Gothic', size: 10, bold: true }
-        fileInfoCell.alignment = { vertical: 'middle', horizontal: 'right' }
-
-        worksheet.getRow(1).height = 30
-
-        const headerRow = worksheet.getRow(2)
-        headerRow.font = { bold: true, color: { argb: '000000' } }
-        headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'CCE5FF' } }
-        headerRow.alignment = { vertical: 'middle', horizontal: 'center' }
+        // ...
 
         // Mappings helper
         const getVal = (v) => v || ''
         const getNum = (v) => v ? parseInt(v) : 0
 
         for (let i = 0; i < items.length; i++) {
-            const item = items[i]
+            let item = items[i]
+            const pId = item.productId || item.id
+
+            // MERGE with DB data if available
+            if (productMap[pId]) {
+                const dbP = productMap[pId]
+                // Prioritize existing item properties (e.g. quantity), fallback to DB
+                item = {
+                    ...item,
+                    name: item.name || dbP.name || dbP.model_name, // fallback
+                    modelName: item.modelName || dbP.model_name,
+                    brand: item.brand || dbP.brand,
+                    description: item.description || dbP.description,
+                    imageUrl: item.imageUrl || dbP.image_url,
+                    detailUrl: item.detailUrl || dbP.detail_url,
+                    consumerPrice: item.consumerPrice || dbP.consumer_price,
+                    supplyPrice: item.supplyPrice || dbP.supply_price || dbP.b2b_price, // fallback chain
+                    manufacturer: item.manufacturer || dbP.manufacturer,
+                    origin: item.origin || dbP.origin,
+                    shippingFee: item.shippingFee || dbP.shipping_fee,
+                    quantityPerCarton: item.quantityPerCarton || dbP.quantity_per_carton,
+                    productOptions: item.productOptions || dbP.product_options,
+                    is_available: dbP.is_available // Always take DB availability
+                }
+            }
+
             const rowIndex = i + 3
             const row = worksheet.getRow(rowIndex)
+
 
             // Map frontend keys to internal keys
             const imgUrl = item.imageUrl || item.image_url || item.image || item.ImageURL || ''
@@ -526,11 +544,11 @@ router.post('/download/proposal', async (req, res) => {
             const consPr = item.consumerPrice || item.consumer_price || item.ConsumerPrice
             const dUrl = item.detailUrl || item.detail_url || item.DetailURL || ''
 
-            // DEBUG PROBE: If name is missing, dump item to desc
-            let descVal = item.description || item.desc || ''
-            if (!pName && !modelName) {
-                descVal = 'DEBUG: ' + JSON.stringify(item)
-            }
+            // DEBUG PROBE REMOVED
+            // let descVal = item.description || item.desc || ''
+            // if (!pName && !modelName) {
+            //     descVal = 'DEBUG: ' + JSON.stringify(item)
+            // }
 
             row.values = {
                 no: i + 1,
@@ -540,7 +558,7 @@ router.post('/download/proposal', async (req, res) => {
                 image: '', // Placeholder
                 model: modelName,
                 option: item.productOptions || item.product_options || item.option || '',
-                desc: descVal,
+                desc: item.description || '', // Revert to standard
                 manufacturer: item.manufacturer || '',
                 origin: item.origin || '',
                 cartonQty: item.quantityPerCarton || item.quantity_per_carton || '',
