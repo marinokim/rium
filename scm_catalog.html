@@ -744,7 +744,7 @@
                             <div class="product-brand">${brandName}</div>
                             <h3 class="product-title">${product.name}</h3>
                             <div class="price-row">
-                                <span class="consumer-price">₩${(product.price * 1.3).toLocaleString()}</span>
+                                <span class="consumer-price">₩${(product.consumerPrice || product.price * 1.3).toLocaleString()}</span>
                                 <div>
                                     <span class="b2b-label">B2B</span>
                                     <span class="b2b-price">₩${product.price.toLocaleString()}</span>
@@ -809,12 +809,13 @@
                         name: product.name,
                         image: product.image_url || product.image, // DB field often image_url
                         price: product.supply_price || product.price || 0,
-                        model: product.model_name,
+                        consumerPrice: product.consumerPrice || product.consumer_price,
+                        model: product.model_name || product.modelNo,
                         brand: product.brand,
                         description: product.description,
                         origin: product.origin,
                         manufacturer: product.manufacturer,
-                        detailUrl: product.detail_url
+                        detailUrl: product.detail_url || product.detailUrl
                     });
                     // Fallback for visual feedback if scraping needed? No, DB is source of truth.
                 } else {
@@ -1030,7 +1031,7 @@
                             origin: item.origin || '상세페이지 참조',
                             cartonQty: 1,
                             defaultQty: 1,
-                            consumerPrice: item.price * 1.5,
+                            consumerPrice: item.consumerPrice || item.price * 1.5,
                             supplyPrice: item.price,
                             shipping: 0,
                             imageUrl: item.image || '',
