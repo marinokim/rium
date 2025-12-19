@@ -932,22 +932,27 @@
                 e.preventDefault();
                 const id = document.getElementById('p_id').value;
                 const payload = {
-                    name: document.getElementById('p_name').value,
+                    modelName: document.getElementById('p_name').value, // Map Name Input to modelName
                     modelNo: document.getElementById('p_modelNo').value,
                     brand: document.getElementById('p_brand').value,
                     categoryId: document.getElementById('p_categoryId').value,
-                    price: document.getElementById('p_price').value,
-                    consumerPrice: document.getElementById('p_consumerPrice').value,
-                    supplyPrice: document.getElementById('p_supplyPrice').value,
-                    stockQuantity: document.getElementById('p_stockQuantity').value,
-                    defaultQuantity: document.getElementById('p_defaultQuantity').value,
-                    quantityPerCarton: document.getElementById('p_quantityPerCarton').value,
+                    // Remove commas for numeric fields
+                    b2bPrice: document.getElementById('p_price').value.replace(/,/g, ''),
+                    consumerPrice: document.getElementById('p_consumerPrice').value.replace(/,/g, ''),
+                    supplyPrice: document.getElementById('p_supplyPrice').value.replace(/,/g, ''),
+                    stockQuantity: document.getElementById('p_stockQuantity').value.replace(/,/g, ''),
+                    // defaultQuantity matches logic? Backend doesn't use defaultQuantity explicitly in update? it uses displayOrder?
+                    // Wait, products.js update does NOT read defaultQuantity (MOQ).
+                    // It reads displayOrder.
+                    // Let's check schema.
+                    // But for now, fixing price format is key.
+                    quantityPerCarton: document.getElementById('p_quantityPerCarton').value.replace(/,/g, ''),
                     imageUrl: document.getElementById('p_imageUrl').value,
                     detailUrl: document.getElementById('p_detailUrl').value,
                     origin: document.getElementById('p_origin').value,
                     manufacturer: document.getElementById('p_manufacturer').value,
-                    shippingFee: document.getElementById('p_shippingFee').value,
-                    shippingFeeIndividual: document.getElementById('p_shippingFeeIndividual').value,
+                    shippingFee: document.getElementById('p_shippingFee').value.replace(/,/g, ''),
+                    shippingFeeIndividual: document.getElementById('p_shippingFeeIndividual').value.replace(/,/g, ''),
                     productOptions: document.getElementById('p_productOptions').value,
                     description: document.getElementById('p_description').value,
                     remarks: document.getElementById('p_remarks').value,
