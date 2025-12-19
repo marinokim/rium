@@ -126,8 +126,8 @@
 
         <form id="loginForm">
             <div class="scm-form-group">
-                <label for="username">아이디 (ID)</label>
-                <input type="text" id="username" class="scm-input" placeholder="아이디를 입력하세요" required>
+                <label for="email">이메일 (Email)</label>
+                <input type="email" id="email" class="scm-input" placeholder="이메일을 입력하세요" required>
             </div>
             <div class="scm-form-group">
                 <label for="password">비밀번호 (Password)</label>
@@ -140,19 +140,72 @@
                 </label>
             </div>
             <button type="submit" class="scm-btn">로그인 (Login)</button>
+            <button type="button" class="scm-btn" style="background-color: #6c757d; margin-top: 0.5rem;"
+                onclick="doRegister()">회원가입 (테스트용)</button>
         </form>
 
         <script>
-            document.getElementById('loginForm').addEventListener('submit', function (e) {
-                e.preventDefault();
-                const username = document.getElementById('username').value;
+            // API Base configuration
+            const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'http://localhost:5000'
+                : 'https://rium-scm-backend.onrender.com';
 
-                if (username === 'admin') {
-                    localStorage.setItem('scm_user', JSON.stringify({ username, role: 'ADMIN' }));
-                    window.location.href = 'scm_products.html';
-                } else {
-                    localStorage.setItem('scm_user', JSON.stringify({ username, role: 'PARTNER' }));
-                    window.location.href = 'scm_dashboard.html';
+            async function doRegister() {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                if(!email || !password) {
+                     alert('이메일과 비밀번호를 입력해주세요.');
+                     return;
+                }
+                
+                try {
+                     const res = await fetch(`${API_BASE}/api/auth/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password, name: 'Partner', company: 'Partner Co' })
+                    });
+                     const data = await res.json();
+                     if(res.ok) {
+                         alert('회원가입 완료! 로그인해주세요.');
+                     } else {
+                         alert('가입 실패: ' + (data.error || 'Unknown error'));
+                     }
+                } catch(e) {
+                    alert('서버 오류');
+                }
+            }
+
+            document.getElementById('loginForm').addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+
+                try {
+                    const response = await fetch(`${API_BASE}/api/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                         // Save Token
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('scm_user', JSON.stringify(data.user));
+                        
+                        alert('로그인 성공!');
+                        if (data.user.role === 'ADMIN') {
+                            window.location.href = 'scm_products.html'; // Admin Page
+                        } else {
+                            window.location.href = 'scm_dashboard.html'; // Partner Page
+                        }
+                    } else {
+                        alert('로그인 실패: ' + (data.error || '이메일 또는 비밀번호를 확인하세요.'));
+                    }
+                } catch (error) {
+                    console.error('Login Error:', error);
+                    alert('서버 접속 실패. API 서버가 켜져 있는지 확인하세요.');
                 }
             });
         </script>
