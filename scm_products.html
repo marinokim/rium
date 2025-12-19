@@ -718,7 +718,17 @@
                 : 'https://rium-scm-backend.onrender.com';
 
             const apiFetch = async (url, options = {}) => {
-                options.credentials = 'include'; // Ensure cookies are sent
+                options.credentials = 'include'; // Send Cookies
+
+                // Add Token if available (Fix for Session Expiry issue)
+                const token = localStorage.getItem('token');
+                if (token) {
+                    options.headers = {
+                        ...options.headers,
+                        'Authorization': `Bearer ${token}`
+                    };
+                }
+
                 const res = await fetch(`${API_BASE}${url}`, options);
                 if (res.status === 401) {
                     alert('세션이 만료되었습니다. 다시 로그인해주세요.');
