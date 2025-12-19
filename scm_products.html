@@ -576,11 +576,14 @@
     <div id="productModal" class="scm-modal-overlay"
         style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
         <div class="scm-modal"
-            style="background: white; padding: 2rem; border-radius: 8px; width: 800px; max-width: 95%; max-height: 90vh; overflow-y: auto;">
-            <h3 id="productModalTitle" style="margin-top: 0;">신규 등록</h3>
+            style="background: white; padding: 1.5rem; border-radius: 8px; width: 1400px; max-width: 98%; max-height: 95vh; overflow-y: auto;">
+            <h3 id="productModalTitle"
+                style="margin-top: 0; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">신규 등록
+            </h3>
             <form id="productForm">
                 <input type="hidden" id="p_id">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <!-- Row 1: Basic Info -->
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px;">
                     <div>
                         <label>상품명 (필수)</label>
                         <input type="text" id="p_name" class="scm-input" style="width: 100%;" required>
@@ -589,8 +592,6 @@
                         <label>모델번호</label>
                         <input type="text" id="p_modelNo" class="scm-input" style="width: 100%;">
                     </div>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 10px;">
                     <div>
                         <label>브랜드</label>
                         <input type="text" id="p_brand" class="scm-input" style="width: 100%;">
@@ -603,9 +604,11 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 10px;">
+                <!-- Row 2: Prices & Quantities -->
+                <div
+                    style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
                     <div>
-                        <label>B2B 판매가 (필수)</label>
+                        <label>B2B 판매가</label>
                         <input type="number" id="p_price" class="scm-input" style="width: 100%;" required>
                     </div>
                     <div>
@@ -616,24 +619,22 @@
                         <label>공급가</label>
                         <input type="number" id="p_supplyPrice" class="scm-input" style="width: 100%;">
                     </div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 10px;">
                     <div>
                         <label>재고</label>
                         <input type="number" id="p_stockQuantity" class="scm-input" style="width: 100%;">
                     </div>
                     <div>
-                        <label>기본수량(MOQ)</label>
+                        <label>MOQ</label>
                         <input type="number" id="p_defaultQuantity" class="scm-input" value="1" style="width: 100%;">
                     </div>
                     <div>
-                        <label>카톤입수량</label>
+                        <label>카톤수량</label>
                         <input type="number" id="p_quantityPerCarton" class="scm-input" value="1" style="width: 100%;">
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 10px;">
+                <!-- Row 3: Origin, Manufacturer, Shipping, Options -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 2fr; gap: 10px; margin-top: 10px;">
                     <div>
                         <label>원산지</label>
                         <input type="text" id="p_origin" class="scm-input" style="width: 100%;">
@@ -642,9 +643,6 @@
                         <label>제조사</label>
                         <input type="text" id="p_manufacturer" class="scm-input" style="width: 100%;">
                     </div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 10px;">
                     <div>
                         <label>기본배송비</label>
                         <input type="number" id="p_shippingFee" class="scm-input" style="width: 100%;">
@@ -653,37 +651,48 @@
                         <label>개별배송비</label>
                         <input type="number" id="p_shippingFeeIndividual" class="scm-input" style="width: 100%;">
                     </div>
+                    <div>
+                        <label>상품 옵션 (콤마 구분)</label>
+                        <input type="text" id="p_productOptions" class="scm-input" style="width: 100%;"
+                            placeholder="예: 블랙, 화이트">
+                    </div>
                 </div>
 
-                <div style="margin-top: 1rem;">
-                    <label>상품 옵션 (콤마로 구분)</label>
-                    <input type="text" id="p_productOptions" class="scm-input" style="width: 100%;"
-                        placeholder="예: 블랙, 화이트, 레드">
+                <!-- Row 4: URLs (Side by Side) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                    <div>
+                        <label>이미지 URL</label>
+                        <input type="text" id="p_imageUrl" class="scm-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>상세페이지 URL</label>
+                        <input type="text" id="p_detailUrl" class="scm-input" style="width: 100%;">
+                    </div>
                 </div>
 
-                <div style="margin-top: 1rem;">
-                    <label>이미지 URL</label>
-                    <input type="text" id="p_imageUrl" class="scm-input" style="width: 100%;">
-                </div>
-                <div style="margin-top: 1rem;">
-                    <label>상세페이지 URL</label>
-                    <input type="text" id="p_detailUrl" class="scm-input" style="width: 100%;">
-                </div>
-
-                <div style="margin-top: 1rem;">
-                    <label>설명 (Description)</label>
-                    <textarea id="p_description" class="scm-input" style="width: 100%; height: 80px;"></textarea>
+                <!-- Row 5: Textareas (Side by Side) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                    <div>
+                        <label>설명 (Description)</label>
+                        <textarea id="p_description" class="scm-input" style="width: 100%; height: 60px;"></textarea>
+                    </div>
+                    <div>
+                        <label>비고 (Internal Remarks)</label>
+                        <textarea id="p_remarks" class="scm-input" style="width: 100%; height: 60px;"></textarea>
+                    </div>
                 </div>
 
-                <div style="margin-top: 1rem;">
-                    <label>비고 (Internal Remarks)</label>
-                    <textarea id="p_remarks" class="scm-input" style="width: 100%; height: 60px;"></textarea>
-                </div>
-
-                <div style="margin-top: 1rem; display: flex; gap: 1rem;">
-                    <label><input type="checkbox" id="p_isNew"> New (신상품)</label>
-                    <label><input type="checkbox" id="p_isTaxFree"> 면세상품</label>
-                    <label><input type="checkbox" id="p_isAvailable" checked> 판매중</label>
+                <!-- Row 6: Flags -->
+                <div
+                    style="margin-top: 10px; display: flex; gap: 1rem; align-items: center; border-top: 1px solid #eee; padding-top: 10px;">
+                    <label style="cursor:pointer; display:flex; align-items:center; gap:5px;"><input type="checkbox"
+                            id="p_isNew"> <span class="scm-status status-active"
+                            style="background:#e3f2fd; color:#1976d2">New (신상품)</span></label>
+                    <label style="cursor:pointer; display:flex; align-items:center; gap:5px;"><input type="checkbox"
+                            id="p_isTaxFree"> <span class="scm-status"
+                            style="background:#f3e5f5; color:#7b1fa2">면세상품</span></label>
+                    <label style="cursor:pointer; display:flex; align-items:center; gap:5px;"><input type="checkbox"
+                            id="p_isAvailable" checked> <span class="scm-status status-active">판매중</span></label>
                 </div>
 
                 <div style="margin-top: 2rem; text-align: right;">
