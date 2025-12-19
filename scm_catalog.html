@@ -699,7 +699,8 @@
 
             try {
                 // Build Query String
-                let query = `/api/products?isAvailable=true`;
+                // Fix: Increase limit to show all products (default was 20)
+                let query = `/api/products?isAvailable=true&limit=200`;
                 if (currentCategoryId) query += `&categoryId=${currentCategoryId}`;
                 if (currentSearchQuery) query += `&search=${encodeURIComponent(currentSearchQuery)}`;
 
