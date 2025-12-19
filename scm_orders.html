@@ -616,18 +616,18 @@
                         id: item.productId,
                         name: item.name,
                         image: '',
-                        model: '',
+                        model: item.model || '-',
                         option: '',
-                        desc: '',
-                        manufacturer: '',
-                        origin: '상세페이지 참조',
+                        desc: item.description || '',
+                        manufacturer: item.manufacturer || '',
+                        origin: item.origin || '상세페이지 참조',
                         cartonQty: 1,
                         defaultQty: 1,
                         consumerPrice: item.price * 1.5,
                         supplyPrice: item.price,
                         shipping: 0,
                         imageUrl: item.image || '',
-                        detailUrl: '',
+                        detailUrl: item.detailUrl || '',
                         remarks: ''
                     };
 
@@ -643,11 +643,11 @@
                             });
 
                             if (imgRes.ok) {
-                                const buffer = await imgRes.arrayBuffer();
+                                const imgBuffer = await imgRes.arrayBuffer(); // Renamed for safety
                                 const extension = item.image.toLowerCase().endsWith('.png') ? 'png' : 'jpeg';
 
                                 const imageId = workbook.addImage({
-                                    buffer: buffer,
+                                    buffer: imgBuffer,
                                     extension: extension,
                                 });
 

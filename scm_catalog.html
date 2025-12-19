@@ -776,48 +776,83 @@
         }
 
         // Quote Buffer (Session Storage)
-        function addToQuote(productId) {
+        async function addToQuote(productId) {
             let buffer = JSON.parse(sessionStorage.getItem('quoteBuffer') || '[]');
-            // De-duplicate or allow updates? Simple de-dupe for now.
             const existing = buffer.find(i => i.productId === productId);
-
-            // Scrape Real Data for Local Fallback
-            // Find card
-            // Try both quoted and unquoted for robustness
-            const cardBtn = document.querySelector(`button[onclick="addToQuote('${productId}')"]`) ||
-                document.querySelector(`button[onclick="addToQuote(${productId})"]`);
-
-            let pName = 'Unknown Product';
-            let pImage = '';
-            let pPrice = 0;
-
-            if (cardBtn) {
-                const card = cardBtn.closest('.product-card');
-                if (card) {
-                    pName = card.querySelector('h3')?.innerText || pName;
-                    pImage = card.querySelector('img')?.src || '';
-                    const priceText = card.querySelector('.b2b-price')?.innerText || '0';
-                    pPrice = parseInt(priceText.replace(/[^0-9]/g, '')) || 0;
-                }
-            } else {
-                console.warn('Could not find product card for ID:', productId);
-            }
 
             if (existing) {
                 existing.quantity += 1;
+                sessionStorage.setItem('quoteBuffer', JSON.stringify(buffer));
                 alert(`상품이 추가되었습니다. (수량: ${existing.quantity})`);
-            } else {
+                updateProposalBadge();
+                return;
+            }
+
+            // Fetch Full Data from DB
+            try {
+                // Try fetching full product details
+                // Assuming public API availability or token usage
+                const token = localStorage.getItem('token');
+                const headers = {};
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                const res = await fetch(`${API_BASE}/api/products/${productId}`, { headers });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    const product = data.product || data; // Handle potential response wrapper
+
+                    buffer.push({
+                        productId,
+                        quantity: 1,
+                        // Store Full Data
+                        name: product.name,
+                        image: product.image_url || product.image, // DB field often image_url
+                        price: product.supply_price || product.price || 0,
+                        model: product.model_name,
+                        brand: product.brand,
+                        description: product.description,
+                        origin: product.origin,
+                        manufacturer: product.manufacturer,
+                        detailUrl: product.detail_url
+                    });
+                    // Fallback for visual feedback if scraping needed? No, DB is source of truth.
+                } else {
+                    console.warn('Failed to fetch product details from DB, falling back to scraping');
+                    throw new Error('Fetch failed'); // Trigger catch for fallback
+                }
+            } catch (e) {
+                // Fallback Scraping (Limit fields)
+                console.error(e);
+                const cardBtn = document.querySelector(`button[onclick="addToQuote('${productId}')"]`) ||
+                    document.querySelector(`button[onclick="addToQuote(${productId})"]`);
+
+                let pName = 'Unknown Product';
+                let pImage = '';
+                let pPrice = 0;
+
+                if (cardBtn) {
+                    const card = cardBtn.closest('.product-card');
+                    if (card) {
+                        pName = card.querySelector('h3')?.innerText || pName;
+                        pImage = card.querySelector('img')?.src || '';
+                        const priceText = card.querySelector('.b2b-price')?.innerText || '0';
+                        pPrice = parseInt(priceText.replace(/[^0-9]/g, '')) || 0;
+                    }
+                }
+
                 buffer.push({
                     productId,
                     quantity: 1,
-                    // Store detailed info for local fallback!
                     name: pName,
                     image: pImage,
-                    price: pPrice
+                    price: pPrice,
+                    origin: '상세페이지 참조' // Default for fallback
                 });
-                alert('상품이 견적서에 담겼습니다.');
             }
+
             sessionStorage.setItem('quoteBuffer', JSON.stringify(buffer));
+            alert('상품이 견적서에 담겼습니다.');
             updateProposalBadge();
         }
 
@@ -988,24 +1023,20 @@
                             id: item.productId,
                             name: item.name,
                             image: '', // Visual Image
-                            model: '',
+                            model: item.model || '-',
                             option: '',
-                            desc: '',
-                            manufacturer: '',
-                            origin: '상세페이지 참조',
+                            desc: item.description || '',
+                            manufacturer: item.manufacturer || '',
+                            origin: item.origin || '상세페이지 참조',
                             cartonQty: 1,
                             defaultQty: 1,
                             consumerPrice: item.price * 1.5,
                             supplyPrice: item.price,
                             shipping: 0,
                             imageUrl: item.image || '',
-                            detailUrl: '',
+                            detailUrl: item.detailUrl || '',
                             remarks: ''
                         };
-
-                        row.height = 100; // Arontec Style Height
-                        row.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-
                         if (item.image) {
                             try {
                                 const proxyUrl = `${API_BASE}/api/quotes/proxy-image?url=${encodeURIComponent(item.image)}`;
@@ -1015,11 +1046,11 @@
                                 });
 
                                 if (imgRes.ok) {
-                                    const buffer = await imgRes.arrayBuffer();
+                                    const imgBuffer = await imgRes.arrayBuffer();
                                     const extension = item.image.toLowerCase().endsWith('.png') ? 'png' : 'jpeg';
 
                                     const imageId = workbook.addImage({
-                                        buffer: buffer,
+                                        buffer: imgBuffer,
                                         extension: extension,
                                     });
 
@@ -1034,7 +1065,7 @@
                                 row.getCell(5).value = '이미지 실패';
                             }
                         }
-                    }
+                    } // End of loop
 
                     // Save
                     const buffer = await workbook.xlsx.writeBuffer();
