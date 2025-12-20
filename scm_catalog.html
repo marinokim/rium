@@ -830,7 +830,9 @@
                         description: product.description,
                         origin: product.origin,
                         manufacturer: product.manufacturer,
-                        detailUrl: product.detail_url || product.detailUrl
+                        detailUrl: product.detail_url || product.detailUrl,
+                        quantityPerCarton: product.quantity_per_carton || product.quantityPerCarton || product.cartonQty,
+                        remarks: product.remarks || ''
                     };
                 }
             } catch (e) {
@@ -981,6 +983,7 @@
                 price: i.price,
                 consumerPrice: i.consumerPrice,
                 // Excel Fields
+                id: i.productId || i.id, // Explicitly map ID for Excel
                 manufacturer: i.manufacturer,
                 origin: i.origin,
                 brand: i.brand,
@@ -988,6 +991,9 @@
                 productOptions: i.options || i.productOptions,
                 shippingFee: i.shippingFee || i.shipping_fee,
                 status: i.status || i.is_available,
+                quantityPerCarton: i.quantityPerCarton,
+                detailUrl: i.detailUrl,
+                remarks: i.remarks
             }));
 
             try {
