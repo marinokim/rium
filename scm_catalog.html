@@ -967,8 +967,19 @@
                 return;
             }
 
-            // Prepare Items for API (Use i.id first as standard frontend model usually puts PK in id)
-            const apiItems = buffer.map(i => ({ productId: i.id || i.productId, quantity: i.quantity }));
+            // Prepare Items for API
+            // Include full details so they are stored in the JSON history.
+            const apiItems = buffer.map(i => ({
+                productId: i.id || i.productId,
+                quantity: i.quantity,
+                // Preserve details
+                productName: i.name || i.productName || i.modelName || '상품',
+                name: i.name || i.productName,
+                modelName: i.model_name || i.modelName || i.modelNo,
+                imageUrl: i.image || i.imageUrl,
+                price: i.price,
+                consumerPrice: i.consumerPrice
+            }));
 
             try {
                 // 1. Try API Call (Save to Proposal History)
