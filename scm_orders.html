@@ -509,7 +509,7 @@
                             // Determine Endpoint
                             const urlParams = new URLSearchParams(window.location.search);
                             const mode = urlParams.get('mode');
-                            
+
                             // If mode is 'my', force personal list. Otherwise if Admin, show all.
                             const endpoint = (isAdmin && mode !== 'my') ? '/api/proposals/all' : '/api/proposals/my';
 
@@ -527,7 +527,6 @@
                                 }
 
                                 tbody.innerHTML = list.map(item => {
-                                    const date = new Date(item.created_at).toLocaleDateString();
                                     const date = new Date(item.created_at).toLocaleDateString();
 
                                     // Safe Parse Items
