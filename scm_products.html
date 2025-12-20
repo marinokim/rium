@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIUM SCM - 상품 관리 (New)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&family=Open+Sans:wght@400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=2">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* SCM Specific Styles (Copied from Dashboard) */
+        body.scm-body {
+            background-color: #f5f7fa;
+            display: flex;
+            height: 100vh;
+            /* Fixed height for sticky layout */
+            overflow: hidden;
+            /* Prevent body scroll */
+        }
+
+        /* Sidebar - Narrow Style */
+        .scm-sidebar {
+            width: 100px;
+            background-color: #1a1a1a;
+            color: white;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
+            transition: width 0.3s;
+        }
+
+        .scm-logo-area {
+            height: 70px;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .scm-logo-area a {
+            font-family: var(--font-heading);
+            font-size: 1rem;
+            font-weight: 800;
+            color: white;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .scm-menu {
+            padding: 1rem 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .scm-menu-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 0.5rem;
+            color: #aaa;
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+            text-align: center;
+        }
+
+        .scm-menu-item:hover,
+        .scm-menu-item.active {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: white;
+            border-left-color: var(--primary-color);
+        }
+
+        .scm-menu-item i {
+            width: auto;
+            font-size: 1.5rem;
+            margin-right: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .scm-menu-item span {
+            font-size: 0.75rem;
+            word-break: keep-all;
+            line-height: 1.2;
+        }
+
+        .scm-user-profile {
+            padding: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        .scm-user-avatar {
+            width: 36px;
+            height: 36px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .scm-user-info {
+            display: none;
+        }
+
+        /* Main Content Adjustment */
+        .scm-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: calc(100% - 100px);
+            height: 100%;
+        }
+
+        .scm-header {
+            height: 70px;
+            min-height: 70px;
+            background-color: white;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+        }
+
+        .scm-breadcrumb {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .scm-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .scm-icon-btn {
+            color: #666;
+            font-size: 1.2rem;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .scm-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--secondary-color);
+            color: white;
+            font-size: 0.6rem;
+            padding: 2px 5px;
+            border-radius: 10px;
+        }
+
+        .scm-content {
+            padding: 2rem;
+            overflow-y: auto;
+            /* Scroll independent of sidebar */
+            height: 100%;
+        }
+
+        /* Filter Bar */
+        .scm-filter-bar {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+        }
+
+        .scm-input-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .scm-input-group label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .scm-select,
+        .scm-input {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .scm-btn {
+            padding: 0.5rem 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .scm-btn-outline {
+            background-color: white;
+            border: 1px solid #ddd;
+            color: #555;
+        }
+
+        /* Tables */
+        .scm-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            border: 1px solid #eee;
+        }
+
+        .scm-table-container {
+            overflow-x: auto;
+        }
+
+        .scm-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .scm-table th {
+            text-align: left;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            color: #666;
+            font-weight: 600;
+            border-bottom: 2px solid #eee;
+            white-space: nowrap;
+        }
+
+        .scm-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            color: #333;
+            vertical-align: middle;
+        }
+
+        .scm-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-active {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .status-inactive {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+
+        .status-soldout {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+
+        .scm-pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+            gap: 0.5rem;
+        }
+
+        .scm-pagination button {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-radius: 4px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .scm-pagination button.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .scm-pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .scm-pagination button:hover:not(:disabled):not(.active) {
+            background-color: #f0f0f0;
+        }
+
+        .page-item {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #666;
+            text-decoration: none;
+        }
+
+        .page-item.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .scm-sidebar {
+                position: fixed;
+                left: -250px;
+                height: 100%;
+                z-index: 1000;
+            }
+
+            .scm-sidebar.active {
+                left: 0;
+            }
+
+            .scm-main {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body class="scm-body">
+
+    <!-- Sidebar -->
+    <aside class="scm-sidebar">
+        <div class="scm-logo-area">
+            <a href="index.html">RIUM<br>SCM</a>
+        </div>
+        <nav class="scm-menu">
+            <a href="scm_admin.html" class="scm-menu-item">
+                <i class="fas fa-chart-line"></i>
+                <span>대시보드</span>
+            </a>
+
+            <!-- Context Switch -->
+            <a href="scm_dashboard.html" class="scm-menu-item" style="color: #4dabf7;">
+                <i class="fas fa-user"></i>
+                <span>사용자 모드</span>
+            </a>
+
+            <a href="scm_products.html" class="scm-menu-item active">
+                <i class="fas fa-box"></i>
+                <span>상품 관리</span>
+            </a>
+            <a href="scm_orders.html" class="scm-menu-item">
+                <i class="fas fa-shopping-cart"></i>
+                <span>제안/주문/견적관리</span>
+            </a>
+
+
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-exchange-alt"></i>
+                <span>반품/교환</span>
+            </a>
+            <a href="javascript:void(0)" class="scm-menu-item"
+                style="opacity: 0.5; pointer-events: none; cursor: default;">
+                <i class="fas fa-calculator"></i>
+                <span>매출통계</span>
+            </a>
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-bullhorn"></i>
+                <span>공지사항</span>
+            </a>
+            <a href="javascript:void(0)" class="scm-menu-item"
+                style="opacity: 0.5; pointer-events: none; cursor: default;">
+                <i class="fas fa-cog"></i>
+                <span>시스템설정</span>
+            </a>
+        </nav>
+        <div class="scm-user-profile">
+            <div class="scm-user-avatar">
+                <span>A</span>
+            </div>
+            <div class="scm-user-info">
+                <h4>Admin User</h4>
+            </div>
+
+            <a href="index.html" style="color: #888; margin-top: 10px;" title="로그아웃">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="scm-main">
+        <!-- Header -->
+        <header class="scm-header">
+            <div class="scm-breadcrumb">
+                <i class="fas fa-home"></i> Home > 상품 관리
+            </div>
+            <div class="scm-header-actions">
+                <div class="scm-icon-btn">
+                    <i class="fas fa-bell"></i>
+                    <span class="scm-badge">3</span>
+                </div>
+                <div class="scm-icon-btn">
+                    <i class="fas fa-envelope"></i>
+                    <span class="scm-badge">5</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="scm-content">
+            <!-- List View Container -->
+            <div id="productListView">
+                <!-- Page Title Area -->
+                <div style="margin-bottom: 1.5rem;">
+                    <h2 style="font-size: 1.8rem; color: #001f3f; margin: 0; font-weight: 800;">상품 관리</h2>
+                </div>
+
+                <!-- Complex Action Toolbar -->
+                <div class="scm-action-bar">
+                    <!-- Group 1: Server Source Replace -->
+                    <div class="scm-action-group" style="padding-right: 1.5rem; border-right: 1px solid #ddd;">
+                        <span style="font-weight: 600;">서버 원본 교체:</span>
+                        <input type="file" id="serverSourceFile" style="display: none;" accept=".xlsx, .xls">
+                        <button class="scm-btn scm-btn-outline"
+                            onclick="document.getElementById('serverSourceFile').click()">파일 선택</button>
+                        <span id="serverSourceFileName"
+                            style="font-size: 0.85rem; color: #666; max-width: 150px; overflow: hidden; white-space: nowrap;">선택된
+                            파일 없음</span>
+                        <button class="scm-btn btn-teal" id="replaceSourceBtn">파일 교체</button>
+                    </div>
+
+                    <!-- Group 2: Excel Register Range -->
+                    <div class="scm-action-group" style="padding-right: 1.5rem; border-right: 1px solid #ddd;">
+                        <span style="font-weight: 600;">서버 엑셀 등록:</span>
+                        <input type="number" id="rangeStart" class="scm-input" placeholder="시작"
+                            style="width: 60px; text-align: center;">
+                        <span>~</span>
+                        <input type="number" id="rangeEnd" class="scm-input" placeholder="종료"
+                            style="width: 60px; text-align: center;">
+                        <button class="scm-btn btn-blue" id="registerRangeBtn">범위 등록</button>
+                    </div>
+
+                    <!-- Group 3: Right Aligned Actions -->
+                    <div class="scm-action-group" style="margin-left: auto;">
+                        <button class="scm-btn btn-teal" id="btnDownloadAll">전체 다운로드</button>
+                        <button class="scm-btn btn-green" id="btnTemplate">양식</button>
+                        <button class="scm-btn btn-red" id="btnDeleteRange">구간 삭제</button>
+
+                        <!-- Excel Upload Logic -->
+                        <input type="file" id="excelUploadInput" style="display: none;" accept=".xlsx, .xls">
+                        <button class="scm-btn btn-cyan" id="excelUploadBtn">엑셀 업로드</button>
+
+                        <!-- Only Excel Upload implemented via Input -->
+
+                        <button class="scm-btn btn-cyan">카테고리 관리</button>
+                        <button class="scm-btn btn-navy"><i class="fas fa-plus"></i> 신규 등록</button>
+                    </div>
+                </div>
+
+                <!-- Filter Options Row (Optional, kept for utility but styled minimally) -->
+                <div style="margin-bottom: 1rem; text-align: right;">
+                    <select class="scm-select">
+                        <option>전체 카테고리</option>
+                    </select>
+                    <button class="scm-btn btn-cyan">+ 카테고리 추가</button>
+                </div>
+
+                <!-- Product Table -->
+                <div class="scm-card">
+                    <div class="scm-table-container">
+                        <table class="scm-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">No.</th>
+                                    <th style="width: 80px;">IMG</th>
+                                    <th>브랜드</th>
+                                    <th>상품명/모델명/옵션</th>
+                                    <th>실판매가</th>
+                                    <th>공급가</th>
+                                    <th>재고</th>
+                                    <th>배송비</th>
+                                    <th>제조사/원산지/등록일</th>
+                                    <th>상태/관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productTableBody">
+                                <!-- Rows will be populated by JS -->
+                                <tr>
+                                    <td colspan="10" style="text-align: center; padding: 2rem;">Loading products...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <!-- Pagination -->
+                    <div class="scm-pagination"></div>
+                </div> <!-- Close scm-card -->
+            </div> <!-- Close productListView -->
+
+            <!-- Detail View Container -->
+            <div id="productDetailView"
+                style="display: none; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+                <!-- Detail Content -->
+            </div>
+        </div> <!-- Close scm-content -->
+    </main>
+
+    <!-- --------------------------------------------------- -->
+    <!-- MODALS -->
+    <!-- --------------------------------------------------- -->
+
+    <!-- Category Manager Modal -->
+    <div id="categoryModal" class="scm-modal-overlay"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="scm-modal"
+            style="background: white; padding: 2rem; border-radius: 8px; width: 500px; max-width: 90%;">
+            <h3 style="margin-top: 0;">카테고리 관리</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+                <input type="text" id="newCatName" class="scm-input" placeholder="카테고리명" style="flex: 1;">
+                <input type="text" id="newCatSlug" class="scm-input" placeholder="슬러그 (영문)" style="flex: 1;">
+                <button id="btnAddCat" class="scm-btn btn-blue">추가</button>
+            </div>
+            <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd;">
+                <table class="scm-table" style="margin: 0;">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>이름</th>
+                            <th>슬러그</th>
+                            <th>삭제</th>
+                        </tr>
+                    </thead>
+                    <tbody id="categoryListBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top: 1rem; text-align: right;">
+                <button id="btnCloseCatModal" class="scm-btn btn-gray">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Editor Modal -->
+    <div id="productModal" class="scm-modal-overlay"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="scm-modal"
+            style="background: white; padding: 1.5rem; border-radius: 8px; width: 1400px; max-width: 98%; max-height: 95vh; overflow-y: auto;">
+            <h3 id="productModalTitle"
+                style="margin-top: 0; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">신규 등록
+            </h3>
+            <form id="productForm">
+                <input type="hidden" id="p_id">
+                <!-- Row 1: Basic Info -->
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label>상품명 (필수)</label>
+                        <input type="text" id="p_name" class="scm-input" style="width: 100%;" required>
+                    </div>
+                    <div>
+                        <label>모델번호</label>
+                        <input type="text" id="p_modelNo" class="scm-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>브랜드</label>
+                        <input type="text" id="p_brand" class="scm-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>카테고리 (필수)</label>
+                        <select id="p_categoryId" class="scm-select" style="width: 100%;" required>
+                            <!-- Populated -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Row 2: Prices & Quantities -->
+                <div
+                    style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
+                    <div>
+                        <label>B2B 판매가</label>
+                        <input type="text" id="p_price" class="scm-input" style="width: 100%;" required>
+                    </div>
+                    <div>
+                        <label>소비자가</label>
+                        <input type="text" id="p_consumerPrice" class="scm-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>공급가</label>
+                        <input type="text" id="p_supplyPrice" class="scm-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>재고</label>
+                        <input type="text" id="p_stockQuantity" class="scm-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>MOQ</label>
+                        <input type="number" id="p_defaultQuantity" class="scm-input" value="1" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>카톤수량</label>
+                        <input type="text" id="p_quantityPerCarton" class="scm-input" value="1" style="width: 100%;">
+                    </div>
+                </div>
+
+                <!-- Row 3: Origin, Manufacturer, Shipping, Options -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 2fr; gap: 10px; margin-top: 10px;">
+                    <div>
+                        <label>원산지</label>
+                        <input type="text" id="p_origin" class="scm-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>제조사</label>
+                        <input type="text" id="p_manufacturer" class="scm-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>기본배송비</label>
+                        <input type="text" id="p_shippingFee" class="scm-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>개별배송비</label>
+                        <input type="text" id="p_shippingFeeIndividual" class="scm-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>상품 옵션 (콤마 구분)</label>
+                        <input type="text" id="p_productOptions" class="scm-input" style="width: 100%;"
+                            placeholder="예: 블랙, 화이트">
+                    </div>
+                </div>
+
+                <!-- Row 4: URLs (Side by Side) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                    <div>
+                        <label>이미지 URL</label>
+                        <input type="text" id="p_imageUrl" class="scm-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>상세페이지 URL</label>
+                        <textarea id="p_detailUrl" class="scm-input"
+                            style="width: 100%; height: 80px; resize: vertical;"></textarea>
+                    </div>
+                </div>
+
+                <!-- Row 5: Textareas (Side by Side) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                    <div>
+                        <label>설명 (Description)</label>
+                        <textarea id="p_description" class="scm-input" style="width: 100%; height: 60px;"></textarea>
+                    </div>
+                    <div>
+                        <label>비고 (Internal Remarks)</label>
+                        <textarea id="p_remarks" class="scm-input" style="width: 100%; height: 60px;"></textarea>
+                    </div>
+                </div>
+
+                <!-- Row 6: Flags -->
+                <div
+                    style="margin-top: 10px; display: flex; gap: 1rem; align-items: center; border-top: 1px solid #eee; padding-top: 10px;">
+                    <label style="cursor:pointer; display:flex; align-items:center; gap:5px;"><input type="checkbox"
+                            id="p_isNew"> <span class="scm-status status-active"
+                            style="background:#e3f2fd; color:#1976d2">New (신상품)</span></label>
+                    <label style="cursor:pointer; display:flex; align-items:center; gap:5px;"><input type="checkbox"
+                            id="p_isTaxFree"> <span class="scm-status"
+                            style="background:#f3e5f5; color:#7b1fa2">면세상품</span></label>
+                    <label style="cursor:pointer; display:flex; align-items:center; gap:5px;"><input type="checkbox"
+                            id="p_isAvailable" checked> <span class="scm-status status-active">판매중</span></label>
+                </div>
+
+                <div style="margin-top: 2rem; text-align: right;">
+                    <button type="button" id="btnCloseProductModal" class="scm-btn btn-gray">취소</button>
+                    <button type="submit" class="scm-btn btn-blue">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- CONFIGURATION ---
+            const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'http://localhost:5003'
+                : 'https://rium-scm-backend.onrender.com';
+
+            const apiFetch = async (url, options = {}) => {
+                options.credentials = 'include'; // Send Cookies
+
+                // Add Token if available (Fix for Session Expiry issue)
+                const token = localStorage.getItem('token');
+                if (token) {
+                    options.headers = {
+                        ...options.headers,
+                        'Authorization': `Bearer ${token}`
+                    };
+                }
+
+                const res = await fetch(`${API_BASE}${url}`, options);
+                if (res.status === 401) {
+                    alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+                    window.location.href = 'scm_login.html';
+                    return;
+                }
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || err.message || 'Request failed');
+                }
+                return res.json();
+            };
+
+            // --- DOM ELEMENTS ---
+            const serverSourceFile = document.getElementById('serverSourceFile');
+            const serverSourceFileName = document.getElementById('serverSourceFileName');
+            const replaceSourceBtn = document.getElementById('replaceSourceBtn');
+            const rangeStart = document.getElementById('rangeStart');
+            const rangeEnd = document.getElementById('rangeEnd');
+            const registerRangeBtn = document.getElementById('registerRangeBtn');
+            const uploadBtn = document.getElementById('excelUploadBtn');
+            const fileInput = document.getElementById('excelUploadInput');
+            const productTableBody = document.getElementById('productTableBody');
+
+            // --- EXCEL & FILE OPERATIONS ---
+
+            // 1. Server Source File Selection
+            if (serverSourceFile) {
+                serverSourceFile.addEventListener('change', (e) => {
+                    if (e.target.files[0]) {
+                        serverSourceFileName.textContent = e.target.files[0].name;
+                    }
+                });
+            }
+
+            // 2. Replace Source File
+            if (replaceSourceBtn) {
+                replaceSourceBtn.onclick = async (e) => {
+                    e.preventDefault();
+                    if (!serverSourceFile || !serverSourceFile.files[0]) return alert('교체할 파일을 선택하세요.');
+
+                    const fd = new FormData();
+                    fd.append('file', serverSourceFile.files[0]);
+                    replaceSourceBtn.innerText = '교체 중...';
+
+                    try {
+                        await apiFetch('/api/excel/replace-source', { method: 'POST', body: fd });
+                        alert('서버 원본 파일이 교체되었습니다.');
+                    } catch (e) { alert('실패: ' + e.message); }
+                    finally { replaceSourceBtn.innerText = '파일 교체'; }
+                };
+            }
+
+            // 3. Register Range
+            if (registerRangeBtn) {
+                registerRangeBtn.onclick = async (e) => {
+                    e.preventDefault();
+                    const start = rangeStart.value;
+                    const end = rangeEnd.value;
+                    if (!start || !end) return alert('범위를 입력하세요.');
+
+                    registerRangeBtn.innerText = '등록 중...';
+                    try {
+                        const res = await apiFetch('/api/excel/register-range', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ start, end })
+                        });
+                        alert(`등록 완료: 성공 ${res.success}, 실패 ${res.failed}`);
+                        alert(`등록 완료: 성공 ${res.success}, 실패 ${res.failed}`);
+                        loadProducts(1); // Refresh list to page 1
+                    } catch (e) {
+                        if (e.message.includes('not found') || e.message.includes('404')) {
+                            alert('⚠️ 서버 원본 엑셀 파일이 없습니다.\n[파일 교체] 버튼을 눌러 파일을 다시 업로드해주세요. (배포 시 초기화됨)');
+                        } else {
+                            alert('실패: ' + e.message);
+                        }
+                    }
+                    finally { registerRangeBtn.innerText = '범위 등록'; }
+                };
+            }
+
+            // 4. Excel Upload (Public/Auth bypassed)
+            if (uploadBtn && fileInput) {
+                uploadBtn.onclick = (e) => { e.preventDefault(); fileInput.click(); };
+                fileInput.onchange = async () => {
+                    if (!fileInput.files.length) return;
+                    const fd = new FormData();
+                    fd.append('file', fileInput.files[0]);
+                    uploadBtn.innerText = '업로드 중...';
+                    try {
+                        const res = await apiFetch('/api/excel/upload', { method: 'POST', body: fd });
+                        if (res.failed > 0) {
+                            alert(`업로드 완료: 성공 ${res.success}, 실패 ${res.failed}\n\n[실패 사유 (상위 5개)]\n${res.errors.slice(0, 5).join('\n')}`);
+                        } else {
+                            alert(`업로드 완료: 성공 ${res.success}, 실패 ${res.failed}`);
+                        }
+                        loadProducts();
+                    } catch (e) { alert('실패: ' + e.message); }
+                    finally { uploadBtn.innerText = '엑셀 업로드'; fileInput.value = ''; }
+                };
+            }
+
+            // 5. Download & Template
+            const btnDownloadAll = document.getElementById('btnDownloadAll');
+            if (btnDownloadAll) btnDownloadAll.onclick = () => window.location.href = `${API_BASE}/api/excel/download`;
+
+            const btnTemplate = document.getElementById('btnTemplate');
+            if (btnTemplate) btnTemplate.onclick = () => window.location.href = `${API_BASE}/api/excel/template`;
+
+            // 6. Delete Range
+            const btnDeleteRange = document.getElementById('btnDeleteRange');
+            if (btnDeleteRange) {
+                btnDeleteRange.onclick = async (e) => {
+                    e.preventDefault();
+                    const input = prompt("삭제할 ID 범위 (예: 100-200)");
+                    if (!input) return;
+                    const [start, end] = input.split('-');
+                    try {
+                        const res = await apiFetch('/api/excel/delete-range', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ start, end })
+                        });
+                        alert(`${res.count}개 삭제 완료`);
+                        loadProducts();
+                    } catch (e) { alert('실패: ' + e.message); }
+                };
+            }
+
+            // --- CATEGORY MANAGEMENT ---
+            const categoryModal = document.getElementById('categoryModal');
+            const catListBody = document.getElementById('categoryListBody');
+            const categorySelect = document.getElementById('p_categoryId');
+
+            const loadCategories = async () => {
+                try {
+                    const data = await apiFetch('/api/categories');
+                    const cats = data.categories;
+
+                    catListBody.innerHTML = cats.map(c => `
+                        <tr>
+                            <td>${c.id}</td>
+                            <td>${c.name}</td>
+                            <td>${c.slug}</td>
+                            <td><button class="scm-btn btn-red btn-sm btn-del-cat" data-id="${c.id}">삭제</button></td>
+                        </tr>
+                    `).join('');
+
+                    categorySelect.innerHTML = '<option value="">선택하세요</option>' +
+                        cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+                } catch (e) { console.error(e); }
+            };
+
+            // Open Modal
+            document.querySelectorAll('button').forEach(btn => {
+                if (btn.innerText.includes('카테고리 관리')) {
+                    btn.onclick = (e) => { e.preventDefault(); categoryModal.style.display = 'flex'; loadCategories(); };
+                }
+            });
+            document.getElementById('btnCloseCatModal').onclick = () => categoryModal.style.display = 'none';
+
+            // Add Category
+            document.getElementById('btnAddCat').onclick = async () => {
+                const name = document.getElementById('newCatName').value;
+                const slug = document.getElementById('newCatSlug').value;
+                if (!name || !slug) return alert('입력값 확인 필요');
+                try {
+                    await apiFetch('/api/categories', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, slug })
+                    });
+                    loadCategories();
+                    document.getElementById('newCatName').value = '';
+                    document.getElementById('newCatSlug').value = '';
+                } catch (e) { alert(e.message); }
+            };
+            // Delete Category
+            catListBody.onclick = async (e) => {
+                if (e.target.classList.contains('btn-del-cat')) {
+                    if (!confirm('삭제하시겠습니까?')) return;
+                    try { await apiFetch(`/api/categories/${e.target.dataset.id}`, { method: 'DELETE' }); loadCategories(); }
+                    catch (e) { alert(e.message); }
+                }
+            };
+
+            // --- PRODUCT MANAGEMENT ---
+            const productModal = document.getElementById('productModal');
+            const productForm = document.getElementById('productForm');
+            const pTitle = document.getElementById('productModalTitle');
+
+            // Open New
+            document.querySelectorAll('button').forEach(btn => {
+                if (btn.innerText.includes('신규 등록')) {
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        pTitle.innerText = '신규 등록';
+                        productForm.reset();
+                        document.getElementById('p_id').value = '';
+                        document.getElementById('p_isNew').checked = true; // Default New
+                        document.getElementById('p_isAvailable').checked = true;
+                        loadCategories();
+                        productModal.style.display = 'flex';
+                    };
+                }
+            });
+            document.getElementById('btnCloseProductModal').onclick = () => productModal.style.display = 'none';
+
+            // Save Product
+            productForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('p_id').value;
+                const payload = {
+                    modelName: document.getElementById('p_name').value, // Map Name Input to modelName
+                    modelNo: document.getElementById('p_modelNo').value,
+                    brand: document.getElementById('p_brand').value,
+                    categoryId: document.getElementById('p_categoryId').value,
+                    // Remove commas for numeric fields
+                    b2bPrice: document.getElementById('p_price').value.replace(/,/g, ''),
+                    consumerPrice: document.getElementById('p_consumerPrice').value.replace(/,/g, ''),
+                    supplyPrice: document.getElementById('p_supplyPrice').value.replace(/,/g, ''),
+                    stockQuantity: document.getElementById('p_stockQuantity').value.replace(/,/g, ''),
+                    // defaultQuantity matches logic? Backend doesn't use defaultQuantity explicitly in update? it uses displayOrder?
+                    // Wait, products.js update does NOT read defaultQuantity (MOQ).
+                    // It reads displayOrder.
+                    // Let's check schema.
+                    // But for now, fixing price format is key.
+                    quantityPerCarton: document.getElementById('p_quantityPerCarton').value.replace(/,/g, ''),
+                    imageUrl: document.getElementById('p_imageUrl').value,
+                    detailUrl: document.getElementById('p_detailUrl').value,
+                    origin: document.getElementById('p_origin').value,
+                    manufacturer: document.getElementById('p_manufacturer').value,
+                    shippingFee: document.getElementById('p_shippingFee').value.replace(/,/g, ''),
+                    shippingFeeIndividual: document.getElementById('p_shippingFeeIndividual').value.replace(/,/g, ''),
+                    productOptions: document.getElementById('p_productOptions').value,
+                    description: document.getElementById('p_description').value,
+                    remarks: document.getElementById('p_remarks').value,
+                    isTaxFree: document.getElementById('p_isTaxFree').checked,
+                    isNew: document.getElementById('p_isNew').checked,
+                    isAvailable: document.getElementById('p_isAvailable').checked
+                };
+                const url = id ? `/api/products/${id}` : '/api/products';
+                const method = id ? 'PUT' : 'POST';
+                try {
+                    await apiFetch(url, {
+                        method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                    });
+                    alert('저장되었습니다.');
+                    productModal.style.display = 'none';
+                    loadProducts(currentPage); // Reload current page
+                } catch (e) { alert(e.message); }
+            };
+
+            // --- GLOBAL STATE ---
+            let currentProducts = [];
+            let currentPage = 1;
+            const itemsPerPage = 20;
+
+            // --- LOAD LIST ---
+            const loadProducts = async (page = 1) => {
+                currentPage = page;
+                try {
+                    // Fetch with pagination
+                    const data = await apiFetch(`/api/products?limit=${itemsPerPage}&page=${page}&includeUnavailable=true`);
+                    currentProducts = data.products || []; // Store globally for safe access
+                    const products = currentProducts;
+                    const pagination = data.pagination;
+
+                    productTableBody.innerHTML = '';
+
+                    if (!products.length) {
+                        productTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 2rem;">등록된 상품이 없습니다.</td></tr>';
+                        renderPagination(0, 0);
+                        return;
+                    }
+
+                    products.forEach((p, index) => {
+                        const tr = document.createElement('tr');
+                        const date = new Date(p.createdAt || p.created_at).toLocaleDateString();
+                        // Handle snake_case vs camelCase
+                        const isAvailable = p.isAvailable !== undefined ? p.isAvailable : (p.is_available !== undefined ? p.is_available : true);
+                        const statusClass = isAvailable ? 'status-active' : 'status-inactive';
+                        const imgSrc = p.imageUrl || p.image_url || 'https://via.placeholder.com/60?text=No+Img';
+                        const categoryName = p.category ? p.category.name : (p.category_name || '-');
+
+                        // Fix: Check model_name/modelName if name is missing
+                        const pName = p.name || p.product_name || p.model_name || p.modelName || 'No Name';
+                        const pModel = p.modelNo || p.model_no || '';
+
+                        // Fix: Number formatting (Integer + Commas)
+                        const fmt = (val) => Math.floor(Number(val) || 0).toLocaleString('ko-KR');
+
+                        const pPrice = fmt(p.price || p.b2b_price);
+                        const pConsumer = fmt(p.consumerPrice || p.consumer_price);
+                        const pSupply = fmt(p.supplyPrice || p.supply_price);
+                        const pStock = fmt(p.stockQuantity || p.stock_quantity);
+                        const pCarton = Number(p.quantityPerCarton || p.quantity_per_carton || 1); // Keep raw number for carton count logic if needed, but display formatted
+
+                        const pIndividualFee = fmt(p.shippingFeeIndividual || p.shipping_fee_individual);
+                        const pCartonFee = fmt(p.shippingFeeCarton || p.shipping_fee_carton);
+
+                        const pBrand = p.brand || '-';
+                        const pManufacturer = p.manufacturer || '-';
+                        const pOrigin = p.origin || '-';
+                        const pTaxFree = p.isTaxFree !== undefined ? p.isTaxFree : (p.is_tax_free || false);
+
+                        // Handle snake_case is_new
+                        const isNew = p.isNew !== undefined ? p.isNew : (p.is_new !== undefined ? p.is_new : false);
+                        const newClass = isNew ? 'btn-green' : 'btn-gray';
+
+                        const availClass = isAvailable ? 'btn-green' : 'btn-red';
+                        const availText = isAvailable ? 'Selling' : '중지';
+
+                        tr.innerHTML = `
+                            <td style="text-align: center;"><strong>${p.id}</strong></td>
+                            <td style="text-align: center;">
+                                <div class="product-img-thumb" style="cursor: pointer;" onclick="openProductDetail(${index})">
+                                    <img src="${imgSrc}" style="width: 60px; height: 60px; object-fit: cover; border: 1px solid #ddd;" onerror="this.src='https://placehold.co/60?text=Error'">
+                                    <div style="font-size: 0.7rem; color: #007bff; margin-top: 2px;">상세보기</div>
+                                </div>
+                            </td>
+                            <td><strong>${pBrand}</strong><br><small style="color:#007bff">${categoryName}</small></td>
+                            <td><strong>${pName}</strong><br><small style="color:#666">${pModel}</small></td>
+                            <td style="text-align: right;"><strong style="color:#007bff">${pPrice}</strong><br><span class="scm-status">${pTaxFree ? '면세' : '과세'}</span></td>
+                            <td><div style="display:grid;grid-template-columns:40px 1fr;gap:5px;font-size:0.85rem"><span style="color:#888">소가</span><span>${pConsumer}</span><span style="color:#888">공급</span><strong>${pSupply}</strong></div></td>
+                            <td style="text-align:center;font-size:0.85rem">재고 ${pStock}<br>카톤 ${pCarton}</td>
+                            <td style="text-align:center;font-size:0.85rem">개별 ${pIndividualFee}<br>카톤 ${pCartonFee}</td>
+                            <td style="font-size:0.8rem;color:#555">제조: ${pManufacturer}<br>원산: ${pOrigin}<br>${date}</td>
+                            <td style="text-align:center;">
+                                <button class="scm-btn ${newClass} btn-toggle-new" data-id="${p.id}" style="padding: 2px 8px; font-size: 0.75rem; margin-bottom: 5px;">${isNew ? 'New' : 'Normal'}</button>
+                                <br>
+                                <button class="scm-btn ${availClass} btn-toggle-avail" data-id="${p.id}" style="padding: 2px 8px; font-size: 0.75rem; margin-bottom: 5px;">${availText}</button>
+                                <div style="display:flex;gap:3px;justify-content:center;margin-top:5px;">
+                                    <button class="scm-btn btn-cyan btn-edit" data-id="${p.id}" style="padding:2px 6px;font-size:0.75rem">수정</button>
+                                    <button class="scm-btn btn-red btn-delete" data-id="${p.id}" style="padding:2px 6px;font-size:0.75rem">삭제</button>
+                                </div>
+                            </td>
+                        `;
+                        productTableBody.appendChild(tr);
+                    });
+
+                    // Render Pagination
+                    renderPagination(pagination.totalPages, currentPage);
+
+                    // List Buttons wiring
+                    attachRowListeners();
+
+                } catch (e) {
+                    console.error(e);
+                    alert('데이터 로드 실패: ' + e.message);
+                }
+            };
+
+            const attachRowListeners = () => {
+                document.querySelectorAll('.btn-toggle-avail').forEach(btn => {
+                    btn.onclick = async (e) => {
+                        e.stopPropagation();
+                        // Optimistic UI Update
+                        const isCurrentlySelling = btn.innerText === 'Selling';
+                        const originalText = btn.innerText;
+                        const originalClass = btn.className;
+
+                        const newStatus = !isCurrentlySelling;
+
+                        // Immediate visual feedback
+                        btn.innerText = newStatus ? 'Selling' : '중지';
+                        btn.className = `scm-btn ${newStatus ? 'btn-green' : 'btn-red'} btn-toggle-avail`;
+
+                        const id = e.target.dataset.id;
+                        try {
+                            // Use apiFetch helper instead of direct fetch + undefined API_BASE_URL
+                            await apiFetch(`/api/products/${id}/availability`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ isAvailable: newStatus })
+                            });
+
+                            // No need to reload, optimistic update is enough
+                        } catch (err) {
+                            console.error(err);
+                            alert('상태 변경 실패');
+                            // Revert on error
+                            btn.innerText = originalText;
+                            btn.className = originalClass;
+                        }
+                    };
+                });
+
+                document.querySelectorAll('.btn-edit').forEach(btn => {
+                    btn.onclick = async (e) => {
+                        e.preventDefault();
+                        const id = e.target.dataset.id;
+                        pTitle.innerText = '상품 수정';
+                        await loadCategories();
+                        try {
+                            // Find product in local list first to save a call, or fetch fresh
+                            // Fetch fresh is safer
+                            const data = await apiFetch(`/api/products/${id}`);
+                            const p = data.product;
+
+                            // Edit Form Population (Map snake_case to IDs)
+                            document.getElementById('p_id').value = p.id;
+                            document.getElementById('p_name').value = p.name || p.product_name || p.model_name || p.modelName || '';
+                            document.getElementById('p_modelNo').value = p.modelNo || p.model_no || '';
+                            document.getElementById('p_brand').value = p.brand || '';
+                            document.getElementById('p_categoryId').value = p.categoryId || p.category_id;
+
+                            const fmt = (val) => Math.floor(Number(val) || 0).toLocaleString('ko-KR');
+
+                            document.getElementById('p_price').value = fmt(p.price || p.b2b_price);
+                            document.getElementById('p_consumerPrice').value = fmt(p.consumerPrice || p.consumer_price);
+
+                            // Handle snake_case is_new
+                            const isNewVal = p.isNew !== undefined ? p.isNew : (p.is_new !== undefined ? p.is_new : false);
+                            document.getElementById('p_isNew').checked = isNewVal;
+
+                            document.getElementById('p_supplyPrice').value = fmt(p.supplyPrice || p.supply_price);
+                            document.getElementById('p_stockQuantity').value = fmt(p.stockQuantity || p.stock_quantity);
+                            document.getElementById('p_defaultQuantity').value = p.defaultQuantity || p.default_quantity || 1;
+                            document.getElementById('p_quantityPerCarton').value = p.quantityPerCarton || p.quantity_per_carton || 1;
+
+                            document.getElementById('p_origin').value = p.origin || '';
+                            document.getElementById('p_manufacturer').value = p.manufacturer || '';
+                            document.getElementById('p_shippingFee').value = fmt(p.shippingFee || p.shipping_fee);
+                            document.getElementById('p_shippingFeeIndividual').value = fmt(p.shippingFeeIndividual || p.shipping_fee_individual);
+                            document.getElementById('p_productOptions').value = p.productOptions || p.product_options || '';
+                            document.getElementById('p_description').value = p.description || '';
+                            document.getElementById('p_remarks').value = p.remarks || '';
+
+                            document.getElementById('p_imageUrl').value = p.imageUrl || p.image_url || '';
+                            document.getElementById('p_detailUrl').value = p.detailUrl || p.detail_url || '';
+
+                            const isTaxFreeVal = p.isTaxFree !== undefined ? p.isTaxFree : (p.is_tax_free || false);
+                            document.getElementById('p_isTaxFree').checked = isTaxFreeVal;
+
+                            const isAvailableVal = p.isAvailable !== undefined ? p.isAvailable : (p.is_available !== undefined ? p.is_available : true);
+                            document.getElementById('p_isAvailable').checked = isAvailableVal;
+
+                            productModal.style.display = 'flex';
+                        } catch (e) { alert(e.message); }
+                    };
+                });
+
+                document.querySelectorAll('.btn-delete').forEach(btn => {
+                    btn.onclick = async (e) => {
+                        if (!confirm('정말 삭제하시겠습니까?')) return;
+                        try {
+                            await apiFetch(`/api/products/${e.target.dataset.id}`, { method: 'DELETE' });
+                            alert('삭제되었습니다.');
+                            loadProducts(currentPage);
+                        }
+                        catch (e) { alert(e.message); }
+                    };
+                });
+
+                // Toggle New Status
+                document.querySelectorAll('.btn-toggle-new').forEach(btn => {
+                    btn.onclick = async (e) => {
+                        e.preventDefault();
+                        const id = e.target.dataset.id;
+                        try {
+                            const data = await apiFetch(`/api/products/${id}`);
+                            const p = data.product;
+
+                            // Check both camelCase and snake_case
+                            const currentIsNew = p.isNew !== undefined ? p.isNew : (p.is_new !== undefined ? p.is_new : false);
+
+                            // Use PATCH endpoint for specific status update
+                            await apiFetch(`/api/products/${id}/new-status`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ isNew: !currentIsNew })
+                            });
+
+                            // Reload logic
+                            loadProducts(currentPage);
+                        } catch (e) {
+                            console.error(e);
+                            alert('상태 변경 실패: ' + e.message);
+                        }
+                    };
+                });
+            };
+
+            // Render Pagination Logic
+            const renderPagination = (totalPages, current) => {
+                const paginationContainer = document.querySelector('.scm-pagination');
+                if (!paginationContainer) return;
+
+                paginationContainer.innerHTML = '';
+
+                if (totalPages <= 1) return;
+
+                // Prev Button
+                const prevBtn = document.createElement('button');
+                prevBtn.innerText = '<';
+                prevBtn.disabled = current === 1;
+                prevBtn.onclick = () => loadProducts(current - 1);
+                paginationContainer.appendChild(prevBtn);
+
+                // Page Numbers
+                let startPage = Math.max(1, current - 2);
+                let endPage = Math.min(totalPages, current + 2);
+
+                if (startPage > 1) {
+                    const firstBtn = document.createElement('button');
+                    firstBtn.innerText = '1';
+                    firstBtn.onclick = () => loadProducts(1);
+                    paginationContainer.appendChild(firstBtn);
+                    if (startPage > 2) {
+                        const span = document.createElement('span');
+                        span.innerText = '...';
+                        paginationContainer.appendChild(span);
+                    }
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const btn = document.createElement('button');
+                    btn.innerText = i;
+                    if (i === current) btn.classList.add('active');
+                    btn.onclick = () => loadProducts(i);
+                    paginationContainer.appendChild(btn);
+                }
+
+                if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) {
+                        const span = document.createElement('span');
+                        span.innerText = '...';
+                        paginationContainer.appendChild(span);
+                    }
+                    const lastBtn = document.createElement('button');
+                    lastBtn.innerText = totalPages;
+                    lastBtn.onclick = () => loadProducts(totalPages);
+                    paginationContainer.appendChild(lastBtn);
+                }
+
+                // Next Button
+                const nextBtn = document.createElement('button');
+                nextBtn.innerText = '>';
+                nextBtn.disabled = current === totalPages;
+                nextBtn.onclick = () => loadProducts(current + 1);
+                paginationContainer.appendChild(nextBtn);
+            };
+
+            // --- IN-PAGE DETAIL VIEW LOGIC ---
+
+            // 1. Helper: Secure Image URL (Duplicated from script.js)
+            const getSecureImageUrl = (url, width = 0) => {
+                if (!url) return '';
+                let cleanUrl = url.trim();
+
+                if (cleanUrl.match(/https?:\/\/(localhost|127\.0\.0\.1)/)) {
+                    try {
+                        const urlObj = new URL(cleanUrl);
+                        cleanUrl = `${API_BASE}${urlObj.pathname}${urlObj.search}`;
+                    } catch (e) {
+                        const path = cleanUrl.replace(/https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, '');
+                        cleanUrl = `${API_BASE}${path}`;
+                    }
+                }
+                // Handle protocol-relative
+                if (cleanUrl.startsWith('//')) cleanUrl = `https:${cleanUrl}`;
+
+                if (cleanUrl.startsWith('/') || cleanUrl.match(/^(uploads|assets|images)\//)) {
+                    const path = cleanUrl.startsWith('/') ? cleanUrl : `/${cleanUrl}`;
+                    cleanUrl = `${API_BASE}${path}`;
+                }
+
+                const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                if (cleanUrl.startsWith('data:') || (isLocalEnv && cleanUrl.includes('localhost'))) return cleanUrl;
+
+                if (cleanUrl.startsWith('http://') || (width > 0 && cleanUrl.startsWith('https://'))) {
+                    if (cleanUrl.startsWith('https://') && width === 0) return cleanUrl;
+                    const encoded = encodeURIComponent(cleanUrl);
+                    let proxyUrl = `https://wsrv.nl/?url=${encoded}&output=webp`;
+                    if (width > 0) proxyUrl += `&w=${width}`;
+                    return proxyUrl;
+                }
+                return cleanUrl;
+            };
+
+            // 2. Render Detail View In-Page
+            const renderScmProductDetail = (product) => {
+                const detailView = document.getElementById('productDetailView');
+
+                // Normalize data
+                const imageUrl = getSecureImageUrl(product.imageUrl || product.image_url, 800);
+                const detailUrl = product.detailUrl || product.detail_url;
+                const modelName = product.modelNo || product.model_name || '';
+                const productName = product.name || product.product_name || 'No Name';
+                const brandName = product.brand || 'Brand';
+                const categoryName = product.category ? product.category.name : (product.category_name || '-');
+
+                // Image HTML
+                const imageHtml = `<img src="${imageUrl}" alt="${productName}" style="width: 100%; max-width: 600px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin: 0 auto; display: block;">`;
+
+                // Detail Content Processing
+                let detailContentHtml = '';
+                if (detailUrl) {
+                    const secureHtml = (html) => html.replace(/src=["'](http:\/\/[^"']+)["']/g, (m, p1) => `src="${getSecureImageUrl(p1)}"`);
+
+                    if (detailUrl.trim().startsWith('<')) {
+                        detailContentHtml = `<div class="product-detail-content" style="text-align: center; display: flex; flex-direction: column; align-items: center; width: 100%;">${secureHtml(detailUrl)}</div>`;
+                    } else {
+                        detailContentHtml = `<div class="product-detail-content" style="text-align: center; width: 100%;"><img src="${getSecureImageUrl(detailUrl)}" alt="Detail" style="max-width: 100%; margin: 0 auto; display: block;"></div>`;
+                    }
+                }
+
+                const detailSection = detailContentHtml ? `
+                    <div style="margin-top: 60px; border-top: 1px solid #eee; padding-top: 40px;">
+                        <h3 style="font-size: 1.5rem; margin-bottom: 30px; text-align: center; color: #333;">상세 정보</h3>
+                        ${detailContentHtml}
+                    </div>` : '';
+
+                // Sticky Header: Centered Button - Stick to Top of Content (Under Main Header)
+                // Added top: 60px to account for the fixed SCM Header height
+                detailView.innerHTML = `
+                    <div style="position: sticky; top: 60px; margin-top: 60px; width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 0; border-bottom: 1px solid #eee; z-index: 900; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                         <div style="max-width: 1000px; margin: 0 auto;">
+                             <button onclick="closeProductDetail()" style="padding: 10px 40px; background: #333; color: white; border: none; border-radius: 30px; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                 <i class="fas fa-list"></i> 목록으로 돌아가기
+                             </button>
+                         </div>
+                    </div>
+
+                    <div style="max-width: 1000px; margin: 0 auto; padding: 3rem 2rem;">
+                         <div style="text-align: center; margin-bottom: 2rem;">
+                            ${imageHtml}
+                        </div>
+                        <div style="padding: 20px; text-align: center; max-width: 800px; margin: 0 auto;">
+                            <span style="background: #f0f0f0; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; color: #666; display: inline-block; margin-bottom: 1rem;">${categoryName}</span>
+                            <h2 style="font-size: 1.5rem; color: var(--primary-color); margin-bottom: 0.5rem; font-weight: 600;">${brandName}</h2>
+                            <h1 style="font-size: 2.2rem; margin-bottom: 1rem; font-weight: 700; color: #333;">${productName}</h1>
+                            <p style="font-size: 1.1rem; color: #888; margin-bottom: 2rem;">${modelName}</p>
+                            
+                            <p style="font-size: 1.1rem; line-height: 1.8; color: #555; margin-bottom: 30px; word-break: keep-all;">${product.description || ''}</p>
+                        </div>
+                        ${detailSection}
+                    </div>
+                `;
+            };
+
+            // Global State for Scroll Position
+            let lastScrollTop = 0;
+
+            // Updated Open Function
+            window.openProductDetail = async (index) => {
+                const listContainer = document.getElementById('productListView');
+                const detailContainer = document.getElementById('productDetailView');
+                const scmContent = document.querySelector('.scm-content');
+
+                if (currentProducts && currentProducts[index]) {
+                    // Save Scroll Position
+                    lastScrollTop = scmContent.scrollTop;
+
+                    const simpleProduct = currentProducts[index];
+
+                    // Fetch Full Detail
+                    try {
+                        // Show loading?
+                        detailContainer.innerHTML = '<div style="padding:50px; text-align:center;">Loading...</div>';
+
+                        listContainer.style.display = 'none';
+                        detailContainer.style.display = 'block';
+
+                        // Show SCM Header (ensure it is visible)
+                        const scmHeader = document.querySelector('.scm-header');
+                        if (scmHeader) scmHeader.style.display = 'flex';
+
+                        // Temporarily remove padding from main scroll container
+                        scmContent.style.padding = '0';
+
+                        // Remove container styling for full screen look
+                        detailContainer.style.background = 'transparent';
+                        detailContainer.style.boxShadow = 'none';
+                        detailContainer.style.borderRadius = '0';
+
+                        // scroll to top for detail view
+                        scmContent.scrollTop = 0;
+
+                        const data = await apiFetch(`/api/products/${simpleProduct.id}`);
+                        renderScmProductDetail(data.product);
+                    } catch (e) {
+                        alert('상세 정보 로드 실패: ' + e.message);
+                        closeProductDetail();
+                    }
+                }
+            };
+
+            // Close Function
+            window.closeProductDetail = () => {
+                const listContainer = document.getElementById('productListView');
+                const detailContainer = document.getElementById('productDetailView');
+                const scmContent = document.querySelector('.scm-content');
+                const breadcrumb = document.querySelector('.scm-breadcrumb');
+
+                detailContainer.style.display = 'none';
+                listContainer.style.display = 'block';
+
+
+
+                // Restore Padding
+                scmContent.style.padding = '2rem';
+
+                // Show SCM Header again
+                const scmHeader = document.querySelector('.scm-header');
+                if (scmHeader) scmHeader.style.display = 'flex';
+
+                // Restore container styling (optional but good practice)
+                detailContainer.style.background = 'white';
+                detailContainer.style.boxShadow = '0 2px 10px rgba(0,0,0,0.03)';
+                detailContainer.style.borderRadius = '8px';
+
+                // Restore Scroll
+                scmContent.scrollTop = lastScrollTop;
+            };
+
+            // Init
+            loadProducts();
+        });
+    </script>
+</body>
+
+</html>
+```

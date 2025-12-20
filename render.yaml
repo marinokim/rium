@@ -1,0 +1,39 @@
+services:
+  # Backend Service (Node.js)
+  - type: web
+    name: rium-scm-backend
+    env: node
+    rootDir: scm-backend
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false # User must enter this in Render Dashboard
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+    autoDeploy: true
+
+  # Frontend Service (React Static Site)
+  - type: web
+    name: rium-scm-frontend
+    env: static
+    rootDir: scm-frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: rium-scm-backend
+          property: host
+    autoDeploy: true
+
+  # Homepage Service (Static HTML)
+  - type: web
+    name: rium-homepage
+    env: static
+    rootDir: .
+    staticPublishPath: ./
+    autoDeploy: true

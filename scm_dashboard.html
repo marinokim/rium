@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCM Dashboard - RIUM Partner System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&family=Open+Sans:wght@400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* SCM Specific Styles */
+        body.scm-body {
+            background-color: #f5f7fa;
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar */
+        .scm-sidebar {
+            width: 100px;
+            background-color: #1a1a1a;
+            color: white;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s;
+        }
+
+        .scm-logo-area {
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .scm-logo-area a {
+            font-family: var(--font-heading);
+            font-size: 1rem;
+            font-weight: 800;
+            color: white;
+            text-decoration: none;
+            letter-spacing: 1px;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .scm-menu {
+            padding: 1rem 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .scm-menu-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 0.5rem;
+            color: #aaa;
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+            text-align: center;
+        }
+
+        .scm-menu-item:hover,
+        .scm-menu-item.active {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: white;
+            border-left-color: var(--primary-color);
+        }
+
+        .scm-menu-item i {
+            width: auto;
+            font-size: 1.5rem;
+            margin-right: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .scm-menu-item span {
+            font-size: 0.8rem;
+            word-break: keep-all;
+            line-height: 1.2;
+        }
+
+        .scm-user-profile {
+            padding: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            text-align: center;
+        }
+
+        .scm-user-info {
+            display: none;
+            /* Hide text on small sidebar */
+        }
+
+        .scm-user-profile a {
+            margin-left: 0 !important;
+            margin-top: 0.5rem;
+        }
+
+        /* Main Content Adjustment */
+        .scm-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: calc(100% - 100px);
+        }
+
+        .scm-header {
+            height: 70px;
+            background-color: white;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+        }
+
+        .scm-breadcrumb {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .scm-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .scm-icon-btn {
+            color: #666;
+            font-size: 1.2rem;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .scm-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--secondary-color);
+            color: white;
+            font-size: 0.6rem;
+            padding: 2px 5px;
+            border-radius: 10px;
+        }
+
+        .scm-content {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        /* Dashboard Widgets */
+        .scm-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .scm-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            border: 1px solid #eee;
+        }
+
+        .scm-stat-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .scm-stat-info h3 {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .scm-stat-info p {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+            margin: 0;
+        }
+
+        .scm-stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .bg-primary-light {
+            background-color: rgba(0, 137, 123, 0.1);
+            color: var(--primary-color);
+        }
+
+        .bg-secondary-light {
+            background-color: rgba(255, 112, 67, 0.1);
+            color: var(--secondary-color);
+        }
+
+        .bg-blue-light {
+            background-color: rgba(33, 150, 243, 0.1);
+            color: #2196F3;
+        }
+
+        .bg-purple-light {
+            background-color: rgba(156, 39, 176, 0.1);
+            color: #9C27B0;
+        }
+
+        /* Tables */
+        .scm-table-container {
+            overflow-x: auto;
+        }
+
+        .scm-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .scm-table th {
+            text-align: left;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            color: #666;
+            font-weight: 600;
+            border-bottom: 2px solid #eee;
+        }
+
+        .scm-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            color: #333;
+        }
+
+        .scm-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-new {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-processing {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+
+        .status-completed {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .scm-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .scm-sidebar {
+                position: fixed;
+                left: -100px;
+                height: 100%;
+                z-index: 1000;
+            }
+
+            .scm-sidebar.active {
+                left: 0;
+            }
+
+            .scm-main {
+                width: 100%;
+            }
+
+            .scm-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .scm-header {
+                padding: 0 1rem;
+            }
+
+            .mobile-menu-btn {
+                display: block !important;
+                margin-right: 1rem;
+                font-size: 1.2rem;
+                cursor: pointer;
+                color: #333;
+            }
+        }
+    </style>
+</head>
+
+<body class="scm-body">
+
+    <!-- Sidebar -->
+    <aside class="scm-sidebar" id="scmSidebar"
+        style="position: sticky; top: 0; height: 100vh; z-index: 100; overflow-y: auto;">
+        <div class="scm-logo-area">
+            <a href="index.html">RIUM<br>SCM</a>
+        </div>
+        <nav class="scm-menu">
+            <a href="scm_dashboard.html" class="scm-menu-item active">
+                <i class="fas fa-home"></i>
+                <span>대시보드</span>
+            </a>
+
+            <!-- Admin Mode Switch (Hidden by default) -->
+            <a href="scm_products.html" class="scm-menu-item" id="btnAdminMode" style="display: none; color: #00d2d3;">
+                <i class="fas fa-user-cog"></i>
+                <span>관리자 모드</span>
+            </a>
+
+            <a href="scm_catalog.html" class="scm-menu-item">
+                <i class="fas fa-book-open"></i>
+                <span>상품<br>카탈로그</span>
+            </a>
+            <a href="scm_quote.html" class="scm-menu-item">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>견적/발주<br>관리</span>
+            </a>
+
+
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-exchange-alt"></i>
+                <span>반품/교환</span>
+            </a>
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-calculator"></i>
+                <span>정산 관리</span>
+            </a>
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-bullhorn"></i>
+                <span>공지사항</span>
+            </a>
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-cog"></i>
+                <span>설정</span>
+            </a>
+        </nav>
+        <div class="scm-user-profile">
+            <div class="scm-user-avatar">P</div>
+            <div class="scm-user-info">
+                <h4>Partner User</h4>
+                <p>Wizard Co.</p>
+            </div>
+
+            <a href="index.html" style="color: #888; margin-left: 0 !important; margin-top: 10px;" title="로그아웃">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="scm-main">
+        <!-- Header -->
+        <header class="scm-header">
+            <div style="display: flex; align-items: center;">
+                <div class="mobile-menu-btn" style="display: none;"
+                    onclick="document.getElementById('scmSidebar').classList.toggle('active')">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <div class="scm-breadcrumb">
+                    <i class="fas fa-home"></i> Home > 대시보드
+                </div>
+            </div>
+            <div class="scm-header-actions">
+                <div class="scm-icon-btn">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="scm-badge">2</span>
+                </div>
+                <div class="scm-icon-btn">
+                    <i class="fas fa-bell"></i>
+                    <span class="scm-badge">3</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="scm-content">
+            <h2 style="margin-bottom: 1.5rem; font-size: 1.5rem;">대시보드 (Dashboard)</h2>
+
+            <!-- Stats Grid -->
+            <div class="scm-grid">
+                <div class="scm-card scm-stat-card">
+                    <div class="scm-stat-info">
+                        <h3>나의 제안서</h3>
+                        <p>0</p>
+                    </div>
+                    <div class="scm-stat-icon bg-primary-light">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                </div>
+                <div class="scm-card scm-stat-card">
+                    <div class="scm-stat-info">
+                        <h3>견적 승인대기</h3>
+                        <p>3</p>
+                    </div>
+                    <div class="scm-stat-icon bg-secondary-light">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+                <div class="scm-card scm-stat-card">
+                    <div class="scm-stat-info">
+                        <h3>발주 진행중</h3>
+                        <p>5</p>
+                    </div>
+                    <div class="scm-stat-icon bg-purple-light">
+                        <i class="fas fa-shipping-fast"></i>
+                    </div>
+                </div>
+                <div class="scm-card scm-stat-card">
+                    <div class="scm-stat-info">
+                        <h3>이번달 실적</h3>
+                        <p>₩45M</p>
+                    </div>
+                    <div class="scm-stat-icon bg-blue-light">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+
+            <a href="#" style="color: #333; font-size: 0.9rem; text-decoration: none;">신규 입점 파트너 가이드</a>
+
+            <!-- Recent Orders (Now Proposal History) -->
+            <div class="scm-card" style="margin-top: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <h3 style="font-size: 1.1rem; margin: 0;">제안서 내역</h3>
+                        <button id="btnDeleteSelected" onclick="deleteSelectedProposals()" class="scm-btn scm-btn-sm"
+                            style="display: none; background-color: #ff5252; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
+                            <i class="fas fa-trash-alt"></i> 선택 삭제
+                        </button>
+                    </div>
+                    <a href="scm_proposal_history.html"
+                        style="font-size: 0.85rem; color: var(--primary-color); text-decoration: none;">전체보기 ></a>
+                </div>
+                <table class="scm-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;"><input type="checkbox" id="checkAll"
+                                    onchange="toggleAllCheckboxes(this)"></th>
+                            <th>No</th>
+                            <th>제안서명</th>
+                            <th>상품수</th>
+                            <th>의뢰일자</th>
+                            <th>상태</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="proposalList">
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 2rem;">데이터를 불러오는 중...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <script>
+                // Excel Download Helper (via Backend)
+                window.downloadProposalExcel = async function (index) {
+                    const item = window.recentProposals && window.recentProposals[index];
+                    if (!item) return;
+
+                    let items = item.items || [];
+                    if (typeof items === 'string') {
+                        try { items = JSON.parse(items); } catch (e) { items = []; }
+                    }
+
+                    // FORM SUBMISSION (Bypass CORS)
+                    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                        ? 'http://localhost:5003'
+                        : 'https://rium-scm-backend.onrender.com';
+
+                    try {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = `${API_BASE}/api/excel/download/proposal`;
+
+                        const titleInput = document.createElement('input');
+                        titleInput.type = 'hidden';
+                        titleInput.name = 'title';
+                        titleInput.value = item.title || '제안서';
+                        form.appendChild(titleInput);
+
+                        const itemsInput = document.createElement('input');
+                        itemsInput.type = 'hidden';
+                        itemsInput.name = 'items';
+                        // Handle potential double stringification if needed, but here we pass the object
+                        itemsInput.value = JSON.stringify(items);
+                        form.appendChild(itemsInput);
+
+                        document.body.appendChild(form);
+                        form.submit();
+                        document.body.removeChild(form);
+
+                    } catch (err) {
+                        console.error('Download prompt error:', err);
+                        alert('다운로드 요청 실패: ' + err.message);
+                    }
+                };
+
+                // Delete Single Proposal Helper
+                window.deleteProposal = async function (id) {
+                    if (!confirm('정말 삭제하시겠습니까?')) return;
+                    await performDelete([id]);
+                }
+
+                // Delete Selected Logic
+                window.toggleAllCheckboxes = function (source) {
+                    const checkboxes = document.querySelectorAll('.proposal-check');
+                    checkboxes.forEach(cb => cb.checked = source.checked);
+                    updateDeleteButtonState();
+                }
+
+                window.updateDeleteButtonState = function () {
+                    const checkedCount = document.querySelectorAll('.proposal-check:checked').length;
+                    const btn = document.getElementById('btnDeleteSelected');
+                    if (checkedCount > 0) {
+                        btn.style.display = 'inline-block';
+                        btn.textContent = `${checkedCount}개 삭제`;
+                    } else {
+                        btn.style.display = 'none';
+                    }
+                }
+
+                window.deleteSelectedProposals = async function () {
+                    const checked = document.querySelectorAll('.proposal-check:checked');
+                    if (checked.length === 0) return;
+
+                    if (!confirm(`선택한 ${checked.length}개의 제안서를 삭제하시겠습니까?`)) return;
+
+                    const ids = Array.from(checked).map(cb => cb.value);
+                    await performDelete(ids);
+                }
+
+                async function performDelete(ids) {
+                    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                        ? 'http://localhost:5003'
+                        : 'https://rium-scm-backend.onrender.com';
+                    const token = localStorage.getItem('token');
+
+                    try {
+                        // Parallel Delete Requests (Backend doesn't have bulk delete yet, so we loop)
+                        // Ideally we should add a bulk delete endpoint, but this works for now.
+                        const promises = ids.map(id =>
+                            fetch(`${API_BASE}/api/proposals/${id}`, {
+                                method: 'DELETE',
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            })
+                        );
+
+                        const results = await Promise.all(promises);
+                        const allOk = results.every(r => r.ok);
+
+                        if (allOk) {
+                            alert('삭제되었습니다.');
+                            location.reload();
+                        } else {
+                            alert('일부 항목 삭제에 실패했습니다.');
+                            location.reload();
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        alert('삭제 중 오류가 발생했습니다.');
+                    }
+                }
+
+                // Initial Load
+                document.addEventListener('DOMContentLoaded', async () => {
+                    // Check Auth
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+
+                    const userStr = localStorage.getItem('user');
+                    if (userStr) {
+                        try {
+                            const user = JSON.parse(userStr);
+                            // Update Sidebar User Info
+                            document.querySelector('.scm-user-info h4').textContent = user.username || 'Partner';
+                            document.querySelector('.scm-user-info p').textContent = user.company_name || 'Company';
+
+                            // Show Admin Button if role is ADMIN
+                            if (user.role === 'ADMIN') {
+                                document.getElementById('btnAdminMode').style.display = 'flex';
+                            }
+                        } catch (e) {
+                            console.error('User parse error', e);
+                        }
+                    }
+
+                    // Fetch Stats & Recent Orders
+                    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                        ? 'http://localhost:5003'
+                        : 'https://rium-scm-backend.onrender.com';
+
+                    try {
+                        // 1. Fetch My Proposals (Recent 5)
+                        const res = await fetch(`${API_BASE}/api/proposals/my`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (res.ok) {
+                            const data = await res.json();
+                            const list = data.history || [];
+                            window.recentProposals = list; // Save for download handler
+
+                            const tbody = document.getElementById('proposalList');
+                            if (list.length === 0) {
+                                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">제안 내역이 없습니다.</td></tr>';
+                            } else {
+                                // Show top 5
+                                tbody.innerHTML = list.slice(0, 5).map((item, index) => {
+                                    const date = new Date(item.created_at).toLocaleDateString();
+
+                                    // Parse items for display
+                                    let items = [];
+                                    try { items = typeof item.items === 'string' ? JSON.parse(item.items) : (item.items || []); } catch (e) { }
+
+                                    const count = items.length;
+                                    let displayTitle = item.title;
+
+                                    // Format: "FirstItemName 외 N개"
+                                    if (count > 0) {
+                                        const firstItemName = items[0].productName || items[0].name || items[0].modelName || '상품';
+                                        if (count > 1) {
+                                            displayTitle = `${firstItemName} 외 ${count - 1}건`;
+                                        } else {
+                                            displayTitle = firstItemName;
+                                        }
+                                    }
+
+                                    return `
+                                        <tr>
+                                            <td><input type="checkbox" class="proposal-check" value="${item.id}" onchange="updateDeleteButtonState()"></td>
+                                            <td>${item.id}</td>
+                                            <td style="font-weight: 500;">
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    ${displayTitle}
+                                                    <i class="fas fa-file-excel" style="color: #217346; cursor: pointer;" onclick="downloadProposalExcel(${index})" title="엑셀 다운로드"></i>
+                                                </div>
+                                            </td>
+                                            <td>${count}개</td>
+                                            <td>${date}</td>
+                                            <td><span class="scm-status status-new">접수완료</span></td>
+                                            <td>
+                                                <button class="scm-icon-btn" onclick="deleteProposal(${item.id})" title="삭제" style="border: none; background: none; color: #ff5252; font-size: 1rem;">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('');
+
+                                // Update Stats (Simple count from list)
+                                document.querySelector('.scm-stat-info p').textContent = list.length;
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Fetch error:', e);
+                    }
+                });
+            </script>
+
+            <!-- Notices -->
+            <div class="scm-card" style="margin-top: 2rem;">
+                <h3 style="font-size: 1.1rem; margin-bottom: 1rem;">SCM 공지사항</h3>
+                <ul style="list-style: none; padding: 0;">
+                    <li
+                        style="padding: 0.8rem 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; font-size: 0.9rem;">
+                        <span>[공지] 12월 정기 시스템 점검 안내</span>
+                        <span style="color: #888;">2025-12-01</span>
+                    </li>
+                    <li
+                        style="padding: 0.8rem 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; font-size: 0.9rem;">
+                        <span>[이벤트] 연말 파트너사 감사 프로모션</span>
+                        <span style="color: #888;">2025-11-28</span>
+                    </li>
+                    <li style="padding: 0.8rem 0; display: flex; justify-content: space-between; font-size: 0.9rem;">
+                        <span>[업데이트] 상품 등록 가이드라인 변경 안내</span>
+                        <span style="color: #888;">2025-11-25</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function (event) {
+            const sidebar = document.getElementById('scmSidebar');
+            const menuBtn = document.querySelector('.mobile-menu-btn');
+
+            if (window.innerWidth <= 768 &&
+                sidebar.classList.contains('active') &&
+                !sidebar.contains(event.target) &&
+                !menuBtn.contains(event.target)) {
+                sidebar.classList.remove('active');
+            }
+        });
+    </script>
+    <script>
+        // Check User Role
+        document.addEventListener('DOMContentLoaded', () => {
+            const userStr = localStorage.getItem('scm_user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                // If Admin, show Admin Mode button
+                if (user.role === 'ADMIN' || user.role === 'admin' || user.isAdmin === true) {
+                    const btn = document.getElementById('btnAdminMode');
+                    if (btn) btn.style.display = 'flex';
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
+```

@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIUM SCM Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* SCM Specific Styles (Copied from scm_dashboard.html and adapted) */
+        :root {
+            --scm-sidebar-width: 100px;
+            /* Vertical Layout */
+            --scm-header-height: 60px;
+            --scm-bg-color: #f5f7fa;
+            --scm-sidebar-bg: #fff;
+            --scm-primary: #1a2b49;
+            /* RIUM Navy */
+            --scm-accent: #c5a47e;
+            /* RIUM Gold */
+        }
+
+        .scm-body {
+            background-color: var(--scm-bg-color);
+            font-family: 'Noto Sans KR', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        /* Sidebar (Dark Theme like Partner Dashboard) */
+        .scm-sidebar {
+            width: var(--scm-sidebar-width);
+            background-color: #1a1a1a;
+            /* Dark Background */
+            color: white;
+            border-right: none;
+            /* Remove border for dark theme */
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+            transition: left 0.3s ease;
+        }
+
+        .scm-logo-area {
+            height: var(--scm-header-height);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: white;
+            /* White text */
+            text-align: center;
+            line-height: 1.2;
+            padding: 1rem 0;
+        }
+
+        .scm-logo-area a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .scm-menu {
+            flex: 1;
+            padding: 1rem 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .scm-menu-item {
+            display: flex;
+            flex-direction: column !important;
+            /* Enforce Vertical Layout */
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 0.5rem;
+            color: #aaa;
+            /* Light gray text */
+            text-decoration: none;
+            transition: all 0.2s;
+            text-align: center;
+            border-left: 3px solid transparent;
+            /* Left border for active state */
+            border-right: none;
+        }
+
+        .scm-menu-item:hover,
+        .scm-menu-item.active {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: white;
+            border-left: 3px solid var(--scm-primary);
+            /* Use primary color for active border */
+            border-right: none;
+        }
+
+        .scm-menu-item i {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            margin-right: 0 !important;
+            width: auto;
+        }
+
+        .scm-menu-item span {
+            font-size: 0.75rem;
+            font-weight: 500;
+            line-height: 1.2;
+            display: block;
+            word-break: keep-all;
+        }
+
+        .scm-user-profile {
+            padding: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .scm-user-avatar {
+            width: 36px;
+            height: 36px;
+            background-color: var(--scm-primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .scm-user-info {
+            display: none;
+        }
+
+        /* Main Content */
+        .scm-main {
+            flex: 1;
+            margin-left: var(--scm-sidebar-width);
+            display: flex;
+            flex-direction: column;
+            width: calc(100% - var(--scm-sidebar-width));
+            transition: width 0.3s ease;
+        }
+
+        /* Header */
+        .scm-header {
+            height: var(--scm-header-height);
+            background-color: #fff;
+            border-bottom: 1px solid #e1e4e8;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+
+        .scm-breadcrumb {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .scm-header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .scm-icon-btn {
+            position: relative;
+            cursor: pointer;
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .scm-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #e74c3c;
+            color: white;
+            font-size: 0.6rem;
+            padding: 2px 5px;
+            border-radius: 10px;
+        }
+
+        /* Content Area */
+        .scm-content {
+            padding: 2rem;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* Cards */
+        .scm-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Grid System */
+        .scm-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .scm-stat-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .scm-stat-info h3 {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .scm-stat-info p {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .scm-stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .bg-primary-light {
+            background-color: rgba(26, 43, 73, 0.1);
+            color: var(--scm-primary);
+        }
+
+        .bg-secondary-light {
+            background-color: rgba(197, 164, 126, 0.1);
+            color: var(--scm-accent);
+        }
+
+        .bg-green-light {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: #2ecc71;
+        }
+
+        .bg-red-light {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+        }
+
+        /* Tables */
+        .scm-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .scm-table th {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+            color: #666;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .scm-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.95rem;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-shipping {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-new {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .scm-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .scm-sidebar {
+                position: fixed;
+                left: -100px;
+                height: 100%;
+                z-index: 1000;
+            }
+
+            .scm-sidebar.active {
+                left: 0;
+            }
+
+            .scm-main {
+                width: 100%;
+            }
+
+            .scm-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .scm-header {
+                padding: 0 1rem;
+            }
+
+            .mobile-menu-btn {
+                display: block !important;
+                margin-right: 1rem;
+                font-size: 1.2rem;
+                cursor: pointer;
+                color: #333;
+            }
+        }
+    </style>
+</head>
+
+<body class="scm-body">
+
+    <!-- Sidebar -->
+    <aside class="scm-sidebar" id="scmSidebar">
+        <div class="scm-logo-area">
+            <a href="index.html">RIUM<br>ADMIN</a>
+        </div>
+        <nav class="scm-menu">
+            <a href="scm_admin.html" class="scm-menu-item active">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>관리자<br>대시보드</span>
+            </a>
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-users"></i>
+                <span>파트너<br>관리</span>
+            </a>
+            <a href="scm_products.html" class="scm-menu-item">
+                <i class="fas fa-box"></i>
+                <span>상품<br>관리</span>
+            </a>
+            <a href="scm_orders.html" class="scm-menu-item">
+                <i class="fas fa-file-invoice"></i>
+                <span>제안/주문/견적관리</span>
+            </a>
+            <a href="javascript:void(0)" class="scm-menu-item"
+                style="opacity: 0.5; pointer-events: none; cursor: default;">
+                <i class="fas fa-chart-bar"></i>
+                <span>매출<br>통계</span>
+            </a>
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-bullhorn"></i>
+                <span>공지사항<br>관리</span>
+            </a>
+            <a href="javascript:void(0)" class="scm-menu-item"
+                style="opacity: 0.5; pointer-events: none; cursor: default;">
+                <i class="fas fa-cogs"></i>
+                <span>시스템<br>설정</span>
+            </a>
+        </nav>
+        <div class="scm-user-profile">
+            <div class="scm-user-avatar" style="background-color: #333;">A</div>
+            <div class="scm-user-info">
+                <h4>Admin</h4>
+                <p>System Admin</p>
+            </div>
+            <a href="scm_dashboard.html"
+                style="color: #4dabf7; display: block; margin-top: 5px; font-size: 0.8rem; text-decoration: none;"
+                title="사용자 모드로 전환">
+                <i class="fas fa-exchange-alt"></i> User Mode
+            </a>
+            <a href="index.html" style="color: #888; margin-left: 0 !important; margin-top: 0.5rem;"><i
+                    class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="scm-main">
+        <!-- Header -->
+        <header class="scm-header">
+            <div style="display: flex; align-items: center;">
+                <div class="mobile-menu-btn" style="display: none;"
+                    onclick="document.getElementById('scmSidebar').classList.toggle('active')">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <div class="scm-breadcrumb">
+                    <i class="fas fa-home"></i> Home > 관리자 대시보드
+                </div>
+            </div>
+            <div class="scm-header-actions">
+                <div class="scm-icon-btn">
+                    <i class="fas fa-bell"></i>
+                    <span class="scm-badge">5</span>
+                </div>
+                <div class="scm-icon-btn">
+                    <i class="fas fa-cog"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="scm-content">
+            <h2 style="margin-bottom: 1.5rem; font-size: 1.5rem;">관리자 대시보드 (Admin Dashboard)</h2>
+
+            <!-- Stats Grid -->
+            <div class="scm-grid">
+                <div class="scm-card scm-stat-card">
+                    <div class="scm-stat-info">
+                        <h3>총 매출 (12월)</h3>
+                        <p>₩125M</p>
+                    </div>
+                    <div class="scm-stat-icon bg-primary-light">
+                        <i class="fas fa-won-sign"></i>
+                    </div>
+                </div>
+                <div class="scm-card scm-stat-card">
+                    <div class="scm-stat-info">
+                        <h3>활성 파트너</h3>
+                        <p>42</p>
+                    </div>
+                    <div class="scm-stat-icon bg-secondary-light">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="scm-card scm-stat-card">
+                    <div class="scm-stat-info">
+                        <h3>견적 승인대기</h3>
+                        <p>8</p>
+                    </div>
+                    <div class="scm-stat-icon bg-red-light">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+                <div class="scm-card scm-stat-card">
+                    <div class="scm-stat-info">
+                        <h3>시스템 상태</h3>
+                        <p style="font-size: 1rem; color: #2ecc71;">정상 운영중</p>
+                    </div>
+                    <div class="scm-stat-icon bg-green-light">
+                        <i class="fas fa-server"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+                <!-- Recent Orders -->
+                <div class="scm-card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="font-size: 1.1rem;">최근 주문/견적 현황</h3>
+                        <a href="#" style="font-size: 0.85rem; color: var(--scm-primary); text-decoration: none;">전체보기
+                            ></a>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="scm-table">
+                            <thead>
+                                <tr>
+                                    <th>주문번호</th>
+                                    <th>파트너사</th>
+                                    <th>상품명</th>
+                                    <th>날짜</th>
+                                    <th>상태</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>ORD-20251206-001</td>
+                                    <td>Wizard Co.</td>
+                                    <td>Smart Air Conditioner</td>
+                                    <td>2025-12-06</td>
+                                    <td><span class="status-badge status-new">신규주문</span></td>
+                                </tr>
+                                <tr>
+                                    <td>REQ-20251206-003</td>
+                                    <td>Lotte Mart</td>
+                                    <td>Bulk Food Containers</td>
+                                    <td>2025-12-06</td>
+                                    <td><span class="status-badge status-pending">승인대기</span></td>
+                                </tr>
+                                <tr>
+                                    <td>ORD-20251205-012</td>
+                                    <td>Coupang</td>
+                                    <td>USB Mini Fan (500ea)</td>
+                                    <td>2025-12-05</td>
+                                    <td><span class="status-badge status-shipping">배송중</span></td>
+                                </tr>
+                                <tr>
+                                    <td>REQ-20251205-008</td>
+                                    <td>E-Mart</td>
+                                    <td>Premium Speakers</td>
+                                    <td>2025-12-05</td>
+                                    <td><span class="status-badge status-completed">승인완료</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- New Partners -->
+                <div class="scm-card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="font-size: 1.1rem;">신규 가입 파트너</h3>
+                        <a href="#" style="font-size: 0.85rem; color: var(--scm-primary); text-decoration: none;">관리
+                            ></a>
+                    </div>
+                    <ul style="list-style: none; padding: 0;">
+                        <li
+                            style="padding: 0.8rem 0; border-bottom: 1px solid #eee; display: flex; align-items: center;">
+                            <div
+                                style="width: 32px; height: 32px; background: #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 0.8rem;">
+                                K</div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 0.9rem;">K-Mart</div>
+                                <div style="font-size: 0.75rem; color: #888;">2025-12-06 가입</div>
+                            </div>
+                        </li>
+                        <li
+                            style="padding: 0.8rem 0; border-bottom: 1px solid #eee; display: flex; align-items: center;">
+                            <div
+                                style="width: 32px; height: 32px; background: #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 0.8rem;">
+                                H</div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 0.9rem;">HomePlus Ilsan</div>
+                                <div style="font-size: 0.75rem; color: #888;">2025-12-05 가입</div>
+                            </div>
+                        </li>
+                        <li style="padding: 0.8rem 0; display: flex; align-items: center;">
+                            <div
+                                style="width: 32px; height: 32px; background: #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 0.8rem;">
+                                G</div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 0.9rem;">GS Retail</div>
+                                <div style="font-size: 0.75rem; color: #888;">2025-12-04 가입</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function (event) {
+            const sidebar = document.getElementById('scmSidebar');
+            const menuBtn = document.querySelector('.mobile-menu-btn');
+
+            if (window.innerWidth <= 768 &&
+                sidebar.classList.contains('active') &&
+                !sidebar.contains(event.target) &&
+                !menuBtn.contains(event.target)) {
+                sidebar.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+
+</html>
