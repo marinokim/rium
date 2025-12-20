@@ -237,59 +237,96 @@ router.delete('/range', requireAdmin, async (req, res) => {
 // Get all products with optional category filter (Public)
 router.get('/', async (req, res) => {
     try {
-        const { category, search, sort, isNew, page = 1, limit = 20 } = req.query
-        const offset = (page - 1) * limit
+        const { category, search, sort, isNew } = req.query
 
-        let queryCode = `
-      SELECT p.*, c.name as category_name
-      FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
-      WHERE 1=1
-    `
-        const params = []
+        // count query
+        // Reconstruct query for count
+        // Note: This is a bit inefficient to rebuild strings but safe for now.
+        // Better to separate filter logic builder.
+
+        let countQuery = `
+          SELECT COUNT(*) as total
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          WHERE 1=1
+        `
+
+        // Re-apply filters for count (Need to duplicate logic or refactor)
+        // Refactoring to common function would be best, but for now inline to minimize drift risk.
+        // Actually, let's reuse the 'where clause' logic if possible.
+        // The 'query' variable has SELECT ... FROM ... WHERE 1=1 ... AND ...
+        // We can extract the FROM/WHERE part? 
+        // Or just re-run the logic cleanly.
+
+        // Let's do it cleanly:
+        let whereClause = 'WHERE 1=1'
+        const countParams = []
+        const dataParams = []
 
         if (req.query.includeUnavailable !== 'true') {
-            queryCode += ` AND p.is_available = true`
+            whereClause += ` AND p.is_available = true`
         }
 
         if (category) {
-            params.push(category)
-            queryCode += ` AND c.slug = $${params.length}`
+            countParams.push(category)
+            dataParams.push(category)
+            whereClause += ` AND c.slug = $${countParams.length}`
         }
 
         if (isNew === 'true') {
-            queryCode += ` AND p.is_new = true`
+            whereClause += ` AND p.is_new = true`
         }
 
         if (search) {
-            params.push(`%${search}%`)
-            queryCode += ` AND (p.brand ILIKE $${params.length} OR p.model_name ILIKE $${params.length} OR p.model_no ILIKE $${params.length})`
+            countParams.push(`%${search}%`)
+            dataParams.push(`%${search}%`)
+            whereClause += ` AND (p.brand ILIKE $${countParams.length} OR p.model_name ILIKE $${countParams.length} OR p.model_no ILIKE $${countParams.length})`
         }
 
-        // --- Count Query for Pagination ---
-        const countQueryCode = queryCode.replace('SELECT p.*, c.name as category_name', 'SELECT COUNT(*)::int as total')
-        const countResult = await pool.query(countQueryCode, params)
-        const totalItems = countResult.rows[0].total
+        const limitVal = parseInt(req.query.limit) || 20
+        const pageVal = parseInt(req.query.page) || 1
+        const offset = (pageVal - 1) * limitVal
 
-        // --- Main Query with Sort and Limit ---
+        // Execution
+        const totalResult = await pool.query(`
+            SELECT COUNT(*) as total 
+            FROM products p 
+            LEFT JOIN categories c ON p.category_id = c.id 
+            ${whereClause}
+        `, countParams)
+
+        const total = parseInt(totalResult.rows[0].total)
+
+        // Data Query
+        let dataQuery = `
+            SELECT p.*, c.name as category_name
+            FROM products p
+            LEFT JOIN categories c ON p.category_id = c.id
+            ${whereClause}
+        `
+
         if (sort === 'newest' || !sort) {
-            queryCode += ' ORDER BY p.id DESC'
+            dataQuery += ' ORDER BY p.id DESC'
         } else if (sort === 'display_order') {
-            queryCode += ' ORDER BY p.display_order DESC, p.created_at DESC'
+            dataQuery += ' ORDER BY p.display_order DESC, p.created_at DESC'
         } else if (sort === 'price_asc') {
-            queryCode += ' ORDER BY p.b2b_price ASC NULLS LAST'
+            dataQuery += ' ORDER BY p.b2b_price ASC NULLS LAST'
         } else if (sort === 'price_desc') {
-            queryCode += ' ORDER BY p.b2b_price DESC NULLS LAST'
+            dataQuery += ' ORDER BY p.b2b_price DESC NULLS LAST'
         } else {
-            queryCode += ' ORDER BY p.id DESC'
+            dataQuery += ' ORDER BY p.id DESC'
         }
 
-        queryCode += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`
-        params.push(limit, offset)
+        // Add Limit/Offset
+        dataParams.push(limitVal)
+        dataQuery += ` LIMIT $${dataParams.length}`
 
-        const result = await pool.query(queryCode, params)
+        dataParams.push(offset)
+        dataQuery += ` OFFSET $${dataParams.length}`
 
-        // Sanitize image URLs
+        const result = await pool.query(dataQuery, dataParams)
+
+        // Sanitize image URLs (remove leading/trailing spaces)
         const products = result.rows.map(p => ({
             ...p,
             image_url: p.image_url ? p.image_url.trim() : p.image_url
@@ -298,10 +335,10 @@ router.get('/', async (req, res) => {
         res.json({
             products,
             pagination: {
-                totalItems,
-                totalPages: Math.ceil(totalItems / limit),
-                currentPage: Number(page),
-                itemsPerPage: Number(limit)
+                total,
+                page: pageVal,
+                limit: limitVal,
+                totalPages: Math.ceil(total / limitVal)
             }
         })
     } catch (error) {
