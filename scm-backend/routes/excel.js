@@ -442,21 +442,24 @@ router.post('/update-source', upload.single('file'), (req, res) => {
 // Generate Excel Proposal (USING EXCELJS - Ported from Arontec-SCM Frontend Logic)
 router.post('/download/proposal', async (req, res) => {
     try {
-        const { title, items } = req.body
-        console.log('Download Proposal Request Body:', JSON.stringify(req.body, null, 2)) // DEBUG LOG
+        let { title, items } = req.body
+
+        // Handle case where items is a string (multipart/form-data or urlencoded form)
+        // Looping parse to handle potential double-stringification
+        try {
+            while (typeof items === 'string') {
+                items = JSON.parse(items)
+            }
+        } catch (e) {
+            console.error('Failed to parse items string:', e)
+            return res.status(400).json({ error: 'Invalid items JSON string' })
+        }
+
+        console.log('Download Proposal Request Body (Parsed):', JSON.stringify({ title, itemsCount: items?.length }), null, 2)
 
         if (!items || !Array.isArray(items)) {
-            console.error('Items missing or invalid:', items)
-            return res.status(400).json({
-                error: 'Items array is required',
-                debug_info: {
-                    received_type: typeof items,
-                    is_array: Array.isArray(items),
-                    body_keys: Object.keys(req.body), // What keys did we actually receive?
-                    content_type: req.headers['content-type'], // Did the form send the right headers?
-                    items_sample: items ? JSON.stringify(items).substring(0, 50) : 'null'
-                }
-            })
+            console.error('Items missing or invalid after parse:', typeof items)
+            return res.status(400).json({ error: 'Items array is required' })
         }
 
         // Helper to hydrate items if they are missing details (only have productId)
