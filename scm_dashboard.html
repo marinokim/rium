@@ -455,8 +455,8 @@
             <!-- Recent Orders (Now Proposal History) -->
             <div class="scm-card" style="margin-top: 2rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <h3 style="font-size: 1.1rem;">견적 의뢰 내역</h3>
-                    <a href="scm_orders.html"
+                    <h3 style="font-size: 1.1rem;">제안서 내역</h3>
+                    <a href="scm_orders.html?mode=my"
                         style="font-size: 0.85rem; color: var(--primary-color); text-decoration: none;">전체보기 ></a>
                 </div>
                 <table class="scm-table">
@@ -467,11 +467,12 @@
                             <th>상품수</th>
                             <th>의뢰일자</th>
                             <th>상태</th>
+                            <th>관리</th>
                         </tr>
                     </thead>
                     <tbody id="proposalList">
                         <tr>
-                            <td colspan="5" style="text-align: center; padding: 2rem;">데이터를 불러오는 중...</td>
+                            <td colspan="6" style="text-align: center; padding: 2rem;">데이터를 불러오는 중...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -488,53 +489,100 @@
                         try { items = JSON.parse(items); } catch (e) { items = []; }
                     }
 
+                    // FORM SUBMISSION (Bypass CORS)
+                    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                        ? 'http://localhost:5003'
+                        : 'https://rium-scm-backend.onrender.com';
+
+                    try {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = `${API_BASE}/api/excel/download/proposal`;
+
+                        const titleInput = document.createElement('input');
+                        titleInput.type = 'hidden';
+                        titleInput.name = 'title';
+                        titleInput.value = item.title || '제안서';
+                        form.appendChild(titleInput);
+
+                        const itemsInput = document.createElement('input');
+                        itemsInput.type = 'hidden';
+                        itemsInput.name = 'items';
+                        // Handle potential double stringification if needed, but here we pass the object
+                        itemsInput.value = JSON.stringify(items);
+                        form.appendChild(itemsInput);
+
+                        document.body.appendChild(form);
+                        form.submit();
+                        document.body.removeChild(form);
+
+                    } catch (err) {
+                        console.error('Download prompt error:', err);
+                        alert('다운로드 요청 실패: ' + err.message);
+                    }
+                };
+
+                // Delete Proposal Helper
+                window.deleteProposal = async function (id) {
+                    if (!confirm('정말 삭제하시겠습니까?')) return;
+
                     const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
                         ? 'http://localhost:5003'
                         : 'https://rium-scm-backend.onrender.com';
 
                     try {
                         const token = localStorage.getItem('token');
-                        const res = await fetch(`${API_BASE}/api/excel/download/proposal`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${token}`
-                            },
-                            body: JSON.stringify({
-                                title: item.title || '제안서',
-                                items: items
-                            })
+                        const res = await fetch(`${API_BASE}/api/proposals/${id}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
                         });
 
-                        if (!res.ok) throw new Error('Excel generation failed');
-
-                        const blob = await res.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        // Sanitize filename
-                        const safeTitle = (item.title || '제안서').replace(/[^a-zA-Z0-9가-힣\s-_]/g, '').trim();
-                        a.download = `${safeTitle}.xlsx`;
-                        document.body.appendChild(a);
-                        a.click();
-                        a.remove();
-                        window.URL.revokeObjectURL(url);
-
+                        if (res.ok) {
+                            alert('삭제되었습니다.');
+                            location.reload();
+                        } else {
+                            const data = await res.json();
+                            alert('삭제 실패: ' + (data.error || '알 수 없는 오류'));
+                        }
                     } catch (e) {
-                        console.error('Download failed:', e);
-                        alert('엑셀 다운로드에 실패했습니다.');
+                        console.error(e);
+                        alert('삭제 중 오류가 발생했습니다.');
                     }
-                };
+                }
 
-                async function loadMyProposals() {
+                // Initial Load
+                document.addEventListener('DOMContentLoaded', async () => {
+                    // Check Auth
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+
+                    const userStr = localStorage.getItem('user');
+                    if (userStr) {
+                        try {
+                            const user = JSON.parse(userStr);
+                            // Update Sidebar User Info
+                            document.querySelector('.scm-user-info h4').textContent = user.username || 'Partner';
+                            document.querySelector('.scm-user-info p').textContent = user.company_name || 'Company';
+
+                            // Show Admin Button if role is ADMIN
+                            if (user.role === 'ADMIN') {
+                                document.getElementById('btnAdminMode').style.display = 'flex';
+                            }
+                        } catch (e) {
+                            console.error('User parse error', e);
+                        }
+                    }
+
+                    // Fetch Stats & Recent Orders
+                    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                        ? 'http://localhost:5003'
+                        : 'https://rium-scm-backend.onrender.com';
+
                     try {
-                        const token = localStorage.getItem('token');
-                        if (!token) return;
-
-                        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                            ? 'http://localhost:5003'
-                            : 'https://rium-scm-backend.onrender.com';
-
+                        // 1. Fetch My Proposals (Recent 5)
                         const res = await fetch(`${API_BASE}/api/proposals/my`, {
                             headers: { 'Authorization': `Bearer ${token}` }
                         });
@@ -542,44 +590,151 @@
                         if (res.ok) {
                             const data = await res.json();
                             const list = data.history || [];
+                            window.recentProposals = list; // Save for download handler
+
                             const tbody = document.getElementById('proposalList');
-
                             if (list.length === 0) {
-                                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">의뢰 내역이 없습니다.</td></tr>';
-                                return;
+                                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">제안 내역이 없습니다.</td></tr>';
+                            } else {
+                                // Show top 5
+                                tbody.innerHTML = list.slice(0, 5).map((item, index) => {
+                                    const date = new Date(item.created_at).toLocaleDateString();
+
+                                    // Parse items for display
+                                    let items = [];
+                                    try { items = typeof item.items === 'string' ? JSON.parse(item.items) : (item.items || []); } catch (e) { }
+
+                                    const count = items.length;
+                                    let displayTitle = item.title;
+
+                                    // Format: "FirstItemName 외 N개"
+                                    if (count > 0) {
+                                        const firstItemName = items[0].productName || items[0].name || items[0].modelName || '상품';
+                                        if (count > 1) {
+                                            displayTitle = `${firstItemName} 외 ${count - 1}건`;
+                                        } else {
+                                            displayTitle = firstItemName;
+                                        }
+                                    }
+
+                                    return `
+                                        <tr>
+                                            <td>${item.id}</td>
+                                            <td style="font-weight: 500;">
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    ${displayTitle}
+                                                    <i class="fas fa-file-excel" style="color: #217346; cursor: pointer;" onclick="downloadProposalExcel(${index})" title="엑셀 다운로드"></i>
+                                                </div>
+                                            </td>
+                                            <td>${count}개</td>
+                                            <td>${date}</td>
+                                            <td><span class="scm-status status-new">접수완료</span></td>
+                                            <td>
+                                                <button class="scm-icon-btn" onclick="deleteProposal(${item.id})" title="삭제" style="border: none; background: none; color: #ff5252; font-size: 1rem;">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('');
+
+                                // Update Stats (Simple count from list)
+                                document.querySelector('.scm-stat-info p').textContent = list.length;
                             }
-
-                            // Safely parse items
-                            window.recentProposals = list; // Store for download
-
-                            tbody.innerHTML = list.slice(0, 5).map((item, index) => {
-                                const date = new Date(item.created_at).toLocaleDateString();
-                                let items = item.items || [];
-                                if (typeof items === 'string') {
-                                    try { items = JSON.parse(items); } catch (e) { items = []; }
-                                }
-
-                                return `
-                                    <tr>
-                                        <td>${list.length - index}</td>
-                                        <td>${item.title || '제목 없음'} <i class="fas fa-file-excel" style="cursor:pointer; color:green; margin-left:5px;" onclick="downloadProposalExcel(${index})" title="Excel 다운로드"></i></td>
-                                        <td>${items.length}개</td>
-                                        <td>${date}</td>
-                                        <td><span class="status-badge status-pending">접수완료</span></td>
-                                    </tr>
-                                `;
-                            }).join('');
-
-                            // Update Stats (Optional)
-                            // document.querySelector('.scm-stat-card:first-child p').innerText = list.length;
                         }
                     } catch (e) {
-                        console.error('Failed to load proposals:', e);
-                        document.getElementById('proposalList').innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">불러오기 실패</td></tr>';
+                        console.error('Fetch error:', e);
                     }
-                }
+                });
+            </script>
+            'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+            title: item.title || '제안서',
+            items: items
+            })
+            });
 
-                document.addEventListener('DOMContentLoaded', loadMyProposals);
+            if (!res.ok) throw new Error('Excel generation failed');
+
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            // Sanitize filename
+            const safeTitle = (item.title || '제안서').replace(/[^a-zA-Z0-9가-힣\s-_]/g, '').trim();
+            a.download = `${safeTitle}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+
+            } catch (e) {
+            console.error('Download failed:', e);
+            alert('엑셀 다운로드에 실패했습니다.');
+            }
+            };
+
+            async function loadMyProposals() {
+            try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:5003'
+            : 'https://rium-scm-backend.onrender.com';
+
+            const res = await fetch(`${API_BASE}/api/proposals/my`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (res.ok) {
+            const data = await res.json();
+            const list = data.history || [];
+            const tbody = document.getElementById('proposalList');
+
+            if (list.length === 0) {
+            tbody.innerHTML = '<tr>
+                <td colspan="5" style="text-align: center; padding: 2rem;">의뢰 내역이 없습니다.</td>
+            </tr>';
+            return;
+            }
+
+            // Safely parse items
+            window.recentProposals = list; // Store for download
+
+            tbody.innerHTML = list.slice(0, 5).map((item, index) => {
+            const date = new Date(item.created_at).toLocaleDateString();
+            let items = item.items || [];
+            if (typeof items === 'string') {
+            try { items = JSON.parse(items); } catch (e) { items = []; }
+            }
+
+            return `
+            <tr>
+                <td>${list.length - index}</td>
+                <td>${item.title || '제목 없음'} <i class="fas fa-file-excel"
+                        style="cursor:pointer; color:green; margin-left:5px;" onclick="downloadProposalExcel(${index})"
+                        title="Excel 다운로드"></i></td>
+                <td>${items.length}개</td>
+                <td>${date}</td>
+                <td><span class="status-badge status-pending">접수완료</span></td>
+            </tr>
+            `;
+            }).join('');
+
+            // Update Stats (Optional)
+            // document.querySelector('.scm-stat-card:first-child p').innerText = list.length;
+            }
+            } catch (e) {
+            console.error('Failed to load proposals:', e);
+            document.getElementById('proposalList').innerHTML = '<tr>
+                <td colspan="5" style="text-align: center; color: red;">불러오기 실패</td>
+            </tr>';
+            }
+            }
+
+            document.addEventListener('DOMContentLoaded', loadMyProposals);
             </script>
 
             <!-- Notices -->
