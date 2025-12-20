@@ -510,8 +510,11 @@
                             const urlParams = new URLSearchParams(window.location.search);
                             const mode = urlParams.get('mode');
 
-                            // If mode is 'my', force personal list. Otherwise if Admin, show all.
-                            const endpoint = (isAdmin && mode !== 'my') ? '/api/proposals/all' : '/api/proposals/my';
+                            // Strictly enforce 'my' mode if param exists
+                            const endpoint = (mode === 'my') ? '/api/proposals/my' : (isAdmin ? '/api/proposals/all' : '/api/proposals/my');
+
+                            // Debug log
+                            console.log('Mode:', mode, 'IsAdmin:', isAdmin, 'Endpoint:', endpoint);
 
                             const res = await fetch(`${API_BASE}${endpoint}`, {
                                 headers: { 'Authorization': `Bearer ${token}` }
