@@ -325,7 +325,8 @@
 <body class="scm-body">
 
     <!-- Sidebar -->
-    <aside class="scm-sidebar" id="scmSidebar">
+    <aside class="scm-sidebar" id="scmSidebar"
+        style="position: sticky; top: 0; height: 100vh; z-index: 100; overflow-y: auto;">
         <div class="scm-logo-area">
             <a href="index.html">RIUM<br>SCM</a>
         </div>
@@ -415,7 +416,7 @@
                 <div class="scm-card scm-stat-card">
                     <div class="scm-stat-info">
                         <h3>나의 제안서</h3>
-                        <p>12</p>
+                        <p>0</p>
                     </div>
                     <div class="scm-stat-icon bg-primary-light">
                         <i class="fas fa-file-alt"></i>
@@ -455,13 +456,21 @@
             <!-- Recent Orders (Now Proposal History) -->
             <div class="scm-card" style="margin-top: 2rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <h3 style="font-size: 1.1rem;">제안서 내역</h3>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <h3 style="font-size: 1.1rem; margin: 0;">제안서 내역</h3>
+                        <button id="btnDeleteSelected" onclick="deleteSelectedProposals()" class="scm-btn scm-btn-sm"
+                            style="display: none; background-color: #ff5252; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
+                            <i class="fas fa-trash-alt"></i> 선택 삭제
+                        </button>
+                    </div>
                     <a href="scm_orders.html?mode=my"
                         style="font-size: 0.85rem; color: var(--primary-color); text-decoration: none;">전체보기 ></a>
                 </div>
                 <table class="scm-table">
                     <thead>
                         <tr>
+                            <th style="width: 40px;"><input type="checkbox" id="checkAll"
+                                    onchange="toggleAllCheckboxes(this)"></th>
                             <th>No</th>
                             <th>제안서명</th>
                             <th>상품수</th>
@@ -472,7 +481,7 @@
                     </thead>
                     <tbody id="proposalList">
                         <tr>
-                            <td colspan="6" style="text-align: center; padding: 2rem;">데이터를 불러오는 중...</td>
+                            <td colspan="7" style="text-align: center; padding: 2rem;">데이터를 불러오는 중...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -522,27 +531,65 @@
                     }
                 };
 
-                // Delete Proposal Helper
+                // Delete Single Proposal Helper
                 window.deleteProposal = async function (id) {
                     if (!confirm('정말 삭제하시겠습니까?')) return;
+                    await performDelete([id]);
+                }
 
+                // Delete Selected Logic
+                window.toggleAllCheckboxes = function (source) {
+                    const checkboxes = document.querySelectorAll('.proposal-check');
+                    checkboxes.forEach(cb => cb.checked = source.checked);
+                    updateDeleteButtonState();
+                }
+
+                window.updateDeleteButtonState = function () {
+                    const checkedCount = document.querySelectorAll('.proposal-check:checked').length;
+                    const btn = document.getElementById('btnDeleteSelected');
+                    if (checkedCount > 0) {
+                        btn.style.display = 'inline-block';
+                        btn.textContent = `${checkedCount}개 삭제`;
+                    } else {
+                        btn.style.display = 'none';
+                    }
+                }
+
+                window.deleteSelectedProposals = async function () {
+                    const checked = document.querySelectorAll('.proposal-check:checked');
+                    if (checked.length === 0) return;
+
+                    if (!confirm(`선택한 ${checked.length}개의 제안서를 삭제하시겠습니까?`)) return;
+
+                    const ids = Array.from(checked).map(cb => cb.value);
+                    await performDelete(ids);
+                }
+
+                async function performDelete(ids) {
                     const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
                         ? 'http://localhost:5003'
                         : 'https://rium-scm-backend.onrender.com';
+                    const token = localStorage.getItem('token');
 
                     try {
-                        const token = localStorage.getItem('token');
-                        const res = await fetch(`${API_BASE}/api/proposals/${id}`, {
-                            method: 'DELETE',
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
+                        // Parallel Delete Requests (Backend doesn't have bulk delete yet, so we loop)
+                        // Ideally we should add a bulk delete endpoint, but this works for now.
+                        const promises = ids.map(id =>
+                            fetch(`${API_BASE}/api/proposals/${id}`, {
+                                method: 'DELETE',
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            })
+                        );
 
-                        if (res.ok) {
+                        const results = await Promise.all(promises);
+                        const allOk = results.every(r => r.ok);
+
+                        if (allOk) {
                             alert('삭제되었습니다.');
                             location.reload();
                         } else {
-                            const data = await res.json();
-                            alert('삭제 실패: ' + (data.error || '알 수 없는 오류'));
+                            alert('일부 항목 삭제에 실패했습니다.');
+                            location.reload();
                         }
                     } catch (e) {
                         console.error(e);
@@ -594,7 +641,7 @@
 
                             const tbody = document.getElementById('proposalList');
                             if (list.length === 0) {
-                                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">제안 내역이 없습니다.</td></tr>';
+                                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">제안 내역이 없습니다.</td></tr>';
                             } else {
                                 // Show top 5
                                 tbody.innerHTML = list.slice(0, 5).map((item, index) => {
@@ -619,6 +666,7 @@
 
                                     return `
                                         <tr>
+                                            <td><input type="checkbox" class="proposal-check" value="${item.id}" onchange="updateDeleteButtonState()"></td>
                                             <td>${item.id}</td>
                                             <td style="font-weight: 500;">
                                                 <div style="display: flex; align-items: center; gap: 8px;">
@@ -646,95 +694,6 @@
                         console.error('Fetch error:', e);
                     }
                 });
-            </script>
-            'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-            title: item.title || '제안서',
-            items: items
-            })
-            });
-
-            if (!res.ok) throw new Error('Excel generation failed');
-
-            const blob = await res.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            // Sanitize filename
-            const safeTitle = (item.title || '제안서').replace(/[^a-zA-Z0-9가-힣\s-_]/g, '').trim();
-            a.download = `${safeTitle}.xlsx`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            window.URL.revokeObjectURL(url);
-
-            } catch (e) {
-            console.error('Download failed:', e);
-            alert('엑셀 다운로드에 실패했습니다.');
-            }
-            };
-
-            async function loadMyProposals() {
-            try {
-            const token = localStorage.getItem('token');
-            if (!token) return;
-
-            const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://localhost:5003'
-            : 'https://rium-scm-backend.onrender.com';
-
-            const res = await fetch(`${API_BASE}/api/proposals/my`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (res.ok) {
-            const data = await res.json();
-            const list = data.history || [];
-            const tbody = document.getElementById('proposalList');
-
-            if (list.length === 0) {
-            tbody.innerHTML = '<tr>
-                <td colspan="5" style="text-align: center; padding: 2rem;">의뢰 내역이 없습니다.</td>
-            </tr>';
-            return;
-            }
-
-            // Safely parse items
-            window.recentProposals = list; // Store for download
-
-            tbody.innerHTML = list.slice(0, 5).map((item, index) => {
-            const date = new Date(item.created_at).toLocaleDateString();
-            let items = item.items || [];
-            if (typeof items === 'string') {
-            try { items = JSON.parse(items); } catch (e) { items = []; }
-            }
-
-            return `
-            <tr>
-                <td>${list.length - index}</td>
-                <td>${item.title || '제목 없음'} <i class="fas fa-file-excel"
-                        style="cursor:pointer; color:green; margin-left:5px;" onclick="downloadProposalExcel(${index})"
-                        title="Excel 다운로드"></i></td>
-                <td>${items.length}개</td>
-                <td>${date}</td>
-                <td><span class="status-badge status-pending">접수완료</span></td>
-            </tr>
-            `;
-            }).join('');
-
-            // Update Stats (Optional)
-            // document.querySelector('.scm-stat-card:first-child p').innerText = list.length;
-            }
-            } catch (e) {
-            console.error('Failed to load proposals:', e);
-            document.getElementById('proposalList').innerHTML = '<tr>
-                <td colspan="5" style="text-align: center; color: red;">불러오기 실패</td>
-            </tr>';
-            }
-            }
-
-            document.addEventListener('DOMContentLoaded', loadMyProposals);
             </script>
 
             <!-- Notices -->
