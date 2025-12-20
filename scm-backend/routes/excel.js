@@ -556,6 +556,8 @@ router.post('/download/proposal', async (req, res) => {
 
             // Map frontend keys to internal keys
             const imgUrl = item.imageUrl || item.image_url || item.image || item.ImageURL || ''
+            // User Request: 'Model Name' column should show 'Model Number'
+            const modelNum = item.modelNo || item.model_no || item.modelName || item.model || ''
             const modelName = item.modelName || item.model_name || item.model || item.modelNo || item.ModelName || ''
             const pName = item.productName || item.name || item.product_name || item.Name || ''
             const supplyPr = item.supplyPrice || item.supply_price || item.price || item.b2b_price || item.SupplyPrice
@@ -574,7 +576,7 @@ router.post('/download/proposal', async (req, res) => {
                 id: item.id || '',
                 name: item.brand ? `[${item.brand}] ${modelName}` : (pName || modelName),
                 image: '', // Placeholder
-                model: modelName,
+                model: modelNum, // Use Model Number here
                 option: item.productOptions || item.product_options || item.option || '',
                 desc: item.description || '', // Revert to standard
                 manufacturer: item.manufacturer || '',
