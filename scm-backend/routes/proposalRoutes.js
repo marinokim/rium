@@ -54,4 +54,27 @@ router.get('/all', requireAuth, requireAdmin, async (req, res) => {
     }
 })
 
+// Delete proposal history
+router.delete('/:id', requireAuth, async (req, res) => {
+    const { id } = req.params
+    const userId = req.session.userId
+
+    try {
+        // Only allow deleting own history unless admin (but here restricted to owner for safety from dashboard)
+        const result = await pool.query(
+            'DELETE FROM proposal_history WHERE id = $1 AND user_id = $2 RETURNING *',
+            [id, userId]
+        )
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Proposal not found or unauthorized' })
+        }
+
+        res.json({ success: true, message: 'Proposal deleted' })
+    } catch (error) {
+        console.error('Error deleting proposal:', error)
+        res.status(500).json({ error: 'Failed to delete proposal' })
+    }
+})
+
 export default router

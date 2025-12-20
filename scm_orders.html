@@ -507,7 +507,11 @@
                                 : 'https://rium-scm-backend.onrender.com';
 
                             // Determine Endpoint
-                            const endpoint = isAdmin ? '/api/proposals/all' : '/api/proposals/my';
+                            const urlParams = new URLSearchParams(window.location.search);
+                            const mode = urlParams.get('mode');
+                            
+                            // If mode is 'my', force personal list. Otherwise if Admin, show all.
+                            const endpoint = (isAdmin && mode !== 'my') ? '/api/proposals/all' : '/api/proposals/my';
 
                             const res = await fetch(`${API_BASE}${endpoint}`, {
                                 headers: { 'Authorization': `Bearer ${token}` }
