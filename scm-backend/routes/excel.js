@@ -446,8 +446,17 @@ router.post('/download/proposal', async (req, res) => {
         console.log('Download Proposal Request Body:', JSON.stringify(req.body, null, 2)) // DEBUG LOG
 
         if (!items || !Array.isArray(items)) {
-            console.error('Items is missing or not an array')
-            return res.status(400).json({ error: 'Items array is required' })
+            console.error('Items missing or invalid:', items)
+            return res.status(400).json({
+                error: 'Items array is required',
+                debug_info: {
+                    received_type: typeof items,
+                    is_array: Array.isArray(items),
+                    body_keys: Object.keys(req.body), // What keys did we actually receive?
+                    content_type: req.headers['content-type'], // Did the form send the right headers?
+                    items_sample: items ? JSON.stringify(items).substring(0, 50) : 'null'
+                }
+            })
         }
 
         // Helper to hydrate items if they are missing details (only have productId)
