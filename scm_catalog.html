@@ -976,9 +976,18 @@
                 productName: i.name || i.productName || i.modelName || '상품',
                 name: i.name || i.productName,
                 modelName: i.model_name || i.modelName || i.modelNo,
+                modelNo: i.model_no || i.modelNo,
                 imageUrl: i.image || i.imageUrl,
                 price: i.price,
-                consumerPrice: i.consumerPrice
+                consumerPrice: i.consumerPrice,
+                // Excel Fields
+                manufacturer: i.manufacturer,
+                origin: i.origin,
+                brand: i.brand,
+                description: i.description,
+                productOptions: i.options || i.productOptions,
+                shippingFee: i.shippingFee || i.shipping_fee,
+                status: i.status || i.is_available,
             }));
 
             try {
