@@ -703,6 +703,17 @@
                     btn.className = 'filter-btn';
                     btn.textContent = cat.name;
                     btn.dataset.id = cat.id;
+
+                    // Apply Color if exists
+                    if (cat.color) {
+                        btn.style.backgroundColor = cat.color;
+                        btn.style.borderColor = cat.color;
+                        // Determine text color for contrast (simple logic: white text usually safe for colored buttons)
+                        if (cat.color !== '#ffffff' && cat.color !== '#fff') {
+                            btn.style.color = '#fff';
+                        }
+                    }
+
                     btn.onclick = () => filterCategory(btn, cat.id);
                     container.appendChild(btn);
                 });
@@ -1102,15 +1113,18 @@
 
                             const token = localStorage.getItem('token');
 
-                            // FORM SUBMISSION STRATEGY (Bypass CORS)
-                            const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                                ? 'http://localhost:5003'
-                                : 'https://rium-scm-backend.onrender.com';
+                            // 엑셀 다운로드 (Backend로 요청)
+                            // const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                            //     ? 'http://localhost:5003'
+                            //     : 'https://rium-scm-backend.onrender.com';
+
+                            // FORCE REMOTE BACKEND FOR VERIFICATION (Bypass Local Stale Backend)
+                            const API_URL = 'https://rium-scm-backend.onrender.com';
 
                             const form = document.createElement('form');
                             form.method = 'POST';
                             form.action = `${API_URL}/api/excel/download/proposal`;
-                            // form.target = '_blank'; // Optional: Open in new tab if debugging, but usually bad UX for download
+                            // form.target = '_blank';
 
                             const titleInput = document.createElement('input');
                             titleInput.type = 'hidden';
