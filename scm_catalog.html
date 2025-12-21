@@ -681,7 +681,8 @@
         const loadCategories = async () => {
             try {
                 const data = await apiFetch('/api/categories');
-                const categories = data.categories || [];
+                // Backend returns array directly, handle both cases for safety (Fix for empty catalog)
+                const categories = Array.isArray(data) ? data : (data.categories || []);
 
                 // Apply Hardcoded Colors
                 categories.forEach(c => {
