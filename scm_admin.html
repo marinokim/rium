@@ -579,12 +579,17 @@
                             let statusBadge = '<span class="status-badge status-pending">승인대기</span>';
                             if (p.status === 'approved') statusBadge = '<span class="status-badge status-active">승인완료</span>';
                             else if (p.status === 'rejected') statusBadge = '<span class="status-badge status-red">반려됨</span>';
+                            else if (p.status === 'shipping') statusBadge = '<span class="status-badge status-shipping">배송중</span>';
+                            else if (p.status === 'completed') statusBadge = '<span class="status-badge status-completed">완료</span>';
+
+                            // Use quote_number as title
+                            const displayTitle = p.quote_number || p.title || '제안서';
 
                             return `
                                 <tr>
-                                    <td>PROP-${p.id}</td>
+                                    <td>${p.quote_number || 'UNKNOWN'}</td>
                                     <td>${p.company_name || '알수없음'}</td>
-                                    <td>${p.title}</td>
+                                    <td>${displayTitle}</td>
                                     <td>${date}</td>
                                     <td>${statusBadge}</td>
                                 </tr>

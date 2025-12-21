@@ -12,17 +12,19 @@ router.get('/stats', requireAdmin, async (req, res) => {
         // 1. Stats Counters
         const pendingMembers = await pool.query('SELECT COUNT(*) FROM users WHERE is_approved = false AND is_admin = false')
         const activePartners = await pool.query('SELECT COUNT(*) FROM users WHERE is_approved = true AND is_admin = false')
-        const pendingQuotes = await pool.query("SELECT COUNT(*) FROM proposals WHERE status = 'pending'")
+        const pendingQuotes = await pool.query("SELECT COUNT(*) FROM quotes WHERE status = 'pending'")
 
-        // Total Proposals (Used as proxy for revenue or activity for now, user asked for real data)
-        const totalProposals = await pool.query('SELECT COUNT(*) FROM proposals')
+        // Total Proposals (Used as proxy for revenue or activity for now)
+        // Using 'quotes' table as 'proposals' logic
+        const totalProposals = await pool.query('SELECT COUNT(*) FROM quotes')
 
         // 2. Recent Proposals (Limit 5) - "Proposal Request Status"
+        // Using quotes table. 
         const recentProposalsRes = await pool.query(`
-            SELECT p.id, p.title, p.created_at, p.status, u.company_name
-            FROM proposals p
-            JOIN users u ON p.user_id = u.id
-            ORDER BY p.created_at DESC
+            SELECT q.id, q.quote_number, q.created_at, q.status, u.company_name
+            FROM quotes q
+            JOIN users u ON q.user_id = u.id
+            ORDER BY q.created_at DESC
             LIMIT 5
         `)
 
