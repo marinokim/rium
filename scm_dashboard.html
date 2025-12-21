@@ -629,7 +629,48 @@
                         : 'https://rium-scm-backend.onrender.com';
 
                     try {
-                        // 1. Fetch My Proposals (Recent 5)
+                        // Fetch Stats & Notices (New Dashboard API)
+                        try {
+                            const dashRes = await fetch(`${API_BASE}/api/dashboard`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            if (dashRes.ok) {
+                                const dashData = await dashRes.json();
+
+                                // 1. Update Stats
+                                if (dashData.stats) {
+                                    const stats = dashData.stats;
+                                    const statCards = document.querySelectorAll('.scm-stat-info p');
+                                    if (statCards.length >= 4) {
+                                        statCards[0].textContent = stats.proposals;
+                                        statCards[1].textContent = stats.pendingQuotes;
+                                        statCards[2].textContent = stats.activeOrders;
+
+                                        // Format Money (e.g. 45M or 45,000,000)
+                                        // User asked for "45M" style, but exact number is better for real data.
+                                        // Let's stick to locale string for accuracy: "₩45,000,000"
+                                        statCards[3].textContent = `₩${stats.monthPerformance.toLocaleString()}`;
+                                    }
+                                }
+
+                                // 2. Update Notifications
+                                const noticeContainer = document.querySelector('.scm-card ul'); // Select the UL inside the Notices card
+                                if (noticeContainer && dashData.notifications) {
+                                    if (dashData.notifications.length === 0) {
+                                        noticeContainer.innerHTML = '<li style="padding: 1rem; text-align: center; color: #aaa;">등록된 공지사항이 없습니다.</li>';
+                                    } else {
+                                        noticeContainer.innerHTML = dashData.notifications.map(n => `
+                                        <li style="padding: 0.8rem 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; font-size: 0.9rem;">
+                                            <span>${n.title}</span>
+                                            <span style="color: #888;">${new Date(n.created_at).toLocaleDateString()}</span>
+                                        </li>
+                                    `).join('');
+                                    }
+                                }
+                            }
+                        } catch (e) { console.error('Dashboard stats error:', e); }
+
+                        // 1. Fetch My Proposals (Recent 5) - Existing Logic for Table
                         const res = await fetch(`${API_BASE}/api/proposals/my`, {
                             headers: { 'Authorization': `Bearer ${token}` }
                         });
