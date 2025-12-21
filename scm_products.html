@@ -773,6 +773,7 @@
 
 
     <script>
+        console.log('Frontend Version: v2 (Force Deploy)');
         const API_BASE = 'https://rium-scm-backend.onrender.com'; // Change to local if needed
         let currentProducts = [];
         let totalItems = 0;
@@ -848,11 +849,11 @@
             try {
                 let url = `/api/products?page=${page}&limit=${itemsPerPage}&sort=id_desc`;
                 // Add Filter
-                const filterCategory = document.getElementById('filterCategory');
                 if (filterCategory && filterCategory.value) {
                     url += `&categoryId=${filterCategory.value}`;
                 }
-                console.log('Loading products:', url); // Debug log
+                // alert(`DEBUG: Loading URL: ${url}\nVal: ${filterCategory ? filterCategory.value : 'null'}`);
+                console.log('Loading products:', url);
 
                 const data = await apiFetch(url);
                 currentProducts = data.products;
