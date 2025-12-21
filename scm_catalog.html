@@ -930,6 +930,17 @@
             };
         }
 
+        // Navigate to Product Detail
+        window.goToDetail = function (productId) {
+            // Save scroll position
+            const scrollPos = document.querySelector('.scm-content').scrollTop;
+            sessionStorage.setItem('catalogScrollPos', scrollPos);
+            sessionStorage.setItem('catalogCategoryId', currentCategoryId);
+            sessionStorage.setItem('catalogSearchQuery', currentSearchQuery);
+
+            location.href = `scm_product_detail.html?id=${productId}`;
+        };
+
         // Proposal Selection (Heart)
         const toggleProposal = async (productId, btn) => {
             // Prevent event bubbling if needed, handled in onclick
@@ -979,9 +990,6 @@
             }
 
             // Find button for fallback scraping context
-            // Using a query selector since we don't have the reference passed easily without changing generic handler,
-            // but usually scraping falls back to defaults if not found.
-            // We can try to find the button in DOM:
             const btn = document.querySelector(`button[onclick="addToCart('${productId}')"]`);
 
             const item = await fetchProductData(productId, btn);
