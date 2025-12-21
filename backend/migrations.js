@@ -40,6 +40,16 @@ export const runMigrations = async () => {
                 END $$;
             `)
 
+            // Add color column to categories if missing
+            await client.query(`
+                DO $$ 
+                BEGIN 
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'categories' AND column_name = 'color') THEN 
+                        ALTER TABLE categories ADD COLUMN color VARCHAR(7) DEFAULT '#ffffff'; 
+                    END IF; 
+                END $$;
+            `)
+
             // Add is_tax_free column to products if missing
             await client.query(`
                 DO $$ 
