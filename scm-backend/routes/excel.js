@@ -119,12 +119,23 @@ router.post('/upload', upload.single('file'), async (req, res) => {
                     if (catRes.rows.length > 0) {
                         categoryId = catRes.rows[0].id
                     } else {
+                        // Slug Check Fallback
                         const slug = categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-                        const newCatRes = await client.query(
-                            'INSERT INTO categories (name, slug) VALUES ($1, $2) RETURNING id',
-                            [categoryName, slug]
-                        )
-                        categoryId = newCatRes.rows[0].id
+                        const slugRes = await client.query('SELECT id FROM categories WHERE slug = $1', [slug])
+
+                        if (slugRes.rows.length > 0) {
+                            categoryId = slugRes.rows[0].id
+                        } else {
+                            // Try Insert (Handle race condition with ON CONFLICT)
+                            const newCatRes = await client.query(
+                                `INSERT INTO categories (name, slug) 
+                                 VALUES ($1, $2) 
+                                 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name 
+                                 RETURNING id`,
+                                [categoryName, slug]
+                            )
+                            categoryId = newCatRes.rows[0].id
+                        }
                     }
                 }
 
