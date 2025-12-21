@@ -779,7 +779,7 @@
         let totalItems = 0;
         let currentPage = 1;
         const itemsPerPage = 20;
-        let currentCategoryId = ''; // Global state for filter
+        window.currentCategoryId = ''; // Explicit Global state
 
         // Robust Handler
         // Robust Handler Removed - using addEventListener below
@@ -801,7 +801,7 @@
                     const debugSpan = document.getElementById('debugFilterId');
                     if (debugSpan) debugSpan.innerText = `ID: ${val}`;
 
-                    currentCategoryId = val;
+                    window.currentCategoryId = val;
                     loadProducts(1);
                 });
             }
@@ -877,10 +877,10 @@
                 // SCM usually needs to see ALL products (Active & Inactive)
                 url += '&includeUnavailable=true';
 
-                if (currentCategoryId) {
-                    url += `&categoryId=${currentCategoryId}`;
+                if (window.currentCategoryId) {
+                    url += `&categoryId=${window.currentCategoryId}`;
                 }
-                console.log('Frontend Version: v4.1 (Include All Status)');
+                console.log('Frontend Version: v12 (Window Scope Fix)');
                 console.log('Loading products:', url);
 
                 const data = await apiFetch(url);
@@ -1446,33 +1446,39 @@
                 const catList = Array.isArray(cats) ? cats : cats.categories;
                 let msg = 'Categories:\n' + catList.map(c => `${c.id}=${c.name}`).join(', ') + '\n\n';
 
-                // Fetch first product WITH CURRENT FILTER
-                let url = '/api/products?limit=1&includeUnavailable=true';
-                if (currentCategoryId) {
-                    url += `&categoryId=${currentCategoryId}`;
-                    msg += `[Filtering by ID: ${currentCategoryId}]\n`;
-                } else {
-                    msg += '[No Filter Selected]\n';
-                }
+                // Debug Function
+                window.inspectData = async () => {
+                    try {
+                        const cats = await apiFetch('/api/categories');
+                        const catList = Array.isArray(cats) ? cats : cats.categories;
+                        let msg = 'Categories:\n' + catList.map(c => `${c.id}=${c.name}`).join(', ') + '\n\n';
 
-                const prods = await apiFetch(url);
-                const p = prods.products[0];
-                if (p) {
-                    msg += `First Product: ID=${p.id}, CatID=${p.category_id}, CatName=${p.category_name}`;
-                } else {
-                    msg += 'No products found.';
-                }
+                        // Fetch first product WITH CURRENT FILTER
+                        let url = '/api/products?limit=1&includeUnavailable=true';
+                        if (window.currentCategoryId) {
+                            url += `&categoryId=${window.currentCategoryId}`;
+                            msg += `[Filtering by ID: ${window.currentCategoryId}]\n`;
+                        } else {
+                            msg += '[No Filter Selected]\n';
+                        }
 
-                if (prods.debugSQL) msg += `\n\nSQL: ${prods.debugSQL}`;
-                if (prods.debugParams) msg += `\nParams: ${JSON.stringify(prods.debugParams)}`;
+                        const prods = await apiFetch(url);
+                        const p = prods.products[0];
+                        if (p) {
+                            msg += `First Product: ID=${p.id}, CatID=${p.category_id}, CatName=${p.category_name}`;
+                        } else {
+                            msg += 'No products found.';
+                        }
 
-                alert(msg);
-                console.log(msg);
+                        if (prods.debugSQL) msg += `\n\nSQL: ${prods.debugSQL}`;
+                        if (prods.debugParams) msg += `\nParams: ${JSON.stringify(prods.debugParams)}`;
 
-                alert(msg);
-                console.log(msg);
-            } catch (e) { alert(e); }
-        };
+                        msg += `\n(Time: ${new Date().toLocaleTimeString()})`;
+
+                        alert(msg);
+                        console.log(msg);
+                    } catch (e) { alert(e); }
+                };
     </script>
 </body>
 
