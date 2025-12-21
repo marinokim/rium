@@ -1298,6 +1298,7 @@
                     cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 
                 // Populate Filter (Keep "All" option)
+                const filterCategory = document.getElementById('filterCategory');
                 if (filterCategory) {
                     const currentVal = filterCategory.value;
                     filterCategory.innerHTML = '<option value="">전체 카테고리</option>' +
