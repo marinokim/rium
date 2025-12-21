@@ -583,7 +583,13 @@
                 <div class="filter-group" id="categoryFilters">
                     <!-- Categories will be loaded here -->
                 </div>
+                <span id="debugCatalogFilterId"
+                    style="font-size: 0.8rem; color: red; margin-left: 5px; font-weight:bold;"></span>
+
                 <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+                    <button class="filter-btn"
+                        style="background: #e53e3e; color: white; border: none; font-size: 0.8rem;"
+                        onclick="inspectCatalogData()">Debug</button>
                     <button class="filter-btn" style="background: #333; color: white; border: none;"
                         onclick="createProposal()">
                         <i class="fas fa-print"></i> 제안서 출력
@@ -691,7 +697,37 @@
 
             // Update State
             currentCategoryId = categoryId;
+
+            // Debug UI
+            const debugSpan = document.getElementById('debugCatalogFilterId');
+            if (debugSpan) debugSpan.innerText = `ID: ${categoryId}`;
+            console.log('Catalog Filter:', categoryId);
+
             loadProducts();
+        };
+
+        // Debug Inspector
+        window.inspectCatalogData = async () => {
+            try {
+                const cats = await apiFetch('/api/categories');
+                const catList = Array.isArray(cats) ? cats : cats.categories;
+                let msg = 'Catalog Debug:\nCategories:\n' + catList.map(c => `${c.id}=${c.name}`).join(', ') + '\n\n';
+
+                // Fetch first product with current filter
+                let url = '/api/products?isAvailable=true&limit=1';
+                if (currentCategoryId) url += `&categoryId=${currentCategoryId}`;
+
+                const prods = await apiFetch(url);
+                const p = prods.products[0];
+                if (p) {
+                    msg += `First Product (Filtered by ${currentCategoryId}):\nID=${p.id}, CatID=${p.category_id}, CatName=${p.category_name}`;
+                } else {
+                    msg += 'No products found for this filter.';
+                }
+
+                alert(msg);
+                console.log(msg);
+            } catch (e) { alert(e); }
         };
 
         // Navigate to Product Detail
