@@ -879,8 +879,17 @@
 
                 if (window.currentCategoryId) {
                     url += `&categoryId=${window.currentCategoryId}`;
+
+                    // User requested "Slug check". Fallback to slug if available.
+                    if (window.categoryList) {
+                        const cat = window.categoryList.find(c => c.id == window.currentCategoryId);
+                        if (cat && cat.slug) {
+                            url += `&category=${cat.slug}`; // Add slug param
+                            console.log(`Adding Slug: ${cat.slug}`);
+                        }
+                    }
                 }
-                console.log('Frontend Version: v12 (Window Scope Fix)');
+                console.log('Frontend Version: v13 (Slug Fallback)');
                 console.log('Loading products:', url);
 
                 const data = await apiFetch(url);
