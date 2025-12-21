@@ -14,17 +14,16 @@ router.get('/stats', requireAdmin, async (req, res) => {
         const activePartners = await pool.query('SELECT COUNT(*) FROM users WHERE is_approved = true AND is_admin = false')
         const pendingQuotes = await pool.query("SELECT COUNT(*) FROM quotes WHERE status = 'pending'")
 
-        // Total Proposals (Used as proxy for revenue or activity for now)
-        // Using 'quotes' table as 'proposals' logic
-        const totalProposals = await pool.query('SELECT COUNT(*) FROM quotes')
+        // Total Proposals (Real Proposal History)
+        const totalProposals = await pool.query('SELECT COUNT(*) FROM proposal_history')
 
-        // 2. Recent Proposals (Limit 5) - "Proposal Request Status"
-        // Using quotes table. 
+        // 2. Recent Proposals (Limit 5) - From proposal_history
+        // We join with users to get company name. Status is implied as 'pending/new' since history is just a log.
         const recentProposalsRes = await pool.query(`
-            SELECT q.id, q.quote_number, q.created_at, q.status, u.company_name
-            FROM quotes q
-            JOIN users u ON q.user_id = u.id
-            ORDER BY q.created_at DESC
+            SELECT ph.id, ph.title, ph.created_at, u.company_name, 'pending' as status
+            FROM proposal_history ph
+            JOIN users u ON ph.user_id = u.id
+            ORDER BY ph.created_at DESC
             LIMIT 5
         `)
 
