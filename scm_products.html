@@ -1310,11 +1310,29 @@
         // Global Category Cache
         window.categoryList = [];
 
+        // Hardcoded Color Map (Fallback for missing backend data)
+        const COLOR_MAP = {
+            'audio': '#FF5733',       // Orange-Red
+            'mobile': '#3498DB',      // Blue
+            'beauty': '#E91E63',      // Pink
+            'living': '#2ECC71',      // Green
+            'electronics': '#9B59B6', // Purple
+            'gift-set': '#F1C40F'     // Yellow
+        };
+
         async function loadCategories() {
             try {
                 const data = await apiFetch('/api/categories');
                 // Backend returns array directly, handle both cases for safety
                 const cats = Array.isArray(data) ? data : (data.categories || []);
+
+                // Apply Hardcoded Colors if backend color is missing/default
+                cats.forEach(c => {
+                    if ((!c.color || c.color === '#ffffff') && COLOR_MAP[c.slug]) {
+                        c.color = COLOR_MAP[c.slug];
+                    }
+                });
+
                 window.categoryList = cats; // Cache for slug lookup
 
                 catListBody.innerHTML = cats.map(c => `
