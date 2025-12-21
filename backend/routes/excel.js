@@ -636,9 +636,16 @@ router.post('/download/proposal', async (req, res) => {
             })
         })
 
-        // Response
+        // Response with Timestamped Filename and Cache Busting
+        const today = new Date();
+        const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+        const filename = `Proposal_${dateStr}.xlsx`;
+
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        res.setHeader('Content-Disposition', `attachment; filename="Proposal.xlsx"`)
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+        res.setHeader('Pragma', 'no-cache')
+        res.setHeader('Expires', '0')
 
         await workbook.xlsx.write(res)
         res.end()
