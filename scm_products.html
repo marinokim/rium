@@ -959,14 +959,14 @@
                     document.getElementById('p_brand').value = p.brand;
                     document.getElementById('p_categoryId').value = p.category_id;
 
-                    document.getElementById('p_consumerPrice').value = (p.consumer_price || 0).toLocaleString();
-                    document.getElementById('p_supplyPrice').value = (p.supply_price || 0).toLocaleString();
-                    document.getElementById('p_b2bPrice').value = (p.b2b_price || 0).toLocaleString();
+                    document.getElementById('p_consumerPrice').value = parseInt(p.consumer_price || 0).toLocaleString();
+                    document.getElementById('p_supplyPrice').value = parseInt(p.supply_price || 0).toLocaleString();
+                    document.getElementById('p_b2bPrice').value = parseInt(p.b2b_price || 0).toLocaleString();
                     document.getElementById('p_stockQuantity').value = p.stock_quantity;
                     document.getElementById('p_quantityPerCarton').value = p.quantity_per_carton;
 
-                    document.getElementById('p_shippingFeeIndividual').value = (p.shipping_fee_individual || 0).toLocaleString();
-                    document.getElementById('p_shippingFeeCarton').value = (p.shipping_fee_carton || 0).toLocaleString();
+                    document.getElementById('p_shippingFeeIndividual').value = parseInt(p.shipping_fee_individual || 0).toLocaleString();
+                    document.getElementById('p_shippingFeeCarton').value = parseInt(p.shipping_fee_carton || 0).toLocaleString();
                     document.getElementById('p_manufacturer').value = p.manufacturer;
                     document.getElementById('p_origin').value = p.origin;
 
