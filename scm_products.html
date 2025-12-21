@@ -529,7 +529,7 @@
                         <th style="width: 80px; text-align: center;">재고</th>
                         <th style="width: 80px; text-align: center;">배송비</th>
                         <th>제조사/원산지/등록일</th>
-                        <th style="width: 100px; text-align: center;">상태/관리</th>
+                        <th style="min-width: 120px; text-align: center;">상태/관리</th>
                     </tr>
                 </thead>
                 <tbody id="productListBody">
@@ -908,9 +908,9 @@
                        <span class="status-selling" style="cursor:pointer;" onclick="toggleProductStatus(${p.id})">
                             ${p.is_available ? 'Selling' : 'Stop'}
                        </span>
-                       <div style="margin-top:5px; display: flex; gap: 2px; justify-content: center;">
-                            <button class="scm-btn btn-navy btn-sm" onclick="openProductModal(${p.id})">수정</button>
-                            <button class="scm-btn btn-navy btn-sm" onclick="deleteProduct(${p.id})">삭제</button>
+                       <div style="margin-top:5px; display: flex; gap: 4px; justify-content: center;">
+                            <button class="scm-btn btn-navy btn-sm" style="white-space: nowrap;" onclick="openProductModal(${p.id})">수정</button>
+                            <button class="scm-btn btn-navy btn-sm" style="white-space: nowrap;" onclick="deleteProduct(${p.id})">삭제</button>
                        </div>
                     </td>
                 </tr>
