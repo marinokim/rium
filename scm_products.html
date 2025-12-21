@@ -9,70 +9,103 @@
     <link rel="stylesheet" href="styles.css">
     <style>
         /* SCM Specific Styles */
-        .scm-container {
+        body.scm-body {
+            background-color: #f5f7fa;
             display: flex;
             min-height: 100vh;
-            background-color: #f5f7fa;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            font-family: 'Open Sans', 'Noto Sans KR', sans-serif;
         }
 
+        /* Sidebar - Aligned with User Mode */
         .scm-sidebar {
-            width: 250px;
-            min-width: 250px !important;
-            max-width: 250px !important;
+            width: 100px;
+            min-width: 100px !important;
+            max-width: 100px !important;
+            background-color: #1a1a1a;
+            color: white;
             flex-shrink: 0;
-            background-color: #1a1c23;
-            color: #a0aec0;
             display: flex;
             flex-direction: column;
             transition: width 0.3s;
-            white-space: nowrap;
-            overflow: hidden;
-            box-sizing: border-box;
-        }
-
-        .scm-sidebar-header {
-            padding: 1.5rem;
-            color: white;
-            font-size: 1.25rem;
-            font-weight: bold;
-            border-bottom: 1px solid #2d3748;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .scm-nav {
-            flex: 1;
-            padding: 1rem 0;
+            height: 100vh;
+            position: sticky;
+            top: 0;
             overflow-y: auto;
+            z-index: 100;
         }
 
-        .scm-nav-item {
+        .scm-logo-area {
+            height: 70px;
             display: flex;
             align-items: center;
-            padding: 0 1.5rem;
-            height: 48px;
-            color: #a0aec0;
+            justify-content: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .scm-logo-area a {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            font-weight: 800;
+            color: white;
             text-decoration: none;
-            transition: all 0.2s;
-            cursor: pointer;
+            letter-spacing: 1px;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .scm-menu {
+            padding: 1rem 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .scm-nav-item,
+        .scm-menu-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 0.5rem;
+            color: #aaa;
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+            text-align: center;
             width: 100%;
+            height: auto;
             box-sizing: border-box;
         }
 
         .scm-nav-item:hover,
-        .scm-nav-item.active {
-            background-color: #2d3748;
+        .scm-menu-item:hover,
+        .scm-nav-item.active,
+        .scm-menu-item.active {
+            background-color: rgba(255, 255, 255, 0.05);
             color: white;
-            border-left: 4px solid #3182ce;
-            padding-left: calc(1.5rem - 4px);
-            /* Adjust padding to keep alignment */
+            border-left-color: #00897B;
+            /* Primary Color */
+            padding-left: 0.5rem;
+            /* Reset padding shift from previous style */
         }
 
-        .scm-nav-item i {
-            width: 24px;
-            margin-right: 0.75rem;
-            text-align: center;
+        .scm-nav-item i,
+        .scm-menu-item i {
+            width: auto;
+            font-size: 1.5rem;
+            margin-right: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .scm-nav-item span,
+        .scm-menu-item span {
+            font-size: 0.8rem;
+            word-break: keep-all;
+            line-height: 1.2;
         }
 
         .scm-main {
@@ -384,129 +417,132 @@
 
 <body>
 
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
-    </div>
+    <!-- Sidebar (User Mode Style) -->
+    <aside class="scm-sidebar" id="scmSidebar">
+        <div class="scm-logo-area">
+            <a href="index.html">RIUM<br>SCM</a>
+        </div>
+        <nav class="scm-menu">
+            <a href="scm_dashboard.html" class="scm-menu-item">
+                <i class="fas fa-home"></i>
+                <span>대시보드</span>
+            </a>
 
-    <div class="scm-container">
-        <!-- Sidebar -->
-        <aside class="scm-sidebar">
-            <div class="scm-sidebar-header">
-                <span>RIUM SCM</span>
-                <i class="fas fa-bars" style="cursor: pointer;"></i>
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-user"></i>
+                <span>사용자 모드</span>
+            </a>
+
+            <a href="scm_products.html" class="scm-menu-item active">
+                <i class="fas fa-box"></i>
+                <span>상품 관리</span>
+            </a>
+
+            <a href="scm_orders.html" class="scm-menu-item">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>견적/발주<br>관리</span>
+            </a>
+
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-exchange-alt"></i>
+                <span>반품/교환</span>
+            </a>
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-calculator"></i>
+                <span>정산 관리</span>
+            </a>
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-bullhorn"></i>
+                <span>공지사항</span>
+            </a>
+            <a href="#" class="scm-menu-item">
+                <i class="fas fa-cog"></i>
+                <span>설정</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="scm-main">
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+        </div>
+
+        <div class="scm-header">
+            <div style="color: #718096;">
+                <i class="fas fa-home"></i> Home > 상품 관리
             </div>
-            <nav class="scm-nav">
-                <a href="scm_dashboard.html" class="scm-nav-item">
-                    <i class="fas fa-chart-line"></i> 대시보드
-                </a>
-                <a href="#" class="scm-nav-item user-mode-btn" style="color:#63b3ed;">
-                    <i class="fas fa-user"></i> 사용자 모드
-                </a>
-                <a href="scm_products.html" class="scm-nav-item active">
-                    <i class="fas fa-box"></i> 상품 관리
-                </a>
-                <a href="scm_orders.html" class="scm-nav-item">
-                    <i class="fas fa-shopping-cart"></i> 제안/주문/견적관리
-                </a>
-                <a href="#" class="scm-nav-item">
-                    <i class="fas fa-exchange-alt"></i> 반품/교환
-                </a>
-                <a href="#" class="scm-nav-item">
-                    <i class="fas fa-calculator"></i> 매출/통계
-                </a>
-                <a href="#" class="scm-nav-item">
-                    <i class="fas fa-bullhorn"></i> 공지사항
-                </a>
-                <div style="margin-top: auto; border-top: 1px solid #2d3748;">
-                    <a href="#" class="scm-nav-item">
-                        <i class="fas fa-cog"></i> 시스템설정
-                    </a>
-                </div>
-            </nav>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="scm-main">
-            <div class="scm-header">
-                <div style="color: #718096;">
-                    <i class="fas fa-home"></i> Home > 상품 관리
-                </div>
-                <div style="display: flex; gap: 1rem; align-items: center;">
-                    <span id="adminNameDisplay" style="font-weight: 600;">관리자님</span>
-                    <button id="logoutBtn" class="scm-btn btn-gray btn-sm">로그아웃</button>
-                </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <span id="adminNameDisplay" style="font-weight: 600;">관리자님</span>
+                <button id="logoutBtn" class="scm-btn btn-gray btn-sm">로그아웃</button>
             </div>
+        </div>
 
-            <!-- Action Bar -->
-            <div class="scm-action-bar">
-                <div class="scm-action-group">
-                    <span style="font-weight:600; margin-right:10px;">서버 원본 교체:</span>
-                    <label for="excelFile" class="scm-btn btn-gray btn-sm" style="cursor: pointer;">파일 선택</label>
-                    <input type="file" id="excelFile" accept=".xlsx, .xls" style="display: none;">
-                    <span id="fileName" style="font-size: 0.8rem; color: #666;">선택된 파일 없음</span>
-                    <button class="scm-btn btn-blue btn-sm" onclick="handleExcelUpload()">파일 교체</button>
-                    <!-- Loading Spinner for this action? Global one is fine -->
-                </div>
-
-                <div class="scm-action-group"
-                    style="padding-left: 20px; margin-left: 20px; border-left: 1px solid #eee;">
-                    <span style="font-weight:600; margin-right:10px;">서버 엑셀 등록:</span>
-                    <input type="number" id="startRow" class="scm-input" placeholder="시작" style="width: 60px;">
-                    <span style="margin: 0 5px;">~</span>
-                    <input type="number" id="endRow" class="scm-input" placeholder="종료" style="width: 60px;">
-                    <button class="scm-btn btn-blue btn-sm" onclick="handleExcelToDb()">범위 등록</button>
-                </div>
-
-                <!-- Right Aligned Group -->
-                <div style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
-                    <button class="scm-btn btn-blue" onclick="downloadExcel()">전체 다운로드</button>
-                    <button class="scm-btn btn-blue" onclick="downloadTemplate()">양식</button>
-                    <button class="scm-btn btn-blue" onclick="deleteRange()">구간 삭제</button>
-
-                    <!-- Only Excel Upload implemented via Input -->
-
-                    <button class="scm-btn btn-cyan">카테고리 관리</button>
-                    <button class="scm-btn btn-navy"><i class="fas fa-plus"></i> 신규 등록</button>
-                </div>
+        <!-- Action Bar -->
+        <div class="scm-action-bar">
+            <!-- (Content remains same as previous, just adjusting container context if needed) -->
+            <div class="scm-action-group">
+                <span style="font-weight:600; margin-right:10px;">서버 원본 교체:</span>
+                <label for="excelFile" class="scm-btn btn-gray btn-sm" style="cursor: pointer;">파일 선택</label>
+                <input type="file" id="excelFile" accept=".xlsx, .xls" style="display: none;">
+                <span id="fileName" style="font-size: 0.8rem; color: #666;">선택된 파일 없음</span>
+                <button class="scm-btn btn-blue btn-sm" onclick="handleExcelUpload()">파일 교체</button>
             </div>
 
-            <!-- Filter Options Row (Optional, kept for utility but styled minimally) -->
-            <div style="margin-bottom: 1rem; text-align: right;">
-                <select class="scm-select" id="filterCategory">
-                    <option value="">전체 카테고리</option>
-                </select>
+            <div class="scm-action-group" style="padding-left: 20px; margin-left: 20px; border-left: 1px solid #eee;">
+                <span style="font-weight:600; margin-right:10px;">서버 엑셀 등록:</span>
+                <input type="number" id="startRow" class="scm-input" placeholder="시작" style="width: 60px;">
+                <span style="margin: 0 5px;">~</span>
+                <input type="number" id="endRow" class="scm-input" placeholder="종료" style="width: 60px;">
+                <button class="scm-btn btn-blue btn-sm" onclick="handleExcelToDb()">범위 등록</button>
             </div>
 
-
-            <!-- Product Table -->
-            <div class="scm-table-container">
-                <table class="scm-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 50px;">No.</th>
-                            <th style="width: 60px;">IMG</th>
-                            <th>브랜드</th>
-                            <th>상품명/모델명/옵션</th>
-                            <th style="min-width: 80px; text-align: right;">실판매가</th>
-                            <th style="min-width: 80px; text-align: right;">공급가</th>
-                            <th style="width: 80px; text-align: center;">재고</th>
-                            <th style="width: 80px; text-align: center;">배송비</th>
-                            <th>제조사/원산지/등록일</th>
-                            <th style="width: 100px; text-align: center;">상태/관리</th>
-                        </tr>
-                    </thead>
-                    <tbody id="productListBody">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
+            <!-- Right Aligned Group -->
+            <div style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
+                <button class="scm-btn btn-blue" onclick="downloadExcel()">전체 다운로드</button>
+                <button class="scm-btn btn-blue" onclick="downloadTemplate()">양식</button>
+                <button class="scm-btn btn-blue" onclick="deleteRange()">구간 삭제</button>
+                <button class="scm-btn btn-cyan">카테고리 관리</button>
+                <button class="scm-btn btn-navy"><i class="fas fa-plus"></i> 신규 등록</button>
             </div>
+        </div>
 
-            <!-- Pagination -->
-            <div class="pagination" id="pagination">
-                <!-- Populated by JS -->
-            </div>
-        </main>
-    </div>
+        <!-- Filter Options Row -->
+        <div style="margin-bottom: 1rem; text-align: right;">
+            <select class="scm-select" id="filterCategory">
+                <option value="">전체 카테고리</option>
+            </select>
+        </div>
+
+
+        <!-- Product Table -->
+        <div class="scm-table-container">
+            <table class="scm-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">No.</th>
+                        <th style="width: 60px;">IMG</th>
+                        <th>브랜드</th>
+                        <th>상품명/모델명/옵션</th>
+                        <th style="min-width: 80px; text-align: right;">실판매가</th>
+                        <th style="min-width: 80px; text-align: right;">공급가</th>
+                        <th style="width: 80px; text-align: center;">재고</th>
+                        <th style="width: 80px; text-align: center;">배송비</th>
+                        <th>제조사/원산지/등록일</th>
+                        <th style="width: 100px; text-align: center;">상태/관리</th>
+                    </tr>
+                </thead>
+                <tbody id="productListBody">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination">
+            <!-- Populated by JS -->
+        </div>
+    </main>
 
     <!-- --------------------------------------------------- -->
     <!-- MODALS -->
