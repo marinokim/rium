@@ -1231,7 +1231,7 @@
                     method: 'POST',
                     body: formData // No Content-Type header (browser sets it)
                 });
-                alert(`${res.message} (${res.count}개 상품)`);
+                alert(`${res.message} (성공: ${res.success}개, 실패: ${res.failed}개)`);
                 loadProducts();
             } catch (e) {
                 alert('업로드 실패: ' + e.message);
