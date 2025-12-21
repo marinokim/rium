@@ -507,11 +507,11 @@
         <div class="scm-action-bar">
             <!-- (Content remains same as previous, just adjusting container context if needed) -->
             <div class="scm-action-group">
-                <span style="font-weight:600; margin-right:10px;">서버 원본 교체:</span>
+                <span style="font-weight:600; margin-right:10px;">엑셀 상품 등록:</span>
                 <label for="excelFile" class="scm-btn btn-gray btn-sm" style="cursor: pointer;">파일 선택</label>
                 <input type="file" id="excelFile" accept=".xlsx, .xls" style="display: none;">
                 <span id="fileName" style="font-size: 0.8rem; color: #666;">선택된 파일 없음</span>
-                <button class="scm-btn btn-blue btn-sm" onclick="handleExcelUpload()">파일 교체</button>
+                <button class="scm-btn btn-blue btn-sm" onclick="handleExcelUpload()">업로드</button>
             </div>
 
             <div class="scm-action-group" style="padding-left: 20px; margin-left: 20px; border-left: 1px solid #eee;">
@@ -1217,7 +1217,7 @@
             const file = e.target.files[0];
             if (!file) return;
 
-            if (!confirm(`${file.name} 파일로 서버 데이터를 덮어쓰시겠습니까? (매우 위험)`)) {
+            if (!confirm(`${file.name} 파일을 업로드하여 상품을 등록/수정하시겠습니까?`)) {
                 e.target.value = null;
                 return;
             }
