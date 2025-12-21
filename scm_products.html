@@ -773,7 +773,6 @@
 
 
     <script>
-        console.log('Frontend Version: v2 (Force Deploy)');
         const API_BASE = 'https://rium-scm-backend.onrender.com'; // Change to local if needed
         let currentProducts = [];
         let totalItems = 0;
@@ -849,11 +848,12 @@
             try {
                 let url = `/api/products?page=${page}&limit=${itemsPerPage}&sort=id_desc`;
                 // Add Filter
+                const filterCategory = document.getElementById('filterCategory');
                 if (filterCategory && filterCategory.value) {
                     url += `&categoryId=${filterCategory.value}`;
                 }
-                // alert(`DEBUG: Loading URL: ${url}\nVal: ${filterCategory ? filterCategory.value : 'null'}`);
-                console.log('Loading products:', url);
+                console.log('Frontend Version: v3 (Horizontal Layout)'); // Debug log
+                console.log('Loading products:', url); // Debug log
 
                 const data = await apiFetch(url);
                 currentProducts = data.products;
@@ -919,16 +919,18 @@
                     </td>
                     
                     <td style="text-align: center;">
-                       <span class="status-badge ${p.is_new ? 'status-active' : 'status-normal'}" 
-                             style="cursor:pointer;" onclick="toggleProductNewStatus(${p.id})">
-                          ${p.is_new ? '신상품' : '일반'}
-                       </span><br>
-                       <span class="status-selling ${p.is_available ? '' : 'status-stop'}" 
-                             style="cursor:pointer;" 
-                             onclick="toggleProductStatus(${p.id})">
-                            ${p.is_available ? '판매중' : '판매중지'}
-                       </span>
-                       <div style="margin-top:5px; display: flex; gap: 4px; justify-content: center;">
+                       <div style="display: flex; gap: 4px; justify-content: center; margin-bottom: 6px;">
+                           <span class="status-badge ${p.is_new ? 'status-active' : 'status-normal'}" 
+                                 style="cursor:pointer;" onclick="toggleProductNewStatus(${p.id})">
+                              ${p.is_new ? '신상품' : '일반'}
+                           </span>
+                           <span class="status-selling ${p.is_available ? '' : 'status-stop'}" 
+                                 style="cursor:pointer;" 
+                                 onclick="toggleProductStatus(${p.id})">
+                                ${p.is_available ? '판매중' : '판매중지'}
+                           </span>
+                       </div>
+                       <div style="display: flex; gap: 4px; justify-content: center;">
                             <button class="scm-btn btn-navy btn-sm" style="white-space: nowrap;" onclick="openProductModal(${p.id})">수정</button>
                             <button class="scm-btn btn-navy btn-sm" style="white-space: nowrap;" onclick="deleteProduct(${p.id})">삭제</button>
                        </div>
