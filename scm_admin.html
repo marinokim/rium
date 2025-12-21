@@ -449,17 +449,17 @@
             <div class="scm-grid">
                 <div class="scm-card scm-stat-card">
                     <div class="scm-stat-info">
-                        <h3>총 매출 (12월)</h3>
-                        <p>₩125M</p>
+                        <h3>총 제안(건수)</h3>
+                        <p id="statTotalSales">-</p>
                     </div>
                     <div class="scm-stat-icon bg-primary-light">
-                        <i class="fas fa-won-sign"></i>
+                        <i class="fas fa-file-invoice-dollar"></i>
                     </div>
                 </div>
                 <div class="scm-card scm-stat-card">
                     <div class="scm-stat-info">
                         <h3>활성 파트너</h3>
-                        <p>42</p>
+                        <p id="statActivePartners">-</p>
                     </div>
                     <div class="scm-stat-icon bg-secondary-light">
                         <i class="fas fa-users"></i>
@@ -467,8 +467,8 @@
                 </div>
                 <div class="scm-card scm-stat-card">
                     <div class="scm-stat-info">
-                        <h3>견적 승인대기</h3>
-                        <p>8</p>
+                        <h3>제안 승인대기</h3>
+                        <p id="statPendingQuotes">-</p>
                     </div>
                     <div class="scm-stat-icon bg-red-light">
                         <i class="fas fa-clock"></i>
@@ -490,49 +490,25 @@
                 <div class="scm-card">
                     <div
                         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h3 style="font-size: 1.1rem;">최근 주문/견적 현황</h3>
-                        <a href="#" style="font-size: 0.85rem; color: var(--scm-primary); text-decoration: none;">전체보기
+                        <h3 style="font-size: 1.1rem;">제안 요청 현황</h3>
+                        <a href="scm_orders.html"
+                            style="font-size: 0.85rem; color: var(--scm-primary); text-decoration: none;">전체보기
                             ></a>
                     </div>
                     <div style="overflow-x: auto;">
                         <table class="scm-table">
                             <thead>
                                 <tr>
-                                    <th>주문번호</th>
+                                    <th>주문/제안번호</th>
                                     <th>파트너사</th>
-                                    <th>상품명</th>
+                                    <th>제목/상품명</th>
                                     <th>날짜</th>
                                     <th>상태</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="recentOrdersTableBody">
                                 <tr>
-                                    <td>ORD-20251206-001</td>
-                                    <td>Wizard Co.</td>
-                                    <td>Smart Air Conditioner</td>
-                                    <td>2025-12-06</td>
-                                    <td><span class="status-badge status-new">신규주문</span></td>
-                                </tr>
-                                <tr>
-                                    <td>REQ-20251206-003</td>
-                                    <td>Lotte Mart</td>
-                                    <td>Bulk Food Containers</td>
-                                    <td>2025-12-06</td>
-                                    <td><span class="status-badge status-pending">승인대기</span></td>
-                                </tr>
-                                <tr>
-                                    <td>ORD-20251205-012</td>
-                                    <td>Coupang</td>
-                                    <td>USB Mini Fan (500ea)</td>
-                                    <td>2025-12-05</td>
-                                    <td><span class="status-badge status-shipping">배송중</span></td>
-                                </tr>
-                                <tr>
-                                    <td>REQ-20251205-008</td>
-                                    <td>E-Mart</td>
-                                    <td>Premium Speakers</td>
-                                    <td>2025-12-05</td>
-                                    <td><span class="status-badge status-completed">승인완료</span></td>
+                                    <td colspan="5" style="text-align: center; padding: 2rem;">데이터를 불러오는 중...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -544,39 +520,12 @@
                     <div
                         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                         <h3 style="font-size: 1.1rem;">신규 가입 파트너</h3>
-                        <a href="#" style="font-size: 0.85rem; color: var(--scm-primary); text-decoration: none;">관리
+                        <a href="scm_partners.html"
+                            style="font-size: 0.85rem; color: var(--scm-primary); text-decoration: none;">관리
                             ></a>
                     </div>
-                    <ul style="list-style: none; padding: 0;">
-                        <li
-                            style="padding: 0.8rem 0; border-bottom: 1px solid #eee; display: flex; align-items: center;">
-                            <div
-                                style="width: 32px; height: 32px; background: #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 0.8rem;">
-                                K</div>
-                            <div>
-                                <div style="font-weight: 600; font-size: 0.9rem;">K-Mart</div>
-                                <div style="font-size: 0.75rem; color: #888;">2025-12-06 가입</div>
-                            </div>
-                        </li>
-                        <li
-                            style="padding: 0.8rem 0; border-bottom: 1px solid #eee; display: flex; align-items: center;">
-                            <div
-                                style="width: 32px; height: 32px; background: #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 0.8rem;">
-                                H</div>
-                            <div>
-                                <div style="font-weight: 600; font-size: 0.9rem;">HomePlus Ilsan</div>
-                                <div style="font-size: 0.75rem; color: #888;">2025-12-05 가입</div>
-                            </div>
-                        </li>
-                        <li style="padding: 0.8rem 0; display: flex; align-items: center;">
-                            <div
-                                style="width: 32px; height: 32px; background: #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 0.8rem;">
-                                G</div>
-                            <div>
-                                <div style="font-weight: 600; font-size: 0.9rem;">GS Retail</div>
-                                <div style="font-size: 0.75rem; color: #888;">2025-12-04 가입</div>
-                            </div>
-                        </li>
+                    <ul style="list-style: none; padding: 0;" id="newPartnersList">
+                        <li style="text-align:center; padding: 1rem; color: #888;">로딩중...</li>
                     </ul>
                 </div>
             </div>
@@ -596,6 +545,85 @@
                 sidebar.classList.remove('active');
             }
         });
+
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:5003'
+            : 'https://rium-scm-backend.onrender.com';
+
+        async function loadAdminStats() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('로그인이 필요합니다.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/stats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+
+                    // 1. Update Stats
+                    document.getElementById('statTotalSales').innerText = (data.totalProposals || 0) + '건';
+                    document.getElementById('statActivePartners').innerText = data.activePartners || 0;
+                    document.getElementById('statPendingQuotes').innerText = data.pendingQuotes || 0;
+
+                    // 2. Update Recent Orders (Proposals)
+                    const orderTbody = document.getElementById('recentOrdersTableBody');
+                    if (data.recentProposals && data.recentProposals.length > 0) {
+                        orderTbody.innerHTML = data.recentProposals.map(p => {
+                            const date = new Date(p.created_at).toLocaleDateString();
+                            let statusBadge = '<span class="status-badge status-pending">승인대기</span>';
+                            if (p.status === 'approved') statusBadge = '<span class="status-badge status-active">승인완료</span>';
+                            else if (p.status === 'rejected') statusBadge = '<span class="status-badge status-red">반려됨</span>';
+
+                            return `
+                                <tr>
+                                    <td>PROP-${p.id}</td>
+                                    <td>${p.company_name || '알수없음'}</td>
+                                    <td>${p.title}</td>
+                                    <td>${date}</td>
+                                    <td>${statusBadge}</td>
+                                </tr>
+                            `;
+                        }).join('');
+                    } else {
+                        orderTbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">최근 제안 내역이 없습니다.</td></tr>';
+                    }
+
+                    // 3. Update New Partners
+                    const partnerList = document.getElementById('newPartnersList');
+                    if (data.newPartners && data.newPartners.length > 0) {
+                        partnerList.innerHTML = data.newPartners.map(u => {
+                            const date = new Date(u.created_at).toLocaleDateString();
+                            return `
+                                <li style="padding: 0.8rem 0; border-bottom: 1px solid #eee; display: flex; align-items: center;">
+                                    <div style="width: 32px; height: 32px; background: #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 0.8rem; font-weight: bold;">
+                                        ${u.initial || 'U'}
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 600; font-size: 0.9rem;">${u.company_name || 'Unknown'}</div>
+                                        <div style="font-size: 0.75rem; color: #888;">${date} 가입</div>
+                                    </div>
+                                </li>
+                            `;
+                        }).join('');
+                    } else {
+                        partnerList.innerHTML = '<li style="text-align:center; padding: 1rem; color: #888;">신규 가입 파트너가 없습니다.</li>';
+                    }
+
+                } else {
+                    console.error('Failed to load stats');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadAdminStats);
     </script>
 </body>
 

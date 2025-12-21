@@ -6,16 +6,42 @@ import bcrypt from 'bcryptjs'
 const router = express.Router()
 
 // Get admin dashboard stats
+// Get admin dashboard stats and widgets
 router.get('/stats', requireAdmin, async (req, res) => {
     try {
+        // 1. Stats Counters
         const pendingMembers = await pool.query('SELECT COUNT(*) FROM users WHERE is_approved = false AND is_admin = false')
-        const pendingQuotes = await pool.query("SELECT COUNT(*) FROM quotes WHERE status = 'pending'")
-        const lowStockProducts = await pool.query('SELECT COUNT(*) FROM products WHERE stock_quantity < 10')
+        const activePartners = await pool.query('SELECT COUNT(*) FROM users WHERE is_approved = true AND is_admin = false')
+        const pendingQuotes = await pool.query("SELECT COUNT(*) FROM proposals WHERE status = 'pending'")
+
+        // Total Proposals (Used as proxy for revenue or activity for now, user asked for real data)
+        const totalProposals = await pool.query('SELECT COUNT(*) FROM proposals')
+
+        // 2. Recent Proposals (Limit 5) - "Proposal Request Status"
+        const recentProposalsRes = await pool.query(`
+            SELECT p.id, p.title, p.created_at, p.status, u.company_name
+            FROM proposals p
+            JOIN users u ON p.user_id = u.id
+            ORDER BY p.created_at DESC
+            LIMIT 5
+        `)
+
+        // 3. New Partners (Limit 3)
+        const newPartnersRes = await pool.query(`
+            SELECT company_name, created_at, SUBSTRING(company_name, 1, 1) as initial
+            FROM users
+            WHERE is_admin = false
+            ORDER BY created_at DESC
+            LIMIT 3
+        `)
 
         res.json({
             pendingMembers: parseInt(pendingMembers.rows[0].count),
-            pendingQuotes: parseInt(pendingQuotes.rows[0].count),
-            lowStockProducts: parseInt(lowStockProducts.rows[0].count)
+            activePartners: parseInt(activePartners.rows[0].count),
+            pendingQuotes: parseInt(pendingQuotes.rows[0].count), // Actually proposals pending
+            totalProposals: parseInt(totalProposals.rows[0].count),
+            recentProposals: recentProposalsRes.rows,
+            newPartners: newPartnersRes.rows
         })
     } catch (error) {
         console.error('Get admin stats error:', error)
