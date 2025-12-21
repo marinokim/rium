@@ -20,7 +20,7 @@ dotenv.config()
 
 const app = express()
 app.set('trust proxy', 1) // Trust first proxy (Render/Heroku)
-console.log('Server starting... Deploy Trigger v2') // Force Deploy Trigger
+console.log('Server starting... Deploy Trigger v3 (SQL Debug)') // Force Deploy Trigger
 const PORT = process.env.PORT || 5002
 
 // Middleware
