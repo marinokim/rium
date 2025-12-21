@@ -1307,11 +1307,15 @@
         // State
         let editingCategoryId = null;
 
+        // Global Category Cache
+        window.categoryList = [];
+
         async function loadCategories() {
             try {
                 const data = await apiFetch('/api/categories');
                 // Backend returns array directly, handle both cases for safety
                 const cats = Array.isArray(data) ? data : (data.categories || []);
+                window.categoryList = cats; // Cache for slug lookup
 
                 catListBody.innerHTML = cats.map(c => `
                         <tr>
@@ -1461,6 +1465,15 @@
                 if (window.currentCategoryId) {
                     url += `&categoryId=${window.currentCategoryId}`;
                     msg += `[Filtering by ID: ${window.currentCategoryId}]\n`;
+
+                    // Slug Fallback Debug
+                    if (window.categoryList) {
+                        const cat = window.categoryList.find(c => c.id == window.currentCategoryId);
+                        if (cat && cat.slug) {
+                            url += `&category=${cat.slug}`;
+                            msg += `[Fallback Slug: ${cat.slug}]\n`;
+                        }
+                    }
                 } else {
                     msg += '[No Filter Selected]\n';
                 }
