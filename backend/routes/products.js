@@ -310,7 +310,9 @@ router.get('/', async (req, res) => {
                 totalPages: Math.ceil(totalItems / limit),
                 currentPage: Number(page),
                 itemsPerPage: Number(limit)
-            }
+            },
+            debugSQL: queryCode,
+            debugParams: params
         })
     } catch (error) {
         console.error('Get products error:', error)
