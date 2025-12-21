@@ -524,6 +524,7 @@
                 <button class="scm-btn btn-blue" onclick="deleteRange()">구간 삭제</button>
                 <button class="scm-btn btn-cyan">카테고리 관리</button>
                 <button class="scm-btn btn-navy" onclick="openProductModal()"><i class="fas fa-plus"></i> 신규 등록</button>
+                <button class="scm-btn btn-red" onclick="inspectData()">데이터 검사 (Debug)</button>
             </div>
         </div>
 
@@ -1426,6 +1427,23 @@
         // New Button
         document.querySelector('button.btn-navy i.fa-plus').parentElement.onclick = () => openProductModal();
 
+        // Debug Function
+        window.inspectData = async () => {
+            try {
+                const cats = await apiFetch('/api/categories');
+                const catList = Array.isArray(cats) ? cats : cats.categories;
+                let msg = 'Categories:\n' + catList.map(c => `${c.id}=${c.name}`).join(', ') + '\n\n';
+
+                const prods = await apiFetch('/api/products?limit=1&includeUnavailable=true');
+                const p = prods.products[0];
+                if (p) {
+                    msg += `First Product: ID=${p.id}, CatID=${p.category_id}, CatName=${p.category_name}`;
+                }
+
+                alert(msg);
+                console.log(msg);
+            } catch (e) { alert(e); }
+        };
     </script>
 </body>
 
