@@ -667,11 +667,29 @@
         window.categoryList = []; // Global Cache
 
 
+        // Hardcoded Color Map (Fallback)
+        const COLOR_MAP = {
+            'audio': '#FF5733',       // Orange-Red
+            'mobile': '#3498DB',      // Blue
+            'beauty': '#E91E63',      // Pink
+            'living': '#2ECC71',      // Green
+            'electronics': '#9B59B6', // Purple
+            'gift-set': '#F1C40F'     // Yellow
+        };
+
         // Load Categories
         const loadCategories = async () => {
             try {
                 const data = await apiFetch('/api/categories');
                 const categories = data.categories || [];
+
+                // Apply Hardcoded Colors
+                categories.forEach(c => {
+                    if ((!c.color || c.color === '#ffffff') && COLOR_MAP[c.slug]) {
+                        c.color = COLOR_MAP[c.slug];
+                    }
+                });
+
                 window.categoryList = categories; // Cache for slug lookup
                 const container = document.getElementById('categoryFilters');
 
