@@ -82,8 +82,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const res = await fetch(`${API_BASE_URL}/api/categories`);
-            const data = await res.json();
-            const categories = data.categories || [];
+            // Handle both array and object response
+            const rawData = await res.json();
+            const categories = Array.isArray(rawData) ? rawData : (rawData.categories || []);
+
+            // Sort categories (optional, but good for UX)
+            // categories.sort((a,b) => a.id - b.id); 
 
             let html = `<button class="filter-btn active" onclick="window.filterPublicCategory(this, '')">All</button>`;
             categories.forEach(cat => {
@@ -140,7 +144,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const res = await fetch(query);
             const data = await res.json();
-            const products = data.products || [];
+            // Backend likely returns { products: [] } or just []
+            const products = Array.isArray(data) ? data : (data.products || []);
 
             publicGrid.innerHTML = '';
 
@@ -150,25 +155,28 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             products.forEach(product => {
-                const originalUrl = product.imageUrl || product.images?.[0] || '';
+                // Robust Field Mapping
+                const pName = product.name || product.model_name || product.product_name || product.modelNo || '제품명 없음';
+                const pId = product.id;
+                const pBrand = product.brand || '';
+
+                const originalUrl = product.imageUrl || product.image_url || product.images?.[0] || '';
                 const imageUrl = getSecureImageUrl(originalUrl, 400);
-                const brandName = product.brand || 'RIUM';
 
                 const card = document.createElement('div');
                 card.className = 'product-card';
-                card.onclick = () => window.location.href = `product_detail.html?id=${product.id}`;
+                card.onclick = () => window.location.href = `product_detail.html?id=${pId}`;
 
                 // Escape originalUrl for HTML attribute
-                const safeOriginalUrl = originalUrl.replace(/'/g, "\\'");
+                const safeOriginalUrl = originalUrl ? originalUrl.replace(/'/g, "\\'") : '';
 
-                // NO PRICE shown, as requested
                 card.innerHTML = `
                     <div class="product-img-wrapper">
-                        <img src="${imageUrl}" alt="${product.name}" loading="lazy" onerror="window.handleImageError(this, '${safeOriginalUrl}')">
+                        <img src="${imageUrl}" alt="${pName}" loading="lazy" onerror="window.handleImageError(this, '${safeOriginalUrl}')">
                     </div>
                     <div class="product-info">
-                        <div class="product-brand">${brandName}</div>
-                        <h3 class="product-title">${product.name}</h3>
+                        <div class="product-brand">${pBrand}</div>
+                        <h3 class="product-title">${pName}</h3>
                     </div>
                 `;
                 publicGrid.appendChild(card);
