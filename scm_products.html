@@ -297,26 +297,46 @@
             color: #822727;
         }
 
-        .status-normal {
-            background-color: #ebf8ff;
-            color: #2c5282;
-            border: 1px solid #bee3f8;
+        .status-badge,
+        .status-selling {
             display: inline-block;
-            padding: 2px 6px;
+            padding: 4px 10px;
+            /* Larger padding */
             border-radius: 4px;
-            font-size: 0.7rem;
-            margin-bottom: 2px;
+            font-size: 0.85rem;
+            /* Larger font */
+            margin-bottom: 4px;
+            font-weight: bold;
+            /* Bold text */
+            text-align: center;
+            min-width: 60px;
+            /* Consistent width */
+        }
+
+        .status-normal {
+            background-color: #edf2f7;
+            color: #4a5568;
+            border: 1px solid #cbd5e0;
+        }
+
+        .status-active {
+            /* Used for NEW */
+            background-color: #ebf8ff;
+            color: #2b6cb0;
+            border: 1px solid #bee3f8;
         }
 
         .status-selling {
             background-color: #c6f6d5;
             color: #22543d;
             border: 1px solid #9ae6b4;
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            margin-bottom: 2px;
+        }
+
+        .status-stop {
+            /* New class for STOP */
+            background-color: #fed7d7;
+            color: #822727;
+            border: 1px solid #feb2b2;
         }
 
         .product-img-thumb {
@@ -903,12 +923,12 @@
                     <td style="text-align: center;">
                        <span class="status-badge ${p.is_new ? 'status-active' : 'status-normal'}" 
                              style="cursor:pointer;" onclick="toggleProductNewStatus(${p.id})">
-                          ${p.is_new ? 'New' : 'Normal'}
+                          ${p.is_new ? '신상품' : '일반'}
                        </span><br>
-                       <span class="status-selling ${p.is_available ? '' : 'status-inactive'}" 
-                             style="cursor:pointer; ${p.is_available ? '' : 'background-color:#fed7d7; color:#822727; border-color:#feb2b2;'}" 
+                       <span class="status-selling ${p.is_available ? '' : 'status-stop'}" 
+                             style="cursor:pointer;" 
                              onclick="toggleProductStatus(${p.id})">
-                            ${p.is_available ? 'Selling' : 'Stop'}
+                            ${p.is_available ? '판매중' : '판매중지'}
                        </span>
                        <div style="margin-top:5px; display: flex; gap: 4px; justify-content: center;">
                             <button class="scm-btn btn-navy btn-sm" style="white-space: nowrap;" onclick="openProductModal(${p.id})">수정</button>
@@ -1073,7 +1093,7 @@
             if (!p) return;
 
             const newStatus = !p.is_available;
-            if (!confirm(`상품 상태를 ${newStatus ? '판매중(Normal)' : '품절(SoldOut)'}으로 변경하시겠습니까?`)) return;
+            if (!confirm(`상품 상태를 ${newStatus ? '판매중' : '판매중지'}로 변경하시겠습니까?`)) return;
 
             try {
                 // Use dedicated PATCH endpoint for safer update
@@ -1107,7 +1127,7 @@
             if (!p) return;
 
             const newStatus = !p.is_new;
-            if (!confirm(`상품 구분을 ${newStatus ? '신상품(New)' : '일반(Normal)'}으로 변경하시겠습니까?`)) return;
+            if (!confirm(`상품 구분을 ${newStatus ? '신상품' : '일반'}으로 변경하시겠습니까?`)) return;
 
             try {
                 // PATCH /api/products/:id/new-status
