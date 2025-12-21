@@ -428,7 +428,7 @@
                 <span>대시보드</span>
             </a>
 
-            <a href="#" class="scm-menu-item">
+            <a href="#" class="scm-menu-item user-mode-btn">
                 <i class="fas fa-user"></i>
                 <span>사용자 모드</span>
             </a>
@@ -503,7 +503,7 @@
                 <button class="scm-btn btn-blue" onclick="downloadTemplate()">양식</button>
                 <button class="scm-btn btn-blue" onclick="deleteRange()">구간 삭제</button>
                 <button class="scm-btn btn-cyan">카테고리 관리</button>
-                <button class="scm-btn btn-navy"><i class="fas fa-plus"></i> 신규 등록</button>
+                <button class="scm-btn btn-navy" onclick="openProductModal()"><i class="fas fa-plus"></i> 신규 등록</button>
             </div>
         </div>
 
@@ -819,7 +819,8 @@
         const productForm = document.getElementById('productForm');
 
         // Load Products
-        const loadProducts = async (page = 1) => {
+        // Load Products
+        async function loadProducts(page = 1) {
             showLoading(true);
             try {
                 let url = `/api/products?page=${page}&limit=${itemsPerPage}&sort=id_desc`;
@@ -1153,7 +1154,7 @@
         // State
         let editingCategoryId = null;
 
-        const loadCategories = async () => {
+        async function loadCategories() {
             try {
                 const data = await apiFetch('/api/categories');
                 // Backend returns array directly, handle both cases for safety
