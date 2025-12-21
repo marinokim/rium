@@ -529,7 +529,7 @@
 
         <!-- Filter Options Row -->
         <div style="margin-bottom: 1rem; text-align: right;">
-            <select class="scm-select" id="filterCategory" onchange="loadProducts(1)">
+            <select class="scm-select" id="filterCategory" onchange="window.handleCategoryChange(this.value)">
                 <option value="">전체 카테고리</option>
             </select>
         </div>
@@ -778,6 +778,14 @@
         let totalItems = 0;
         let currentPage = 1;
         const itemsPerPage = 20;
+        let currentCategoryId = ''; // Global state for filter
+
+        // Robust Handler
+        window.handleCategoryChange = (val) => {
+            console.log('Category Changed to:', val);
+            currentCategoryId = val;
+            loadProducts(1);
+        };
 
         // AUTH & INIT
         document.addEventListener('DOMContentLoaded', () => {
@@ -849,11 +857,11 @@
                 let url = `/api/products?page=${page}&limit=${itemsPerPage}&sort=id_desc`;
                 // Add Filter
                 const filterCategory = document.getElementById('filterCategory');
-                if (filterCategory && filterCategory.value) {
-                    url += `&categoryId=${filterCategory.value}`;
+                if (currentCategoryId) {
+                    url += `&categoryId=${currentCategoryId}`;
                 }
-                console.log('Frontend Version: v3 (Horizontal Layout)'); // Debug log
-                console.log('Loading products:', url); // Debug log
+                console.log('Frontend Version: v4 (Robust Filter)');
+                console.log('Loading products:', url);
 
                 const data = await apiFetch(url);
                 currentProducts = data.products;
