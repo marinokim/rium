@@ -784,6 +784,20 @@
             }
         };
 
+        // Helper: Optimize Image URL using wsrv.nl proxy
+        function getSecureImageUrl(url, width = 0) {
+            if (!url) return '';
+            if (url.startsWith('https://') || url.startsWith('/') || url.startsWith('data:')) return url;
+
+            if (url.startsWith('http://')) {
+                const encoded = encodeURIComponent(url);
+                let proxyUrl = `https://wsrv.nl/?url=${encoded}&output=webp`;
+                if (width > 0) proxyUrl += `&w=${width}`;
+                return proxyUrl;
+            }
+            return url;
+        }
+
         // Load Products
         const loadProducts = async () => {
             const grid = document.getElementById('productGrid');
