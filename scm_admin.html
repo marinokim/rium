@@ -576,7 +576,7 @@
                     if (data.recentProposals && data.recentProposals.length > 0) {
                         orderTbody.innerHTML = data.recentProposals.map(p => {
                             const date = new Date(p.created_at).toLocaleDateString();
-                            let statusBadge = '<span class="status-badge status-pending">승인대기</span>';
+                            let statusBadge = '<span class="status-badge status-pending">접수완료</span>';
                             if (p.status === 'approved') statusBadge = '<span class="status-badge status-active">승인완료</span>';
                             else if (p.status === 'rejected') statusBadge = '<span class="status-badge status-red">반려됨</span>';
                             else if (p.status === 'shipping') statusBadge = '<span class="status-badge status-shipping">배송중</span>';
@@ -587,7 +587,7 @@
 
                             return `
                                 <tr>
-                                    <td>${p.quote_number || 'UNKNOWN'}</td>
+                                    <td>${p.quote_number || `PROP-${p.id}`}</td>
                                     <td>${p.company_name || '알수없음'}</td>
                                     <td>${displayTitle}</td>
                                     <td>${date}</td>
