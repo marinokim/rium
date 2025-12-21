@@ -664,13 +664,17 @@
         // Global State
         let currentCategoryId = '';
         let currentSearchQuery = '';
+        window.categoryList = []; // Global Cache
+
 
         // Load Categories
         const loadCategories = async () => {
             try {
                 const data = await apiFetch('/api/categories');
                 const categories = data.categories || [];
+                window.categoryList = categories; // Cache for slug lookup
                 const container = document.getElementById('categoryFilters');
+
 
                 // Keep 'All' button and append others
                 container.innerHTML = `<button class="filter-btn active" data-id="" onclick="filterCategory(this, '')">전체</button>`;
@@ -715,7 +719,17 @@
 
                 // Fetch first product with current filter
                 let url = '/api/products?isAvailable=true&limit=1';
-                if (currentCategoryId) url += `&categoryId=${currentCategoryId}`;
+                if (currentCategoryId) {
+                    url += `&categoryId=${currentCategoryId}`;
+                    // Slug Fallback Debug
+                    if (window.categoryList) {
+                        const cat = window.categoryList.find(c => c.id == currentCategoryId);
+                        if (cat && cat.slug) {
+                            url += `&category=${cat.slug}`;
+                            msg += `[Fallback Slug: ${cat.slug}]\n`;
+                        }
+                    }
+                }
 
                 const prods = await apiFetch(url);
                 const p = prods.products[0];
@@ -764,7 +778,17 @@
                 // Build Query String
                 // Fix: Increase limit to show all products (default was 20)
                 let query = `/api/products?isAvailable=true&limit=200`;
-                if (currentCategoryId) query += `&categoryId=${currentCategoryId}`;
+                if (currentCategoryId) {
+                    query += `&categoryId=${currentCategoryId}`;
+                    // Slug Fallback (v13 Logic)
+                    if (window.categoryList) {
+                        const cat = window.categoryList.find(c => c.id == currentCategoryId);
+                        if (cat && cat.slug) {
+                            query += `&category=${cat.slug}`;
+                            console.log(`Adding Slug (Catalog): ${cat.slug}`);
+                        }
+                    }
+                }
                 if (currentSearchQuery) query += `&search=${encodeURIComponent(currentSearchQuery)}`;
 
                 const data = await apiFetch(query);
