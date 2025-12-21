@@ -901,11 +901,13 @@
                     </td>
                     
                     <td style="text-align: center;">
-                       <span class="status-badge ${p.is_available ? 'status-active' : 'status-inactive'}" 
-                             style="cursor:pointer;" onclick="toggleProductStatus(${p.id})">
-                          ${p.is_available ? 'Normal' : 'SoldOut'}
+                       <span class="status-badge ${p.is_new ? 'status-active' : 'status-normal'}" 
+                             style="cursor:pointer;" onclick="toggleProductNewStatus(${p.id})">
+                          ${p.is_new ? 'New' : 'Normal'}
                        </span><br>
-                       <span class="status-selling" style="cursor:pointer;" onclick="toggleProductStatus(${p.id})">
+                       <span class="status-selling ${p.is_available ? '' : 'status-inactive'}" 
+                             style="cursor:pointer; ${p.is_available ? '' : 'background-color:#fed7d7; color:#822727; border-color:#feb2b2;'}" 
+                             onclick="toggleProductStatus(${p.id})">
                             ${p.is_available ? 'Selling' : 'Stop'}
                        </span>
                        <div style="margin-top:5px; display: flex; gap: 4px; justify-content: center;">
@@ -1085,15 +1087,48 @@
                 if (res && res.product) {
                     const idx = currentProducts.findIndex(x => x.id === id);
                     if (idx !== -1) {
-                        currentProducts[idx] = res.product; // Update the single item
-                        renderTable(); // Re-render table only
+                        currentProducts[idx] = res.product;
+                        renderTable();
                     } else {
-                        loadProducts(currentPage); // Fallback
+                        loadProducts(currentPage);
                     }
                 } else {
                     loadProducts(currentPage);
                 }
 
+            } catch (e) {
+                alert('상태 변경 실패: ' + e.message);
+            }
+        };
+
+        // Toggle New Status (New vs Normal)
+        const toggleProductNewStatus = async (id) => {
+            const p = currentProducts.find(x => x.id === id);
+            if (!p) return;
+
+            const newStatus = !p.is_new;
+            if (!confirm(`상품 구분을 ${newStatus ? '신상품(New)' : '일반(Normal)'}으로 변경하시겠습니까?`)) return;
+
+            try {
+                // PATCH /api/products/:id/new-status
+                // Payload: { isNew: boolean }
+                const res = await apiFetch(`/api/products/${id}/new-status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ isNew: newStatus })
+                });
+
+                if (res && res.product) {
+                    const idx = currentProducts.findIndex(x => x.id === id);
+                    if (idx !== -1) {
+                        currentProducts[idx] = res.product;
+                        renderTable();
+                    } else {
+                        loadProducts(currentPage);
+                    }
+                } else {
+                    loadProducts(currentPage);
+                }
             } catch (e) {
                 alert('상태 변경 실패: ' + e.message);
             }
