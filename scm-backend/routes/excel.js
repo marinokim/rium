@@ -1,6 +1,6 @@
 import express from 'express'
 import multer from 'multer'
-import * as XLSX from 'xlsx'
+import XLSX from 'xlsx'
 import pool from '../config/database.js'
 import path from 'path'
 import fs from 'fs'
