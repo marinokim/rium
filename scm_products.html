@@ -550,8 +550,8 @@
                         <th style="width: 60px;">IMG</th>
                         <th>브랜드</th>
                         <th>상품명/모델명/옵션</th>
-                        <th style="min-width: 80px; text-align: right;">실판매가</th>
-                        <th style="min-width: 80px; text-align: right;">공급가</th>
+                        <th style="min-width: 80px; text-align: right;">B2B공급가</th>
+                        <th style="min-width: 80px; text-align: right;">소비자가</th>
                         <th style="width: 80px; text-align: center;">재고</th>
                         <th style="width: 80px; text-align: center;">배송비</th>
                         <th>제조사/원산지/등록일</th>
@@ -937,12 +937,11 @@
                     </td>
                     
                     <td style="text-align: right;">
-                        <div style="color:#3182ce; font-weight:bold;">${formatPrice(p.consumer_price)}</div>
+                        <div style="color:#3182ce; font-weight:bold;">${formatPrice(p.b2b_price)}</div>
                         <div style="font-size:0.75rem;"><span style="color:#e53e3e;">${p.is_tax_free ? '면세' : '과세'}</span></div>
                     </td>
                      <td style="text-align: right;">
-                        <div style="color:#4a5568;">소가 ${formatPrice(p.supply_price)}</div>
-                        <div style="font-weight:bold;">공급 ${formatPrice(p.b2b_price)}</div>
+                        <div style="color:#4a5568;">${formatPrice(p.consumer_price)}</div>
                     </td>
 
                     <td style="text-align: center;">
