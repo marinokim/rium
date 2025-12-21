@@ -857,10 +857,13 @@
                 let url = `/api/products?page=${page}&limit=${itemsPerPage}&sort=id_desc`;
                 // Add Filter
                 const filterCategory = document.getElementById('filterCategory');
+                // SCM usually needs to see ALL products (Active & Inactive)
+                url += '&includeUnavailable=true';
+
                 if (currentCategoryId) {
                     url += `&categoryId=${currentCategoryId}`;
                 }
-                console.log('Frontend Version: v4 (Robust Filter)');
+                console.log('Frontend Version: v4.1 (Include All Status)');
                 console.log('Loading products:', url);
 
                 const data = await apiFetch(url);
