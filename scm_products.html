@@ -749,11 +749,11 @@
             if (token) {
                 options.headers = {
                     ...options.headers,
-                    'Authorization': `Bearer \${token}`
+                    'Authorization': `Bearer ${token}`
                 };
             }
 
-            const res = await fetch(`\${API_BASE}\${url}`, options);
+            const res = await fetch(`${API_BASE}${url}`, options);
             if (res.status === 401) {
                 alert('세션이 만료되었습니다. 다시 로그인해주세요.');
                 window.location.href = 'scm_login.html';
@@ -776,11 +776,11 @@
         const loadProducts = async (page = 1) => {
             showLoading(true);
             try {
-                let url = `/api/products?page=\${page}&limit=\${itemsPerPage}&sort=id_desc`;
+                let url = `/api/products?page=${page}&limit=${itemsPerPage}&sort=id_desc`;
                 // Add Filter
                 const filterCategory = document.getElementById('filterCategory');
                 if (filterCategory && filterCategory.value) {
-                    url += `&categoryId=\${filterCategory.value}`;
+                    url += `&categoryId=${filterCategory.value}`;
                 }
 
                 const data = await apiFetch(url);
@@ -801,58 +801,58 @@
             const tbody = document.getElementById('productListBody');
             tbody.innerHTML = currentProducts.map(p => `
                 <tr>
-                    <td>\${p.id}</td>
+                    <td>${p.id}</td>
                     <td>
-                        <img src="\${p.image_url || 'https://via.placeholder.com/50'}" class="product-img-thumb" 
-                             onclick="window.open('\${p.image_url || '#'}', '_blank')" 
+                        <img src="${p.image_url || 'https://via.placeholder.com/50'}" class="product-img-thumb" 
+                             onclick="window.open('${p.image_url || '#'}', '_blank')" 
                              onerror="this.src='https://via.placeholder.com/50?text=No+Img'">
                     </td>
-                    <td style="font-weight:600; color:#4a5568;">\${p.brand || '-'}
-                        <div style="font-size:0.75rem; color:#3182ce;">\${p.category_name || ''}</div>
+                    <td style="font-weight:600; color:#4a5568;">${p.brand || '-'}
+                        <div style="font-size:0.75rem; color:#3182ce;">${p.category_name || ''}</div>
                     </td>
                     <td>
                         <div style="font-weight:bold; color:#2d3748; margin-bottom:2px;">
-                            \${p.is_new ? '<span style="color:red; font-size:0.7rem; font-weight:bold;">[NEW]</span> ' : ''}
-                            <a href="#" class="edit-btn" data-id="\${p.id}" style="color:#2d3748; text-decoration:none;">
-                                \${p.model_name}
+                            ${p.is_new ? '<span style="color:red; font-size:0.7rem; font-weight:bold;">[NEW]</span> ' : ''}
+                            <a href="#" class="edit-btn" data-id="${p.id}" style="color:#2d3748; text-decoration:none;">
+                                ${p.model_name}
                             </a>
                         </div>
-                        <div style="font-size:0.8rem; color:#718096;">\${p.product_options || '-'}</div>
-                        <div style="font-size:0.75rem; color:#a0aec0;">\${p.model_no || 'No Model #'}</div>
+                        <div style="font-size:0.8rem; color:#718096;">${p.product_options || '-'}</div>
+                        <div style="font-size:0.75rem; color:#a0aec0;">${p.model_no || 'No Model #'}</div>
                     </td>
                     
                     <td style="text-align: right;">
-                        <div style="color:#3182ce; font-weight:bold;">\${formatPrice(p.consumer_price)}</div>
-                        <div style="font-size:0.75rem;"><span style="color:#e53e3e;">\${p.is_tax_free ? '면세' : '과세'}</span></div>
+                        <div style="color:#3182ce; font-weight:bold;">${formatPrice(p.consumer_price)}</div>
+                        <div style="font-size:0.75rem;"><span style="color:#e53e3e;">${p.is_tax_free ? '면세' : '과세'}</span></div>
                     </td>
                      <td style="text-align: right;">
-                        <div style="color:#4a5568;">소가 \${formatPrice(p.supply_price)}</div>
-                        <div style="font-weight:bold;">공급 \${formatPrice(p.b2b_price)}</div>
+                        <div style="color:#4a5568;">소가 ${formatPrice(p.supply_price)}</div>
+                        <div style="font-weight:bold;">공급 ${formatPrice(p.b2b_price)}</div>
                     </td>
 
                     <td style="text-align: center;">
-                        <div style="font-weight:bold;">재고 \${p.stock_quantity}</div>
-                        <div style="font-size:0.75rem; color:#718096;">카톤 \${p.quantity_per_carton || 0}</div>
+                        <div style="font-weight:bold;">재고 ${p.stock_quantity}</div>
+                        <div style="font-size:0.75rem; color:#718096;">카톤 ${p.quantity_per_carton || 0}</div>
                     </td>
                      <td style="text-align: center;">
-                        <div style="font-size:0.8rem;">개별 \${formatPrice(p.shipping_fee_individual)}</div>
-                        <div style="font-size:0.8rem;">카톤 \${formatPrice(p.shipping_fee_carton)}</div>
+                        <div style="font-size:0.8rem;">개별 ${formatPrice(p.shipping_fee_individual)}</div>
+                        <div style="font-size:0.8rem;">카톤 ${formatPrice(p.shipping_fee_carton)}</div>
                     </td>
 
                     <td style="font-size:0.85rem;">
-                        <div>제조: \${p.manufacturer || '-'}</div>
-                        <div>원산: \${p.origin || '-'}</div>
-                        <div style="color:#a0aec0;">\${new Date(p.created_at).toLocaleDateString()}</div>
+                        <div>제조: ${p.manufacturer || '-'}</div>
+                        <div>원산: ${p.origin || '-'}</div>
+                        <div style="color:#a0aec0;">${new Date(p.created_at).toLocaleDateString()}</div>
                     </td>
                     
                     <td style="text-align: center;">
-                       <span class="status-badge \${p.is_available ? 'status-active' : 'status-inactive'}">
-                          \${p.is_available ? 'Normal' : 'SoldOut'}
+                       <span class="status-badge ${p.is_available ? 'status-active' : 'status-inactive'}">
+                          ${p.is_available ? 'Normal' : 'SoldOut'}
                        </span><br>
-                       <span class="status-selling">\${p.is_available ? 'Selling' : 'Stop'}</span>
+                       <span class="status-selling">${p.is_available ? 'Selling' : 'Stop'}</span>
                        <div style="margin-top:5px; display: flex; gap: 2px; justify-content: center;">
-                            <button class="scm-btn btn-navy btn-sm" onclick="openProductModal(\${p.id})">수정</button>
-                            <button class="scm-btn btn-navy btn-sm" onclick="deleteProduct(\${p.id})">삭제</button>
+                            <button class="scm-btn btn-navy btn-sm" onclick="openProductModal(${p.id})">수정</button>
+                            <button class="scm-btn btn-navy btn-sm" onclick="deleteProduct(${p.id})">삭제</button>
                        </div>
                     </td>
                 </tr>
@@ -865,7 +865,7 @@
             let html = '';
 
             // Prev
-            html += `<button class="page-btn" \${currentPage === 1 ? 'disabled' : ''} onclick="loadProducts(\${currentPage - 1})"><</button>`;
+            html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="loadProducts(${currentPage - 1})"><</button>`;
 
             // Range (Showing 5 pages around current)
             let start = Math.max(1, currentPage - 2);
@@ -873,11 +873,11 @@
             if (end - start < 4) start = Math.max(1, end - 4);
 
             for (let i = start; i <= end; i++) {
-                html += `<button class="page-btn \${i === currentPage ? 'active' : ''}" onclick="loadProducts(\${i})">\${i}</button>`;
+                html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="loadProducts(${i})">${i}</button>`;
             }
 
             // Next
-            html += `<button class="page-btn" \${currentPage === totalPages ? 'disabled' : ''} onclick="loadProducts(\${currentPage + 1})">></button>`;
+            html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadProducts(${currentPage + 1})">></button>`;
 
             container.innerHTML = html;
         };
@@ -969,7 +969,7 @@
             showLoading(true);
             try {
                 if (id) {
-                    await apiFetch(`/api/products/\${id}`, {
+                    await apiFetch(`/api/products/${id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -995,7 +995,7 @@
         window.deleteProduct = async (id) => {
             if (!confirm('정말 삭제하시겠습니까?')) return;
             try {
-                await apiFetch(`/api/products/\${id}`, { method: 'DELETE' });
+                await apiFetch(`/api/products/${id}`, { method: 'DELETE' });
                 loadProducts(currentPage);
             } catch (e) { alert(e.message); }
         };
@@ -1013,7 +1013,7 @@
             const file = e.target.files[0];
             if (!file) return;
 
-            if (!confirm(`\${file.name} 파일로 서버 데이터를 덮어쓰시겠습니까? (매우 위험)`)) {
+            if (!confirm(`${file.name} 파일로 서버 데이터를 덮어쓰시겠습니까? (매우 위험)`)) {
                 e.target.value = null;
                 return;
             }
@@ -1045,7 +1045,7 @@
 
             if (!start || !end) return alert('시작/종료 번호를 입력하세요');
 
-            if (!confirm(`\${start} ~ \${end} 구간의 상품을 엑셀에서 DB로 등록하시겠습니까?`)) return;
+            if (!confirm(`${start} ~ ${end} 구간의 상품을 엑셀에서 DB로 등록하시겠습니까?`)) return;
 
             showLoading(true);
             try {
@@ -1080,13 +1080,13 @@
             const end = prompt('삭제할 종료 ID를 입력하세요:');
             if (!end) return;
 
-            if (!confirm(`ID \${start} ~ \${end} 구간의 상품을 정말 삭제하시겠습니까?`)) return;
+            if (!confirm(`ID ${start} ~ ${end} 구간의 상품을 정말 삭제하시겠습니까?`)) return;
 
             try {
-                const res = await apiFetch(`/api/products/range?startId=\${start}&endId=\${end}`, {
+                const res = await apiFetch(`/api/products/range?startId=${start}&endId=${end}`, {
                     method: 'DELETE'
                 });
-                alert(`\${res.count}개 삭제 완료`);
+                alert(`${res.count}개 삭제 완료`);
                 loadProducts();
             } catch (e) { alert('실패: ' + e.message); }
         };
@@ -1115,30 +1115,30 @@
 
                 catListBody.innerHTML = cats.map(c => `
                         <tr>
-                            <td>\${c.id}</td>
-                            <td>\${c.name}</td>
-                            <td>\${c.slug}</td>
+                            <td>${c.id}</td>
+                            <td>${c.name}</td>
+                            <td>${c.slug}</td>
                             <td>
                                 <div style="display:flex; align-items:center; gap:5px;">
-                                    <div style="width:20px; height:20px; background-color:\${c.color || '#ffffff'}; border:1px solid #ddd; border-radius:4px;"></div>
-                                    <span style="font-size:0.8rem; color:#888;">\${c.color || '#ffffff'}</span>
+                                    <div style="width:20px; height:20px; background-color:${c.color || '#ffffff'}; border:1px solid #ddd; border-radius:4px;"></div>
+                                    <span style="font-size:0.8rem; color:#888;">${c.color || '#ffffff'}</span>
                                 </div>
                             </td>
                             <td>
-                                <button class="scm-btn btn-success btn-sm btn-edit-cat" data-id="\${c.id}" data-name="\${c.name}" data-color="\${c.color}">수정</button>
-                                <button class="scm-btn btn-red btn-sm btn-del-cat" data-id="\${c.id}">삭제</button>
+                                <button class="scm-btn btn-success btn-sm btn-edit-cat" data-id="${c.id}" data-name="${c.name}" data-color="${c.color}">수정</button>
+                                <button class="scm-btn btn-red btn-sm btn-del-cat" data-id="${c.id}">삭제</button>
                             </td>
                         </tr>
                     `).join('');
 
                 categorySelect.innerHTML = '<option value="">선택하세요</option>' +
-                    cats.map(c => `<option value="\${c.id}">\${c.name}</option>`).join('');
+                    cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 
                 // Populate Filter (Keep "All" option)
                 if (filterCategory) {
                     const currentVal = filterCategory.value;
                     filterCategory.innerHTML = '<option value="">전체 카테고리</option>' +
-                        cats.map(c => `<option value="\${c.id}">\${c.name}</option>`).join('');
+                        cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
                     filterCategory.value = currentVal; // Restore selection
                 }
 
@@ -1154,7 +1154,7 @@
             if (editingCategoryId) {
                 // Update
                 try {
-                    await apiFetch(`/api/categories/\${editingCategoryId}`, {
+                    await apiFetch(`/api/categories/${editingCategoryId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ name, color })
@@ -1218,7 +1218,7 @@
 
         const deleteCategory = async (id) => {
             try {
-                await apiFetch(`/api/categories/\${id}`, { method: 'DELETE' });
+                await apiFetch(`/api/categories/${id}`, { method: 'DELETE' });
                 loadCategories();
             } catch (e) { alert(e.message); }
         };
