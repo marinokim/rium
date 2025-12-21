@@ -1075,14 +1075,24 @@
 
             try {
                 // Use dedicated PATCH endpoint for safer update
-                await apiFetch(`/api/products/${id}/availability`, {
+                const res = await apiFetch(`/api/products/${id}/availability`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ isAvailable: newStatus })
                 });
 
-                // Optimistic UI update or reload
-                loadProducts(currentPage);
+                // Update local state and re-render immediately for better UX
+                if (res && res.product) {
+                    const idx = currentProducts.findIndex(x => x.id === id);
+                    if (idx !== -1) {
+                        currentProducts[idx] = res.product; // Update the single item
+                        renderTable(); // Re-render table only
+                    } else {
+                        loadProducts(currentPage); // Fallback
+                    }
+                } else {
+                    loadProducts(currentPage);
+                }
 
             } catch (e) {
                 alert('상태 변경 실패: ' + e.message);
