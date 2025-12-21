@@ -1469,6 +1469,12 @@
                     msg += 'No products found.';
                 }
 
+                if (prods.debugSQL) msg += `\n\nSQL: ${prods.debugSQL}`;
+                if (prods.debugParams) msg += `\nParams: ${JSON.stringify(prods.debugParams)}`;
+
+                alert(msg);
+                console.log(msg);
+
                 alert(msg);
                 console.log(msg);
             } catch (e) { alert(e); }
