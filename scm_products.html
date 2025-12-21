@@ -1227,7 +1227,7 @@
 
             showLoading(true);
             try {
-                const res = await apiFetch('/api/upload/excel-full', {
+                const res = await apiFetch('/api/excel/upload', {
                     method: 'POST',
                     body: formData // No Content-Type header (browser sets it)
                 });
