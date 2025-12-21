@@ -210,16 +210,37 @@ export const runMigrations = async () => {
                 );
             `)
 
-            // Create proposal_history table
+            // Add color column to categories if missing
             await client.query(`
-                CREATE TABLE IF NOT EXISTS proposal_history (
-                    id SERIAL PRIMARY KEY,
-                    user_id INTEGER REFERENCES users(id),
-                    title VARCHAR(255),
-                    items JSONB,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
+                DO $$ 
+                BEGIN 
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'categories' AND column_name = 'color') THEN 
+                        ALTER TABLE categories ADD COLUMN color VARCHAR(7) DEFAULT '#333333'; 
+                    END IF; 
+                END $$;
             `)
+
+            // Seed default category colors
+            const colorMap = {
+                'audio': '#FF5733',       // Orange-Red
+                'mobile': '#3498DB',      // Blue
+                'beauty': '#E91E63',      // Pink
+                'living': '#2ECC71',      // Green
+                'electronics': '#9B59B6', // Purple
+                'gift-set': '#F1C40F',    // Yellow
+                'gift set': '#F1C40F'     // Handle variation
+            }
+
+            for (const [slug, color] of Object.entries(colorMap)) {
+                // Update by slug or name (case insensitive for name)
+                await client.query(`
+                    UPDATE categories 
+                    SET color = $1 
+                    WHERE (slug = $2 OR LOWER(name) = $2) 
+                    AND (color IS NULL OR color = '#333333')
+                `, [color, slug])
+            }
+
 
             await client.query('COMMIT')
             console.log('✅ Database migrations completed successfully')
