@@ -221,7 +221,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     } catch (error) {
         if (client) await client.query('ROLLBACK')
         console.error('Excel upload error:', error)
-        res.status(500).json({ error: 'Failed to process Excel file' })
+        res.status(500).json({ error: 'Failed to process Excel file: ' + error.message })
     } finally {
         if (client) client.release()
         if (req.file && req.file.path) {
