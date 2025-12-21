@@ -530,12 +530,11 @@
 
         <!-- Filter Options Row -->
         <div style="margin-bottom: 1rem; text-align: right;">
-            <select class="scm-select" id="filterCategory" onchange="window.handleCategoryChange(this.value)">
+            <select class="scm-select" id="filterCategory">
                 <option value="">전체 카테고리</option>
             </select>
             <span id="debugFilterId" style="font-size: 0.8rem; color: red; margin-left: 5px; font-weight:bold;"></span>
         </div>
-
 
         <!-- Product Table -->
         <div class="scm-table-container">
@@ -783,14 +782,8 @@
         let currentCategoryId = ''; // Global state for filter
 
         // Robust Handler
-        window.handleCategoryChange = (val) => {
-            console.log('Category Changed to:', val);
-            const debugSpan = document.getElementById('debugFilterId');
-            if (debugSpan) debugSpan.innerText = `ID: ${val}`;
+        // Robust Handler Removed - using addEventListener below
 
-            currentCategoryId = val;
-            loadProducts(1);
-        };
 
         // AUTH & INIT
         document.addEventListener('DOMContentLoaded', () => {
