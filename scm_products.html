@@ -794,6 +794,24 @@
 
         // AUTH & INIT
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM Loaded - Initializing SCM');
+
+            // Re-bind Filter Listener safely
+            const filterSelect = document.getElementById('filterCategory');
+            if (filterSelect) {
+                filterSelect.addEventListener('change', (e) => {
+                    const val = e.target.value;
+                    // ALERT DEBUG to confirm it runs
+                    // alert('DEBUG: Selected Category ID = ' + val); 
+
+                    const debugSpan = document.getElementById('debugFilterId');
+                    if (debugSpan) debugSpan.innerText = `ID: ${val}`;
+
+                    currentCategoryId = val;
+                    loadProducts(1);
+                });
+            }
+
             const token = localStorage.getItem('token');
             if (!token) {
                 window.location.href = 'scm_login.html';
