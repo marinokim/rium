@@ -783,6 +783,9 @@
         // Robust Handler
         window.handleCategoryChange = (val) => {
             console.log('Category Changed to:', val);
+            const debugSpan = document.getElementById('debugFilterId');
+            if (debugSpan) debugSpan.innerText = `ID: ${val}`;
+
             currentCategoryId = val;
             loadProducts(1);
         };
