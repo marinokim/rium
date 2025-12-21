@@ -182,10 +182,11 @@
             height: 100%;
         }
 
-        /* Filter Bar */
+        /* Filter Bar & Action Bar */
+        .scm-action-bar,
         .scm-filter-bar {
             background: white;
-            padding: 1.5rem;
+            padding: 1rem;
             border-radius: 8px;
             margin-bottom: 1.5rem;
             display: flex;
@@ -193,6 +194,12 @@
             align-items: center;
             flex-wrap: wrap;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+        }
+
+        .scm-action-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .scm-input-group {
