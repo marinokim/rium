@@ -1329,6 +1329,7 @@
                 // Apply Hardcoded Colors if backend color is missing/default
                 cats.forEach(c => {
                     if ((!c.color || c.color === '#ffffff') && COLOR_MAP[c.slug]) {
+                        console.log(`[v14] Applying color ${COLOR_MAP[c.slug]} to ${c.slug}`);
                         c.color = COLOR_MAP[c.slug];
                     }
                 });
