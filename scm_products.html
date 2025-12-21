@@ -1074,44 +1074,11 @@
             if (!confirm(`상품 상태를 ${newStatus ? '판매중(Normal)' : '품절(SoldOut)'}으로 변경하시겠습니까?`)) return;
 
             try {
-                // We only need to update isAvailable. The PUT endpoint expects full object usually, 
-                // but we can try sending just the flag if backend supports partial updates, 
-                // OR we have to send everything. 
-                // Looking at backend code: it destructures ALL fields. So we must send full payload.
-                // However, fetching full details just to toggle boolean is inefficient. 
-                // For now, let's use the object from `currentProducts` but we need to match the payload structure of `onsubmit`.
-
-                // Construct payload from `p` (currentProducts item)
-                const payload = {
-                    categoryId: p.category_id,
-                    brand: p.brand,
-                    modelName: p.model_name,
-                    description: p.description,
-                    imageUrl: p.image_url,
-                    b2bPrice: p.b2b_price,
-                    stockQuantity: p.stock_quantity,
-                    isAvailable: newStatus,
-                    detailUrl: p.detail_url,
-                    consumerPrice: p.consumer_price,
-                    supplyPrice: p.supply_price,
-                    quantityPerCarton: p.quantity_per_carton,
-                    manufacturer: p.manufacturer,
-                    origin: p.origin,
-                    isTaxFree: p.is_tax_free,
-                    shippingFeeIndividual: p.shipping_fee_individual,
-                    shippingFeeCarton: p.shipping_fee_carton,
-                    productOptions: p.product_options,
-                    modelNo: p.model_no,
-                    remarks: p.remarks,
-                    displayOrder: p.display_order,
-                    productSpec: p.product_spec,
-                    isNew: p.is_new
-                };
-
-                await apiFetch(`/api/products/${id}`, {
-                    method: 'PUT',
+                // Use dedicated PATCH endpoint for safer update
+                await apiFetch(`/api/products/${id}/availability`, {
+                    method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ isAvailable: newStatus })
                 });
 
                 // Optimistic UI update or reload
