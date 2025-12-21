@@ -258,8 +258,11 @@ router.get('/', async (req, res) => {
         }
 
         if (req.query.categoryId) {
-            params.push(req.query.categoryId)
-            queryCode += ` AND p.category_id = $${params.length}`
+            const catId = parseInt(req.query.categoryId, 10)
+            if (!isNaN(catId)) {
+                params.push(catId)
+                queryCode += ` AND p.category_id = $${params.length}`
+            }
         }
 
         if (isNew === 'true') {
