@@ -639,15 +639,18 @@
                     style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
                     <div>
                         <label>소비자가</label>
-                        <input type="number" id="p_consumerPrice" class="scm-input" style="width: 100%;">
+                        <input type="text" id="p_consumerPrice" class="scm-input" style="width: 100%;"
+                            oninput="formatNumberInput(this)">
                     </div>
                     <div>
                         <label>공급가</label>
-                        <input type="number" id="p_supplyPrice" class="scm-input" style="width: 100%;">
+                        <input type="text" id="p_supplyPrice" class="scm-input" style="width: 100%;"
+                            oninput="formatNumberInput(this)">
                     </div>
                     <div>
                         <label>B2B 가격</label>
-                        <input type="number" id="p_b2bPrice" class="scm-input" style="width: 100%;">
+                        <input type="text" id="p_b2bPrice" class="scm-input" style="width: 100%;"
+                            oninput="formatNumberInput(this)">
                     </div>
                     <div>
                         <label>재고수량</label>
@@ -667,11 +670,13 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
                     <div>
                         <label>배송비 (개별)</label>
-                        <input type="number" id="p_shippingFeeIndividual" class="scm-input" style="width: 100%;">
+                        <input type="text" id="p_shippingFeeIndividual" class="scm-input" style="width: 100%;"
+                            oninput="formatNumberInput(this)">
                     </div>
                     <div>
                         <label>배송비 (박스)</label>
-                        <input type="number" id="p_shippingFeeCarton" class="scm-input" style="width: 100%;">
+                        <input type="text" id="p_shippingFeeCarton" class="scm-input" style="width: 100%;"
+                            oninput="formatNumberInput(this)">
                     </div>
                     <div>
                         <label>제조사</label>
@@ -716,6 +721,16 @@
                     <textarea id="p_remarks" class="scm-input" style="width: 100%; height: 60px;"></textarea>
                 </div>
 
+                <!-- Moved Checkboxes to Bottom -->
+
+
+                <!-- Description Editor (Simple Textarea for now) -->
+                <div style="margin-top: 15px;">
+                    <label>상세 설명 (HTML)</label>
+                    <textarea id="p_description" class="scm-input" style="width: 100%; height: 200px;"></textarea>
+                </div>
+
+                <!-- Row 6: Flags (Moved here) -->
                 <div style="margin-top: 10px; display: flex; gap: 20px;">
                     <label style="display: flex; align-items: center; gap: 5px;">
                         <input type="checkbox" id="p_isAvailable" checked> 판매 가능
@@ -726,13 +741,6 @@
                     <label style="display: flex; align-items: center; gap: 5px;">
                         <input type="checkbox" id="p_isTaxFree"> 면세 상품
                     </label>
-                </div>
-
-
-                <!-- Description Editor (Simple Textarea for now) -->
-                <div style="margin-top: 15px;">
-                    <label>상세 설명 (HTML)</label>
-                    <textarea id="p_description" class="scm-input" style="width: 100%; height: 200px;"></textarea>
                 </div>
 
                 <div style="margin-top: 2rem; text-align: right; padding-top: 1rem; border-top: 1px solid #eee;">
@@ -893,10 +901,13 @@
                     </td>
                     
                     <td style="text-align: center;">
-                       <span class="status-badge ${p.is_available ? 'status-active' : 'status-inactive'}">
+                       <span class="status-badge ${p.is_available ? 'status-active' : 'status-inactive'}" 
+                             style="cursor:pointer;" onclick="toggleProductStatus(${p.id})">
                           ${p.is_available ? 'Normal' : 'SoldOut'}
                        </span><br>
-                       <span class="status-selling">${p.is_available ? 'Selling' : 'Stop'}</span>
+                       <span class="status-selling" style="cursor:pointer;" onclick="toggleProductStatus(${p.id})">
+                            ${p.is_available ? 'Selling' : 'Stop'}
+                       </span>
                        <div style="margin-top:5px; display: flex; gap: 2px; justify-content: center;">
                             <button class="scm-btn btn-navy btn-sm" onclick="openProductModal(${p.id})">수정</button>
                             <button class="scm-btn btn-navy btn-sm" onclick="deleteProduct(${p.id})">삭제</button>
@@ -948,14 +959,14 @@
                     document.getElementById('p_brand').value = p.brand;
                     document.getElementById('p_categoryId').value = p.category_id;
 
-                    document.getElementById('p_consumerPrice').value = p.consumer_price;
-                    document.getElementById('p_supplyPrice').value = p.supply_price;
-                    document.getElementById('p_b2bPrice').value = p.b2b_price;
+                    document.getElementById('p_consumerPrice').value = (p.consumer_price || 0).toLocaleString();
+                    document.getElementById('p_supplyPrice').value = (p.supply_price || 0).toLocaleString();
+                    document.getElementById('p_b2bPrice').value = (p.b2b_price || 0).toLocaleString();
                     document.getElementById('p_stockQuantity').value = p.stock_quantity;
                     document.getElementById('p_quantityPerCarton').value = p.quantity_per_carton;
 
-                    document.getElementById('p_shippingFeeIndividual').value = p.shipping_fee_individual;
-                    document.getElementById('p_shippingFeeCarton').value = p.shipping_fee_carton;
+                    document.getElementById('p_shippingFeeIndividual').value = (p.shipping_fee_individual || 0).toLocaleString();
+                    document.getElementById('p_shippingFeeCarton').value = (p.shipping_fee_carton || 0).toLocaleString();
                     document.getElementById('p_manufacturer').value = p.manufacturer;
                     document.getElementById('p_origin').value = p.origin;
 
@@ -989,14 +1000,14 @@
                 brand: document.getElementById('p_brand').value,
                 categoryId: document.getElementById('p_categoryId').value,
 
-                consumerPrice: document.getElementById('p_consumerPrice').value,
-                supplyPrice: document.getElementById('p_supplyPrice').value,
-                b2bPrice: document.getElementById('p_b2bPrice').value,
+                consumerPrice: getRawNumber('p_consumerPrice'),
+                supplyPrice: getRawNumber('p_supplyPrice'),
+                b2bPrice: getRawNumber('p_b2bPrice'),
                 stockQuantity: document.getElementById('p_stockQuantity').value,
                 quantityPerCarton: document.getElementById('p_quantityPerCarton').value,
 
-                shippingFeeIndividual: document.getElementById('p_shippingFeeIndividual').value,
-                shippingFeeCarton: document.getElementById('p_shippingFeeCarton').value,
+                shippingFeeIndividual: getRawNumber('p_shippingFeeIndividual'),
+                shippingFeeCarton: getRawNumber('p_shippingFeeCarton'),
                 manufacturer: document.getElementById('p_manufacturer').value,
                 origin: document.getElementById('p_origin').value,
 
@@ -1037,6 +1048,79 @@
             }
         };
 
+
+        // Format Number Input (Comma)
+        const formatNumberInput = (input) => {
+            let val = input.value.replace(/[^0-9]/g, ""); // Remove non-numeric
+            if (val) {
+                input.value = parseInt(val).toLocaleString();
+            } else {
+                input.value = "";
+            }
+        };
+
+        // Helper to get raw number from formatted input
+        const getRawNumber = (id) => {
+            const val = document.getElementById(id).value.replace(/,/g, '');
+            return val ? parseInt(val) : 0;
+        };
+
+        // Toggle Status
+        const toggleProductStatus = async (id) => {
+            const p = currentProducts.find(x => x.id === id);
+            if (!p) return;
+
+            const newStatus = !p.is_available;
+            if (!confirm(`상품 상태를 ${newStatus ? '판매중(Normal)' : '품절(SoldOut)'}으로 변경하시겠습니까?`)) return;
+
+            try {
+                // We only need to update isAvailable. The PUT endpoint expects full object usually, 
+                // but we can try sending just the flag if backend supports partial updates, 
+                // OR we have to send everything. 
+                // Looking at backend code: it destructures ALL fields. So we must send full payload.
+                // However, fetching full details just to toggle boolean is inefficient. 
+                // For now, let's use the object from `currentProducts` but we need to match the payload structure of `onsubmit`.
+
+                // Construct payload from `p` (currentProducts item)
+                const payload = {
+                    categoryId: p.category_id,
+                    brand: p.brand,
+                    modelName: p.model_name,
+                    description: p.description,
+                    imageUrl: p.image_url,
+                    b2bPrice: p.b2b_price,
+                    stockQuantity: p.stock_quantity,
+                    isAvailable: newStatus,
+                    detailUrl: p.detail_url,
+                    consumerPrice: p.consumer_price,
+                    supplyPrice: p.supply_price,
+                    quantityPerCarton: p.quantity_per_carton,
+                    manufacturer: p.manufacturer,
+                    origin: p.origin,
+                    isTaxFree: p.is_tax_free,
+                    shippingFeeIndividual: p.shipping_fee_individual,
+                    shippingFeeCarton: p.shipping_fee_carton,
+                    productOptions: p.product_options,
+                    modelNo: p.model_no,
+                    remarks: p.remarks,
+                    displayOrder: p.display_order,
+                    productSpec: p.product_spec,
+                    isNew: p.is_new
+                };
+
+                await apiFetch(`/api/products/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                // Optimistic UI update or reload
+                loadProducts(currentPage);
+
+            } catch (e) {
+                alert('상태 변경 실패: ' + e.message);
+            }
+        };
 
         // Delete Product
         window.deleteProduct = async (id) => {
