@@ -778,6 +778,15 @@
     </div>
 
 
+    <!-- Detail View Overlay Container -->
+    <div id="detailViewOverlay"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f7fafc; z-index: 9999; overflow-y: auto;">
+        <div id="detailViewContent"
+            style="max-width: 1200px; margin: 0 auto; background: white; min-height: 100vh; box-shadow: 0 0 20px rgba(0,0,0,0.1);">
+            <!-- Content Injected via JS -->
+        </div>
+    </div>
+
     <script>
         const API_BASE = 'https://rium-scm-backend.onrender.com'; // Change to local if needed
         let currentProducts = [];
@@ -919,7 +928,8 @@
                     <td>${p.id}</td>
                     <td>
                         <img src="${p.image_url || 'https://via.placeholder.com/50'}" class="product-img-thumb" 
-                             onclick="window.open('${p.image_url || '#'}', '_blank')" 
+                             onclick="openDetailView(${p.id})" 
+                             style="cursor: pointer;"
                              onerror="this.src='https://via.placeholder.com/50?text=No+Img'">
                     </td>
                     <td style="font-weight:600; color:#4a5568;">${p.brand || '-'}
@@ -1474,6 +1484,66 @@
 
         // New Button
         document.querySelector('button.btn-navy i.fa-plus').parentElement.onclick = () => openProductModal();
+
+
+        // --- DETAIL VIEW OVERLAY ---
+        const openDetailView = (id) => {
+            const product = currentProducts.find(p => p.id === id);
+            if (!product) return;
+
+            const overlay = document.getElementById('detailViewOverlay');
+            const content = document.getElementById('detailViewContent');
+
+            // Clean content
+            content.innerHTML = '';
+
+            // Header (Back Button + Title)
+            content.innerHTML += `
+                <div style="position: sticky; top: 0; background: white; padding: 15px; border-bottom: 1px solid #eee; display: flex; align-items: center; z-index: 10;">
+                    <button class="scm-btn btn-gray" onclick="closeDetailView()" style="margin-right: 20px;">
+                        <i class="fas fa-arrow-left"></i> 목록으로 돌아가기
+                    </button>
+                    <h2 style="margin: 0; font-size: 1.2rem;">${product.brand ? '[' + product.brand + '] ' : ''}${product.model_name} <span style="font-size: 0.9rem; color: #666; font-weight: normal;">(${product.model_no || '-'})</span></h2>
+                </div>
+            `;
+
+            // Main Image Area
+            content.innerHTML += `
+                <div style="padding: 20px; text-align: center; border-bottom: 10px solid #f7fafc;">
+                    <h3 style="font-size: 1rem; color: #4a5568; margin-bottom: 10px;">대표 이미지</h3>
+                    <img src="${product.image_url}" style="max-width: 300px; max-height: 300px; object-fit: contain; border: 1px solid #eee;">
+                </div>
+            `;
+
+            // Detail Content Area
+            let detailHtml = '';
+            if (!product.detail_url) {
+                detailHtml = '<div style="padding: 50px; text-align: center; color: #aaa;">상세 페이지 정보가 없습니다.</div>';
+            } else if (product.detail_url.trim().startsWith('<')) {
+                // Assuming HTML content
+                detailHtml = `<div style="max-width: 860px; margin: 0 auto;">${product.detail_url}</div>`;
+            } else {
+                // Assuming URL (Image or Page)
+                // Split by comma if multiple images (just in case) or render single image
+                detailHtml = `<img src="${product.detail_url}" style="width: 100%; max-width: 860px; display: block; margin: 0 auto;">`;
+            }
+
+            content.innerHTML += `
+                <div style="padding: 20px; background: white; min-height: 500px;">
+                    <h3 style="font-size: 1rem; color: #4a5568; margin-bottom: 15px; text-align: center;">상세 페이지</h3>
+                    ${detailHtml}
+                </div>
+            `;
+
+            overlay.style.display = 'block';
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        };
+
+        const closeDetailView = () => {
+            document.getElementById('detailViewOverlay').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        };
+
 
         // Debug Function
         // Debug Function
