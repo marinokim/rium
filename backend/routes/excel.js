@@ -526,6 +526,7 @@ import ExcelJS from 'exceljs'
 // Generate Excel Proposal (Export) - Using ExcelJS for Styling
 router.post('/download/proposal', async (req, res) => {
     try {
+        console.log('--- EXCELJS PROPOSAL GENERATION START (v1.0.5) ---')
         const { title, items } = req.body
 
         if (!items || !Array.isArray(items)) {
