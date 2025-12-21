@@ -519,21 +519,33 @@ router.post('/download/proposal', async (req, res) => {
         ]
 
         // --- ROW 1: Branding & Warning ---
-        const titleRow = worksheet.addRow(['RIUM', '당사가 운영하는 모든 상품은 폐쇄몰을 제외한 온라인 판매를 금하며, 판매 시 상품 공급이 중단됩니다.']);
+        // We will manually manage cells since we are merging
+        const titleRow = worksheet.getRow(1);
+        titleRow.height = 60; // Tall header for Logo
 
-        // Style 'RIUM' (A1)
-        const cellA1 = titleRow.getCell(1);
-        cellA1.font = { size: 16, bold: true, color: { argb: 'FF003366' } }; // Dark Blue
+        // 1. Title "RIUM" (Big, Blue) - Merged A1:B1
+        worksheet.mergeCells('A1:B1');
+        const titleCell = worksheet.getCell('A1');
+        titleCell.value = 'RIUM';
+        titleCell.font = {
+            name: 'Arial',
+            size: 36,
+            bold: true,
+            color: { argb: 'FF002060' } // Dark Blue
+        };
+        titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
 
-        // Style Warning (B1)
-        const cellB1 = titleRow.getCell(2);
-        cellB1.font = { size: 11, bold: true, color: { argb: 'FFFF0000' } }; // Red
-
-        // Merge Warning across columns (B1 to R1)
-        worksheet.mergeCells('B1:R1');
-
-        titleRow.height = 30;
-        titleRow.alignment = { vertical: 'middle' };
+        // 2. Warning Text (Red) - Merged C1:H1
+        worksheet.mergeCells('C1:H1');
+        const warningCell = worksheet.getCell('C1');
+        warningCell.value = '당사가 운영하는 모든 상품은 폐쇄몰을 제외한 온라인 판매를 금하며, 판매 시 상품 공급이 중단됩니다.';
+        warningCell.font = {
+            name: 'Malgun Gothic',
+            size: 12, // Reduced slightly to fit if needed, or keep 12
+            bold: true,
+            color: { argb: 'FFFF0000' } // Red
+        };
+        warningCell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
 
 
         // --- ROW 2: Column Headers ---
@@ -543,7 +555,8 @@ router.post('/download/proposal', async (req, res) => {
             '옵션', '설명', '제조원', '원산지', '카톤입수량', '기본수량',
             '소비자가', '공급가(부가세포함)', '개별배송비(부가세포함)', '대표이미지', '상세이미지', '비고'
         ];
-        const headerRow = worksheet.addRow(headerNames);
+        const headerRow = worksheet.getRow(2);
+        headerRow.values = headerNames; // Set values explicitly to ensure they are in Row 2
 
         // Style Header Row
         headerRow.eachCell((cell) => {
@@ -562,24 +575,19 @@ router.post('/download/proposal', async (req, res) => {
             };
         });
 
+        // Set Row 2 Height
+        headerRow.height = 30;
+
 
         // Fetch Products Details to Populate Images & Missing Info
         const productIds = items.map(i => i.productId || i.id).filter(id => id);
         // ... (rest of logic)
 
         // Adjust loop to start adding from Row 3 (which addRow does naturally)
-        // Note: The previous logic used `i + 3` because it assumed row 1 was header and we wanted 1-based index gap?
-        // Wait, previously `worksheet.columns` set Row 1. Loop started `i+3`? No, let's see.
+        // ...
 
         // Loop Logic Recovery:
-        // Before: `worksheet.columns` = [...]` (Sets Row 1 headers)
-        // ...
-        // `for (let i=0; i < items.length; i++)`
-        // `const rowIndex = i + 3` -> Row 3, 4, 5...
-        // This implies Row 2 was empty? Or maybe title was previously attempted?
-        // Regardless, now we have Row 1 and Row 2 occupied.
         // We can just use `worksheet.addRow(rowValues)` inside the loop, relying on ExcelJS to append.
-        // It's safer and cleaner than calculating rowIndex.
 
         // ... (skipping to inside loop for row addition)
 
@@ -627,12 +635,6 @@ router.post('/download/proposal', async (req, res) => {
             const supplyPr = item.supplyPrice || item.supply_price || item.price || item.b2b_price || item.SupplyPrice
             const consPr = item.consumerPrice || item.consumer_price || item.ConsumerPrice
             const dUrl = item.detailUrl || item.detail_url || item.DetailURL || ''
-
-            // DEBUG PROBE REMOVED
-            // let descVal = item.description || item.desc || ''
-            // if (!pName && !modelName) {
-            //     descVal = 'DEBUG: ' + JSON.stringify(item)
-            // }
 
             row.values = {
                 no: i + 1,
@@ -687,9 +689,18 @@ router.post('/download/proposal', async (req, res) => {
             }
         }
 
-        const filename = `Proposal_${Date.now()}.xlsx`
+        // Response with Timestamped Filename for Verification
+        const today = new Date();
+        const dateStr = today.getFullYear() +
+            String(today.getMonth() + 1).padStart(2, '0') +
+            String(today.getDate()).padStart(2, '0');
+        const filename = `Proposal_${dateStr}.xlsx`;
+
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+        res.setHeader('Pragma', 'no-cache')
+        res.setHeader('Expires', '0')
 
         await workbook.xlsx.write(res)
         res.end()
