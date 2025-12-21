@@ -538,8 +538,8 @@ router.post('/download/proposal', async (req, res) => {
 
         // 1. Column Widths
         worksheet.columns = [
-            { header: '', key: 'no', width: 6 },          // A (Increased slightly)
-            { header: '', key: 'name', width: 45 },       // B (Increased)
+            { header: '', key: 'no', width: 6 },          // A
+            { header: '', key: 'name', width: 45 },       // B
             { header: '', key: 'model', width: 25 },      // C
             { header: '', key: 'brand', width: 15 },      // D
             { header: '', key: 'qty', width: 10 },        // E
@@ -548,15 +548,12 @@ router.post('/download/proposal', async (req, res) => {
             { header: '', key: 'empty', width: 10 }       // H
         ]
 
-        // 2. Set Row Heights for Header
+        // 2. Row Heights
         const row1 = worksheet.getRow(1)
-        const row2 = worksheet.getRow(2)
-        row1.height = 30
-        row2.height = 30
-        // Total height ~60px, nicely fits font size 36 (~48px)
+        row1.height = 60 // Tall header for Logo
 
-        // 3. Title "RIUM" (Big, Blue) - Merged A1:C2
-        worksheet.mergeCells('A1:C2')
+        // 3. Title "RIUM" (Big, Blue) - Merged A1:B1 (User Request)
+        worksheet.mergeCells('A1:B1')
         const titleCell = worksheet.getCell('A1')
         titleCell.value = 'RIUM'
         titleCell.font = {
@@ -567,24 +564,21 @@ router.post('/download/proposal', async (req, res) => {
         }
         titleCell.alignment = { vertical: 'middle', horizontal: 'center' }
 
-        // 4. Warning Text (Red) - Merged D1:H2 to allow more space (or just D2:H2?)
-        // User said "From D put red warning". 
-        // Let's merge D1:H2 to align with RIUM block vertically if possible, OR Keep D2.
-        // If RIUM is A1:C2, and text is D2... it looks like "RIUM" is tall, and warning is subtext.
-        // Let's keep D2:H2 but make sure it wraps if needed.
-        worksheet.mergeCells('D2:H2')
-        const warningCell = worksheet.getCell('D2')
+        // 4. Warning Text (Red) - Merged C1:H1 (User Request: Start at C)
+        worksheet.mergeCells('C1:H1')
+        const warningCell = worksheet.getCell('C1')
         warningCell.value = '당사가 운영하는 모든 상품은 폐쇄몰을 제외한 온라인 판매를 금하며, 판매 시 상품 공급이 중단됩니다.'
         warningCell.font = {
             name: 'Malgun Gothic',
-            size: 11, // Standard size
+            size: 12,
             bold: true,
             color: { argb: 'FFFF0000' } // Red
         }
         warningCell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true }
 
-        // 5. Data Headers (Row 4)
-        const headerRow = worksheet.getRow(4)
+        // 5. Data Headers (Row 2) - Moved up from Row 4
+        const headerRow = worksheet.getRow(2)
+        headerRow.height = 30
         headerRow.values = ['No', '상품명', '모델명/코드', '브랜드', '수량', '단가(B2B)', '합계']
 
         headerRow.eachCell((cell) => {
@@ -600,10 +594,10 @@ router.post('/download/proposal', async (req, res) => {
                 bottom: { style: 'thin' },
                 right: { style: 'thin' }
             }
-            cell.alignment = { horizontal: 'center' }
+            cell.alignment = { horizontal: 'center', vertical: 'middle' }
         })
 
-        // 5. Data Rows (Row 5+)
+        // 6. Data Rows (Row 3+)
         items.forEach((p, index) => {
             const rowData = [
                 index + 1,
