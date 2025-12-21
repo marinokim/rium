@@ -521,7 +521,9 @@ router.post('/update-source', upload.single('file'), (req, res) => {
     }
 })
 
-// Generate Excel Proposal (Export)
+import ExcelJS from 'exceljs'
+
+// Generate Excel Proposal (Export) - Using ExcelJS for Styling
 router.post('/download/proposal', async (req, res) => {
     try {
         const { title, items } = req.body
@@ -530,41 +532,112 @@ router.post('/download/proposal', async (req, res) => {
             return res.status(400).json({ error: 'Items array is required' })
         }
 
-        // Map items to Korean headers
-        const excelData = items.map((p, index) => ({
-            'No': index + 1,
-            '상품명': p.name || '',
-            '모델명/코드': p.model || p.model_name || p.modelNo || '',
-            '브랜드': p.brand || '',
-            '수량': p.quantity || 1,
-            '단가(B2B)': p.price || 0,
-            '합계': p.totalAmount || ((p.price || 0) * (p.quantity || 1))
-        }))
+        const workbook = new ExcelJS.Workbook()
+        const worksheet = workbook.addWorksheet('제안서')
 
-        const workbook = XLSX.utils.book_new()
-        const worksheet = XLSX.utils.json_to_sheet(excelData)
-
-        // Adjust column widths
-        const wscols = [
-            { wch: 5 }, // No
-            { wch: 40 }, // Name
-            { wch: 20 }, // Model
-            { wch: 15 }, // Brand
-            { wch: 10 }, // Qty
-            { wch: 15 }, // Price
-            { wch: 15 } // Total
+        // 1. Column Widths
+        worksheet.columns = [
+            { header: '', key: 'no', width: 5 },          // A
+            { header: '', key: 'name', width: 40 },       // B
+            { header: '', key: 'model', width: 20 },      // C
+            { header: '', key: 'brand', width: 15 },      // D
+            { header: '', key: 'qty', width: 10 },        // E
+            { header: '', key: 'price', width: 15 },      // F
+            { header: '', key: 'total', width: 15 },      // G
+            { header: '', key: 'empty', width: 10 }       // H
         ]
-        worksheet['!cols'] = wscols
 
-        XLSX.utils.book_append_sheet(workbook, worksheet, '제안서')
+        // 2. Title "RIUM" (Big, Blue) - Merged A1:B2 or A1:C2?
+        // Image shows RIUM taking up about 2-3 columns. Let's merge A1:C2
+        worksheet.mergeCells('A1:C2')
+        const titleCell = worksheet.getCell('A1')
+        titleCell.value = 'RIUM'
+        titleCell.font = {
+            name: 'Arial',
+            size: 36, // Large font
+            bold: true,
+            color: { argb: 'FF002060' } // Dark Blue
+        }
+        titleCell.alignment = { vertical: 'middle', horizontal: 'center' }
 
-        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
+        // 3. Warning Text (Red) - D2:H2 or similar
+        // Image shows text starting around D column
+        worksheet.mergeCells('D2:H2')
+        const warningCell = worksheet.getCell('D2')
+        warningCell.value = '당사가 운영하는 모든 상품은 폐쇄몰을 제외한 온라인 판매를 금하며, 판매 시 상품 공급이 중단됩니다.'
+        warningCell.font = {
+            name: 'Malgun Gothic',
+            size: 11,
+            bold: true,
+            color: { argb: 'FFFF0000' } // Red
+        }
+        warningCell.alignment = { vertical: 'middle', horizontal: 'left' }
 
-        // Ensure headers are set for binary download
+        // 4. Data Headers (Row 4)
+        const headerRow = worksheet.getRow(4)
+        headerRow.values = ['No', '상품명', '모델명/코드', '브랜드', '수량', '단가(B2B)', '합계']
+
+        headerRow.eachCell((cell) => {
+            cell.font = { bold: true }
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFEFEFEF' } // Light Gray
+            }
+            cell.border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' }
+            }
+            cell.alignment = { horizontal: 'center' }
+        })
+
+        // 5. Data Rows (Row 5+)
+        items.forEach((p, index) => {
+            const rowData = [
+                index + 1,
+                p.name || '',
+                p.model || p.model_name || p.modelNo || '',
+                p.brand || '',
+                p.quantity || 1,
+                p.price || 0,
+                p.totalAmount || ((p.price || 0) * (p.quantity || 1))
+            ]
+            const row = worksheet.addRow(rowData)
+
+            // Layout & Borders
+            row.getCell(1).alignment = { horizontal: 'center' } // No
+            row.getCell(2).alignment = { horizontal: 'left' }   // Name
+            row.getCell(3).alignment = { horizontal: 'center' } // Model
+            row.getCell(4).alignment = { horizontal: 'center' } // Brand
+            row.getCell(5).alignment = { horizontal: 'center' } // Qty
+            row.getCell(6).alignment = { horizontal: 'right' }  // Price
+            row.getCell(7).alignment = { horizontal: 'right' }  // Total
+
+            // Number formats
+            row.getCell(6).numFmt = '#,##0'
+            row.getCell(7).numFmt = '#,##0'
+
+            // Borders for all
+            row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                if (colNumber <= 7) {
+                    cell.border = {
+                        top: { style: 'thin' },
+                        left: { style: 'thin' },
+                        bottom: { style: 'thin' },
+                        right: { style: 'thin' }
+                    }
+                }
+            })
+        })
+
+        // Response
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         res.setHeader('Content-Disposition', `attachment; filename="Proposal.xlsx"`)
 
-        res.send(buffer)
+        await workbook.xlsx.write(res)
+        res.end()
 
     } catch (error) {
         console.error('Excel generation error:', error)
