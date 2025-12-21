@@ -529,7 +529,7 @@
 
         <!-- Filter Options Row -->
         <div style="margin-bottom: 1rem; text-align: right;">
-            <select class="scm-select" id="filterCategory">
+            <select class="scm-select" id="filterCategory" onchange="loadProducts(1)">
                 <option value="">전체 카테고리</option>
             </select>
         </div>
@@ -857,6 +857,7 @@
                 if (filterCategory && filterCategory.value) {
                     url += `&categoryId=${filterCategory.value}`;
                 }
+                console.log('Loading products:', url); // Debug log
 
                 const data = await apiFetch(url);
                 currentProducts = data.products;
