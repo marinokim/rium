@@ -736,7 +736,8 @@
 
         // Filter Handlers
         // Filter Handlers
-        window.filterCategory = function (btn, categoryId) {
+        // Filter Handlers
+        window.filterCategory = function (btn, categorySlug) {
             // Update UI - Reset all to outline
             document.querySelectorAll('.filter-btn').forEach(b => {
                 b.classList.remove('active');
@@ -745,7 +746,6 @@
                     b.style.backgroundColor = 'white';
                     b.style.color = color;
                 } else if (b.textContent === '전체') {
-                    // Fallback for 'All'
                     b.style.backgroundColor = '#fff';
                     b.style.color = '#333';
                 }
@@ -762,13 +762,27 @@
                 btn.style.color = 'white';
             }
 
-            // Update State
-            currentCategoryId = categoryId;
+            // Update State: Resolve Slug to ID
+            // The generation loop passes slugs (e.g. 'audio'), but backend filtering needs ID (e.g. 1)
+            let targetId = '';
+            if (categorySlug) {
+                // Try to find by slug first
+                const cat = window.categoryList.find(c => c.slug === categorySlug);
+                if (cat) {
+                    targetId = cat.id;
+                } else {
+                    // Fallback: try finding by ID if slug lookup failed (legacy compatibility)
+                    const catById = window.categoryList.find(c => c.id == categorySlug);
+                    if (catById) targetId = catById.id;
+                }
+            }
+
+            currentCategoryId = targetId;
 
             // Debug UI
             const debugSpan = document.getElementById('debugCatalogFilterId');
-            if (debugSpan) debugSpan.innerText = `ID: ${categoryId}`;
-            console.log('Catalog Filter:', categoryId);
+            if (debugSpan) debugSpan.innerText = `ID: ${targetId} (Slug: ${categorySlug})`;
+            console.log('Catalog Filter:', targetId);
 
             loadProducts();
         };
