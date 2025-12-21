@@ -1440,45 +1440,39 @@
         document.querySelector('button.btn-navy i.fa-plus').parentElement.onclick = () => openProductModal();
 
         // Debug Function
+        // Debug Function
         window.inspectData = async () => {
             try {
                 const cats = await apiFetch('/api/categories');
                 const catList = Array.isArray(cats) ? cats : cats.categories;
                 let msg = 'Categories:\n' + catList.map(c => `${c.id}=${c.name}`).join(', ') + '\n\n';
 
-                // Debug Function
-                window.inspectData = async () => {
-                    try {
-                        const cats = await apiFetch('/api/categories');
-                        const catList = Array.isArray(cats) ? cats : cats.categories;
-                        let msg = 'Categories:\n' + catList.map(c => `${c.id}=${c.name}`).join(', ') + '\n\n';
+                // Fetch first product WITH CURRENT FILTER
+                let url = '/api/products?limit=1&includeUnavailable=true';
+                if (window.currentCategoryId) {
+                    url += `&categoryId=${window.currentCategoryId}`;
+                    msg += `[Filtering by ID: ${window.currentCategoryId}]\n`;
+                } else {
+                    msg += '[No Filter Selected]\n';
+                }
 
-                        // Fetch first product WITH CURRENT FILTER
-                        let url = '/api/products?limit=1&includeUnavailable=true';
-                        if (window.currentCategoryId) {
-                            url += `&categoryId=${window.currentCategoryId}`;
-                            msg += `[Filtering by ID: ${window.currentCategoryId}]\n`;
-                        } else {
-                            msg += '[No Filter Selected]\n';
-                        }
+                const prods = await apiFetch(url);
+                const p = prods.products[0];
+                if (p) {
+                    msg += `First Product: ID=${p.id}, CatID=${p.category_id}, CatName=${p.category_name}`;
+                } else {
+                    msg += 'No products found.';
+                }
 
-                        const prods = await apiFetch(url);
-                        const p = prods.products[0];
-                        if (p) {
-                            msg += `First Product: ID=${p.id}, CatID=${p.category_id}, CatName=${p.category_name}`;
-                        } else {
-                            msg += 'No products found.';
-                        }
+                if (prods.debugSQL) msg += `\n\nSQL: ${prods.debugSQL}`;
+                if (prods.debugParams) msg += `\nParams: ${JSON.stringify(prods.debugParams)}`;
 
-                        if (prods.debugSQL) msg += `\n\nSQL: ${prods.debugSQL}`;
-                        if (prods.debugParams) msg += `\nParams: ${JSON.stringify(prods.debugParams)}`;
+                msg += `\n(Time: ${new Date().toLocaleTimeString()})`;
 
-                        msg += `\n(Time: ${new Date().toLocaleTimeString()})`;
-
-                        alert(msg);
-                        console.log(msg);
-                    } catch (e) { alert(e); }
-                };
+                alert(msg);
+                console.log(msg);
+            } catch (e) { alert(e); }
+        };
     </script>
 </body>
 
