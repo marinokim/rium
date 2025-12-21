@@ -141,7 +141,7 @@
             </div>
             <button type="submit" class="scm-btn">로그인 (Login)</button>
             <button type="button" class="scm-btn" style="background-color: #6c757d; margin-top: 0.5rem;"
-                onclick="doRegister()">회원가입 (테스트용)</button>
+                onclick="location.href='scm_register.html'">회원가입 (Sign Up)</button>
         </form>
 
         <script>
@@ -150,30 +150,8 @@
                 ? 'http://localhost:5003'
                 : 'https://rium-scm-backend.onrender.com';
 
-            async function doRegister() {
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                if (!email || !password) {
-                    alert('이메일과 비밀번호를 입력해주세요.');
-                    return;
-                }
+            // doRegister function removed - use scm_register.html
 
-                try {
-                    const res = await fetch(`${API_BASE}/api/auth/register`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, password, name: 'Partner', company: 'Partner Co' })
-                    });
-                    const data = await res.json();
-                    if (res.ok) {
-                        alert('회원가입 완료! 로그인해주세요.');
-                    } else {
-                        alert('가입 실패: ' + (data.error || 'Unknown error'));
-                    }
-                } catch (e) {
-                    alert('서버 오류');
-                }
-            }
 
             document.getElementById('loginForm').addEventListener('submit', async function (e) {
                 e.preventDefault();

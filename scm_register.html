@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCM Register - RIUM Partner System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&family=Open+Sans:wght@400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body.scm-login-body {
+            background-color: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-image: linear-gradient(rgba(0, 137, 123, 0.05), rgba(0, 137, 123, 0.05)), url('https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2069&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            padding: 2rem 0;
+            /* Add padding for scroll on small screens */
+        }
+
+        .scm-login-card {
+            background: white;
+            padding: 2.5rem 3rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+            /* Slightly wider for register */
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .scm-logo {
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .scm-subtitle {
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        .scm-form-group {
+            margin-bottom: 1.2rem;
+            text-align: left;
+        }
+
+        .scm-form-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .scm-form-group label span.required {
+            color: #e53935;
+            margin-left: 2px;
+        }
+
+        .scm-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .scm-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .scm-btn {
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 1rem;
+        }
+
+        .scm-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .scm-links {
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .scm-links a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .scm-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body class="scm-login-body">
+
+    <div class="scm-login-card" style="max-height: 90vh; overflow-y: auto;">
+        <a href="index.html" class="scm-logo">RIUM</a>
+        <p class="scm-subtitle">Partner Registration</p>
+
+        <form id="registerForm">
+            <div class="scm-form-group">
+                <label for="email">이메일 (Email) <span class="required">*</span></label>
+                <input type="email" id="email" class="scm-input" placeholder="example@company.com" required>
+            </div>
+
+            <div class="scm-form-group">
+                <label for="password">비밀번호 (Password) <span class="required">*</span></label>
+                <input type="password" id="password" class="scm-input" placeholder="8자 이상 입력해주세요" required>
+            </div>
+
+            <div class="scm-form-group">
+                <label for="passwordConfirm">비밀번호 확인 <span class="required">*</span></label>
+                <input type="password" id="passwordConfirm" class="scm-input" placeholder="비밀번호를 다시 입력해주세요" required>
+            </div>
+
+            <div class="scm-form-group">
+                <label for="companyName">회사명 (Company Name) <span class="required">*</span></label>
+                <input type="text" id="companyName" class="scm-input" placeholder="회사명을 입력해주세요" required>
+            </div>
+
+            <div class="scm-form-group">
+                <label for="businessNumber">사업자번호 (Business No) <span class="required">*</span></label>
+                <input type="text" id="businessNumber" class="scm-input" placeholder="000-00-00000" maxlength="12"
+                    required oninput="formatBusinessNumber(this)">
+            </div>
+
+            <div class="scm-form-group">
+                <label for="contactPerson">담당자명 (Contact Person)</label>
+                <input type="text" id="contactPerson" class="scm-input" placeholder="담당자 성함">
+            </div>
+
+            <div class="scm-form-group">
+                <label for="phone">연락처 (Phone)</label>
+                <input type="tel" id="phone" class="scm-input" placeholder="010-0000-0000"
+                    oninput="formatPhoneNumber(this)">
+            </div>
+
+            <button type="submit" class="scm-btn">회원가입 신청 (Register)</button>
+        </form>
+
+        <div class="scm-links">
+            이미 계정이 있으신가요? <a href="scm_login.html">로그인하기</a>
+        </div>
+    </div>
+
+    <script>
+        // API Base configuration
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:5003'
+            : 'https://rium-scm-backend.onrender.com';
+
+        // Auto-format Business Number (000-00-00000)
+        function formatBusinessNumber(input) {
+            let value = input.value.replace(/[^0-9]/g, '');
+            if (value.length > 3 && value.length <= 5) {
+                value = value.slice(0, 3) + '-' + value.slice(3);
+            } else if (value.length > 5) {
+                value = value.slice(0, 3) + '-' + value.slice(3, 5) + '-' + value.slice(5, 10);
+            }
+            input.value = value;
+        }
+
+        // Auto-format Phone Number
+        function formatPhoneNumber(input) {
+            let value = input.value.replace(/[^0-9]/g, '');
+            if (value.length > 3 && value.length <= 7) {
+                value = value.slice(0, 3) + '-' + value.slice(3);
+            } else if (value.length > 7) {
+                value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7, 11);
+            }
+            input.value = value;
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const passwordConfirm = document.getElementById('passwordConfirm').value;
+            const companyName = document.getElementById('companyName').value;
+            const businessNumber = document.getElementById('businessNumber').value;
+            const contactPerson = document.getElementById('contactPerson').value;
+            const phone = document.getElementById('phone').value;
+
+            if (password !== passwordConfirm) {
+                alert('비밀번호가 일치하지 않습니다.');
+                return;
+            }
+
+            if (businessNumber.length < 10) {
+                alert('올바른 사업자번호를 입력해주세요.');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email,
+                        password,
+                        companyName,
+                        businessNumber, // Backend expects key 'businessNumber'
+                        contactPerson,
+                        phone
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert('회원가입 신청이 완료되었습니다.\n관리자 승인 후 로그인이 가능합니다.');
+                    window.location.href = 'scm_login.html';
+                } else {
+                    alert('가입 실패: ' + (data.error || '알 수 없는 오류가 발생했습니다.'));
+                }
+            } catch (e) {
+                console.error('Register Error:', e);
+                alert('서버와 통신 중 오류가 발생했습니다.');
+            }
+        });
+    </script>
+</body>
+
+</html>
