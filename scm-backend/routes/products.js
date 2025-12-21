@@ -371,14 +371,15 @@ router.get('/categories', async (req, res) => {
 
 // Create category
 router.post('/categories', requireAdmin, async (req, res) => {
-    const { name } = req.body
+    const { name, color } = req.body
     try {
         // Generate slug: lowercase, replace spaces with hyphens, remove special chars
         const slug = name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '')
+        const colorVal = color || '#333333';
 
         const result = await pool.query(
-            'INSERT INTO categories (name, slug) VALUES ($1, $2) RETURNING *',
-            [name, slug]
+            'INSERT INTO categories (name, slug, color) VALUES ($1, $2, $3) RETURNING *',
+            [name, slug, colorVal]
         )
         res.status(201).json(result.rows[0])
     } catch (error) {
@@ -390,14 +391,28 @@ router.post('/categories', requireAdmin, async (req, res) => {
 // Update category (Admin)
 router.put('/categories/:id', requireAdmin, async (req, res) => {
     const { id } = req.params
-    const { name } = req.body
+    const { name, color } = req.body
     try {
         const slug = name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '')
 
-        const result = await pool.query(
-            'UPDATE categories SET name = $1, slug = $2 WHERE id = $3 RETURNING *',
-            [name, slug, id]
-        )
+        // If color is not provided, keep existing? 
+        // Or if provided, update it.
+        // For simplicity, let's update it if provided.
+        // Actually, better to fetch existing if we want partial update, but logic here usually sends full object.
+        // Let's assume frontend sends current value if not changed.
+
+        let query = 'UPDATE categories SET name = $1, slug = $2';
+        let params = [name, slug];
+
+        if (color) {
+            query += ', color = $' + (params.length + 1);
+            params.push(color);
+        }
+
+        query += ' WHERE id = $' + (params.length + 1) + ' RETURNING *';
+        params.push(id);
+
+        const result = await pool.query(query, params)
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Category not found' })
