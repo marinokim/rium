@@ -86,12 +86,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const rawData = await res.json();
             const categories = Array.isArray(rawData) ? rawData : (rawData.categories || []);
 
-            // Sort categories (optional, but good for UX)
+            // Sort categories (display_order or id)
             // categories.sort((a,b) => a.id - b.id); 
 
             let html = `<button class="filter-btn active" onclick="window.filterPublicCategory(this, '')">All</button>`;
             categories.forEach(cat => {
-                html += `<button class="filter-btn" onclick="window.filterPublicCategory(this, ${cat.id})">${cat.name}</button>`;
+                // Determine styling for colors
+                const colorStyle = cat.color
+                    ? `style="background-color: ${cat.color}; border-color: ${cat.color}; color: white;"`
+                    : '';
+
+                // Use slug for filtering if available, otherwise name (backend expects slug)
+                const filterValue = cat.slug || cat.name;
+
+                // We add a 'data-color' attribute to help with active state styling logic later if needed
+                html += `<button class="filter-btn" 
+                            data-color="${cat.color || ''}"
+                            style="${cat.color ? `background-color: white; color: ${cat.color}; border-color: ${cat.color};` : ''}"
+                            onmouseover="this.style.backgroundColor='${cat.color || '#333'}'; this.style.color='white';"
+                            onmouseout="if(!this.classList.contains('active')) { this.style.backgroundColor='white'; this.style.color='${cat.color || '#666'}'; }"
+                            onclick="window.filterPublicCategory(this, '${filterValue}')">
+                            ${cat.name}
+                        </button>`;
             });
             container.innerHTML = html;
         } catch (error) {
@@ -101,13 +117,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Filter Function (Global)
-    window.filterPublicCategory = (btn, categoryId) => {
+    window.filterPublicCategory = (btn, categorySlug) => {
         // Update active state
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.filter-btn').forEach(b => {
+            b.classList.remove('active');
+            // Reset style for inactive buttons
+            const color = b.dataset.color;
+            if (color) {
+                b.style.backgroundColor = 'white';
+                b.style.color = color;
+            } else {
+                b.style.backgroundColor = 'white';
+                b.style.color = '#666';
+            }
+        });
+
         btn.classList.add('active');
 
+        // Solid color for active
+        const color = btn.dataset.color || '#333';
+        btn.style.backgroundColor = color;
+        btn.style.color = 'white';
+
+
         // Update state and reload
-        currentPublicCategory = categoryId;
+        currentPublicCategory = categorySlug;
         loadPublicProducts();
     };
 
@@ -140,7 +174,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             let query = `${API_BASE_URL}/api/products?isAvailable=true`;
-            if (currentPublicCategory) query += `&categoryId=${currentPublicCategory}`;
+            // BACKEND FIX: use 'category' param (slug), not 'categoryId'
+            if (currentPublicCategory) query += `&category=${currentPublicCategory}`;
 
             const res = await fetch(query);
             const data = await res.json();
