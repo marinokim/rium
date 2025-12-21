@@ -688,13 +688,16 @@ router.post('/download/proposal', async (req, res) => {
                 }
             }
         }
-
         // Response with Timestamped Filename for Verification
-        const today = new Date();
-        const dateStr = today.getFullYear() +
-            String(today.getMonth() + 1).padStart(2, '0') +
-            String(today.getDate()).padStart(2, '0');
-        const filename = `Proposal_${dateStr}.xlsx`;
+        const now = new Date();
+        // Adjust to KST (UTC+9) manually for simple formatting without external libs
+        const kstOffset = 9 * 60 * 60 * 1000;
+        const kstDate = new Date(now.getTime() + kstOffset);
+
+        const dateStr = kstDate.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+        const timeStr = kstDate.toISOString().slice(11, 19).replace(/:/g, ''); // HHMMSS
+
+        const filename = `Proposal_${dateStr}_${timeStr}.xlsx`;
 
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
