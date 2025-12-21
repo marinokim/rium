@@ -705,28 +705,29 @@
                 const container = document.getElementById('categoryFilters');
 
 
-                // Keep 'All' button and append others
-                container.innerHTML = `<button class="filter-btn active" data-id="" onclick="filterCategory(this, '')">전체</button>`;
+                // Match Homepage Style: Outline by default, Solid on active/hover
+                // Refactor to string concatenation for consistency with homepage script.js
+
+                let html = `<button class="filter-btn active" data-id="" onclick="filterCategory(this, '')">전체</button>`;
 
                 categories.forEach(cat => {
-                    const btn = document.createElement('button');
-                    btn.className = 'filter-btn';
-                    btn.textContent = cat.name;
-                    btn.dataset.id = cat.id;
+                    const color = cat.color || '#333333';
+                    // Slug or ID? Homepage uses slug, Catalog uses ID usually. 
+                    // Let's keep using ID for Catalog filtering compatibility (since filterCategory expects ID/Element)
+                    // But styling mimics homepage.
 
-                    // Apply Color if exists
-                    if (cat.color) {
-                        btn.style.backgroundColor = cat.color;
-                        btn.style.borderColor = cat.color;
-                        // Determine text color for contrast (simple logic: white text usually safe for colored buttons)
-                        if (cat.color !== '#ffffff' && cat.color !== '#fff') {
-                            btn.style.color = '#fff';
-                        }
-                    }
-
-                    btn.onclick = () => filterCategory(btn, cat.id);
-                    container.appendChild(btn);
+                    html += `<button class="filter-btn" 
+                                data-id="${cat.id}"
+                                data-color="${color}"
+                                style="background-color: white; color: ${color}; border-color: ${color};"
+                                onmouseover="this.style.backgroundColor='${color}'; this.style.color='white';"
+                                onmouseout="if(!this.classList.contains('active')) { this.style.backgroundColor='white'; this.style.color='${color}'; }"
+                                onclick="filterCategory(this, '${cat.slug || ''}')">
+                                ${cat.name}
+                            </button>`;
                 });
+                container.innerHTML = html;
+
 
             } catch (err) {
                 console.error('Failed to load categories:', err);
