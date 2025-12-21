@@ -1452,10 +1452,21 @@
                 const catList = Array.isArray(cats) ? cats : cats.categories;
                 let msg = 'Categories:\n' + catList.map(c => `${c.id}=${c.name}`).join(', ') + '\n\n';
 
-                const prods = await apiFetch('/api/products?limit=1&includeUnavailable=true');
+                // Fetch first product WITH CURRENT FILTER
+                let url = '/api/products?limit=1&includeUnavailable=true';
+                if (currentCategoryId) {
+                    url += `&categoryId=${currentCategoryId}`;
+                    msg += `[Filtering by ID: ${currentCategoryId}]\n`;
+                } else {
+                    msg += '[No Filter Selected]\n';
+                }
+
+                const prods = await apiFetch(url);
                 const p = prods.products[0];
                 if (p) {
                     msg += `First Product: ID=${p.id}, CatID=${p.category_id}, CatName=${p.category_name}`;
+                } else {
+                    msg += 'No products found.';
                 }
 
                 alert(msg);
