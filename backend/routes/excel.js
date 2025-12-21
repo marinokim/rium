@@ -538,9 +538,9 @@ router.post('/download/proposal', async (req, res) => {
 
         // 1. Column Widths
         worksheet.columns = [
-            { header: '', key: 'no', width: 5 },          // A
-            { header: '', key: 'name', width: 40 },       // B
-            { header: '', key: 'model', width: 20 },      // C
+            { header: '', key: 'no', width: 6 },          // A (Increased slightly)
+            { header: '', key: 'name', width: 45 },       // B (Increased)
+            { header: '', key: 'model', width: 25 },      // C
             { header: '', key: 'brand', width: 15 },      // D
             { header: '', key: 'qty', width: 10 },        // E
             { header: '', key: 'price', width: 15 },      // F
@@ -548,33 +548,42 @@ router.post('/download/proposal', async (req, res) => {
             { header: '', key: 'empty', width: 10 }       // H
         ]
 
-        // 2. Title "RIUM" (Big, Blue) - Merged A1:B2 or A1:C2?
-        // Image shows RIUM taking up about 2-3 columns. Let's merge A1:C2
+        // 2. Set Row Heights for Header
+        const row1 = worksheet.getRow(1)
+        const row2 = worksheet.getRow(2)
+        row1.height = 30
+        row2.height = 30
+        // Total height ~60px, nicely fits font size 36 (~48px)
+
+        // 3. Title "RIUM" (Big, Blue) - Merged A1:C2
         worksheet.mergeCells('A1:C2')
         const titleCell = worksheet.getCell('A1')
         titleCell.value = 'RIUM'
         titleCell.font = {
             name: 'Arial',
-            size: 36, // Large font
+            size: 36,
             bold: true,
             color: { argb: 'FF002060' } // Dark Blue
         }
         titleCell.alignment = { vertical: 'middle', horizontal: 'center' }
 
-        // 3. Warning Text (Red) - D2:H2 or similar
-        // Image shows text starting around D column
+        // 4. Warning Text (Red) - Merged D1:H2 to allow more space (or just D2:H2?)
+        // User said "From D put red warning". 
+        // Let's merge D1:H2 to align with RIUM block vertically if possible, OR Keep D2.
+        // If RIUM is A1:C2, and text is D2... it looks like "RIUM" is tall, and warning is subtext.
+        // Let's keep D2:H2 but make sure it wraps if needed.
         worksheet.mergeCells('D2:H2')
         const warningCell = worksheet.getCell('D2')
         warningCell.value = '당사가 운영하는 모든 상품은 폐쇄몰을 제외한 온라인 판매를 금하며, 판매 시 상품 공급이 중단됩니다.'
         warningCell.font = {
             name: 'Malgun Gothic',
-            size: 11,
+            size: 11, // Standard size
             bold: true,
             color: { argb: 'FFFF0000' } // Red
         }
-        warningCell.alignment = { vertical: 'middle', horizontal: 'left' }
+        warningCell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true }
 
-        // 4. Data Headers (Row 4)
+        // 5. Data Headers (Row 4)
         const headerRow = worksheet.getRow(4)
         headerRow.values = ['No', '상품명', '모델명/코드', '브랜드', '수량', '단가(B2B)', '합계']
 
