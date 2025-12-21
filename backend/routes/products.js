@@ -257,6 +257,11 @@ router.get('/', async (req, res) => {
             queryCode += ` AND c.slug = $${params.length}`
         }
 
+        if (req.query.categoryId) {
+            params.push(req.query.categoryId)
+            queryCode += ` AND p.category_id = $${params.length}`
+        }
+
         if (isNew === 'true') {
             queryCode += ` AND p.is_new = true`
         }

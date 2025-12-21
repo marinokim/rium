@@ -9,18 +9,175 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // API Configuration
+    // Force update for Rium Branding
     const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
         ? 'http://localhost:5000'
-        : 'https://arontec-backend.onrender.com';
+        : 'https://rium-scm-backend.onrender.com';
 
-    // Helper to get full image URL
-    function getImageUrl(url) {
+    // Helper: Optimize Image URL using wsrv.nl proxy & handle relative paths
+    function getSecureImageUrl(url, width = 0) {
         if (!url) return '';
-        const cleanUrl = url.trim();
-        if (cleanUrl.startsWith('http') || cleanUrl.startsWith('data:')) return cleanUrl;
-        if (cleanUrl.startsWith('/')) return `${API_BASE_URL}${cleanUrl}`;
+        let cleanUrl = url.trim();
+
+        // 1. Fix localhost/127.0.0.1 URLs (e.g. from local DB seed) to point to correct backend
+        if (cleanUrl.match(/https?:\/\/(localhost|127\.0\.0\.1)/)) {
+            try {
+                const urlObj = new URL(cleanUrl);
+                cleanUrl = `${API_BASE_URL}${urlObj.pathname}${urlObj.search}`;
+            } catch (e) {
+                // Fallback regex if URL parsing fails
+                const path = cleanUrl.replace(/https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, '');
+                cleanUrl = `${API_BASE_URL}${path}`;
+            }
+        }
+
+        // 2. Handle protocol-relative URLs (e.g. //kdsoundmall.co.kr/...)
+        if (cleanUrl.startsWith('//')) {
+            cleanUrl = `https:${cleanUrl}`;
+        }
+
+        // 3. Handle relative paths (even without leading slash if it looks like a path)
+        if (cleanUrl.startsWith('/') || cleanUrl.match(/^(uploads|assets|images)\//)) {
+            // Ensure leading slash for concatenation
+            const path = cleanUrl.startsWith('/') ? cleanUrl : `/${cleanUrl}`;
+            cleanUrl = `${API_BASE_URL}${path}`;
+        }
+
+        const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+        // 3. Skip proxy for data URIs or if we are in local dev env (proxy can't reach localhost)
+        if (cleanUrl.startsWith('data:') || (isLocalEnv && cleanUrl.includes('localhost'))) {
+            return cleanUrl;
+        }
+
+        // 4. Use Proxy for HTTP (Mixed Content Fix) or for resizing
+        // Only proxy if it's a public URL (http/https)
+        if (cleanUrl.startsWith('http://') || (width > 0 && cleanUrl.startsWith('https://'))) {
+            // For https, we only proxy if width > 0 to optimize, otherwise keep original
+            if (cleanUrl.startsWith('https://') && width === 0) return cleanUrl;
+
+            const encoded = encodeURIComponent(cleanUrl);
+            let proxyUrl = `https://wsrv.nl/?url=${encoded}&output=webp`;
+            if (width > 0) proxyUrl += `&w=${width}`;
+            return proxyUrl;
+        }
+
         return cleanUrl;
+    }
+
+    // Global State for Public Catalog
+    let currentPublicCategory = '';
+
+    // Initialize Public Catalog (if on products.html)
+    const publicGrid = document.getElementById('publicProductGrid');
+    if (publicGrid) {
+        loadPublicCategories();
+        loadPublicProducts();
+    }
+
+    // Load Public Categories
+    async function loadPublicCategories() {
+        const container = document.getElementById('categoryFilters');
+        if (!container) return;
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/categories`);
+            const data = await res.json();
+            const categories = data.categories || [];
+
+            let html = `<button class="filter-btn active" onclick="window.filterPublicCategory(this, '')">All</button>`;
+            categories.forEach(cat => {
+                html += `<button class="filter-btn" onclick="window.filterPublicCategory(this, ${cat.id})">${cat.name}</button>`;
+            });
+            container.innerHTML = html;
+        } catch (error) {
+            console.error('Error loading categories:', error);
+            container.innerHTML = '<span style="color:red;">Error loading categories</span>';
+        }
+    }
+
+    // Filter Function (Global)
+    window.filterPublicCategory = (btn, categoryId) => {
+        // Update active state
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Update state and reload
+        currentPublicCategory = categoryId;
+        loadPublicProducts();
+    };
+
+    // Generic Image Error Handler
+    window.handleImageError = (img, originalUrl) => {
+        img.onerror = null; // Prevent infinite loop
+
+        // If we are currently showing the proxy or some processed URL, and it failed
+        // Try the original URL if it's different and safe (HTTPS or relative)
+        if (originalUrl && img.src !== originalUrl) {
+            if (originalUrl.startsWith('https://') || originalUrl.startsWith('/') || originalUrl.startsWith('data:')) {
+                img.src = originalUrl;
+                // If the original also fails, set final fallback
+                img.onerror = () => {
+                    img.src = 'https://placehold.co/400x400?text=No+Image';
+                };
+                return;
+            }
+        }
+
+        // Default fallback
+        img.src = 'https://placehold.co/400x400?text=No+Image';
+    };
+
+    // Load Public Products
+    async function loadPublicProducts() {
+        if (!publicGrid) return;
+
+        publicGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 50px;"><i class="fas fa-spinner fa-spin fa-3x"></i></div>';
+
+        try {
+            let query = `${API_BASE_URL}/api/products?isAvailable=true`;
+            if (currentPublicCategory) query += `&categoryId=${currentPublicCategory}`;
+
+            const res = await fetch(query);
+            const data = await res.json();
+            const products = data.products || [];
+
+            publicGrid.innerHTML = '';
+
+            if (products.length === 0) {
+                publicGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 50px; color: #666;">등록된 상품이 없습니다.</div>';
+                return;
+            }
+
+            products.forEach(product => {
+                const originalUrl = product.imageUrl || product.images?.[0] || '';
+                const imageUrl = getSecureImageUrl(originalUrl, 400);
+                const brandName = product.brand || 'RIUM';
+
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.onclick = () => window.location.href = `product_detail.html?id=${product.id}`;
+
+                // Escape originalUrl for HTML attribute
+                const safeOriginalUrl = originalUrl.replace(/'/g, "\\'");
+
+                // NO PRICE shown, as requested
+                card.innerHTML = `
+                    <div class="product-img-wrapper">
+                        <img src="${imageUrl}" alt="${product.name}" loading="lazy" onerror="window.handleImageError(this, '${safeOriginalUrl}')">
+                    </div>
+                    <div class="product-info">
+                        <div class="product-brand">${brandName}</div>
+                        <h3 class="product-title">${product.name}</h3>
+                    </div>
+                `;
+                publicGrid.appendChild(card);
+            });
+
+        } catch (error) {
+            console.error('Error loading products:', error);
+            publicGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: red;">상품을 불러오는 중 오류가 발생했습니다.</div>';
+        }
     }
 
     // Render Notices
@@ -79,22 +236,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 newProductList.innerHTML = products.map(product => {
                     // Normalize image URL
-                    const imageUrl = getImageUrl(product.image_url);
+                    const imageUrl = getSecureImageUrl(product.imageUrl || product.image_url);
+                    const productName = product.name || product.modelNo || product.model_name || '제품명 없음';
+                    const brandName = product.brand || 'Brand';
+                    const productId = product.id;
 
                     // Check if image is an emoji (legacy support)
                     const isEmoji = !imageUrl.includes('/') && !imageUrl.includes('.');
                     const imageHtml = isEmoji
                         ? `<div class="product-icon" style="font-size: 3rem; padding: 2rem; background: #fff; display: flex; align-items: center; justify-content: center; height: 200px;">${imageUrl}</div>`
                         : `<div class="product-image-container" style="height: 200px; overflow: hidden; background: #fff; display: flex; align-items: center; justify-content: center; padding: 10px;">
-                             <img src="${imageUrl}" alt="${product.model_name}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                             <img src="${imageUrl}" alt="${productName}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
                            </div>`;
 
                     return `
-                    <div class="card product-card" onclick="window.location.href='product_detail.html?id=${product.id}'" style="cursor: pointer; padding: 0; overflow: hidden;">
+                    <div class="card product-card" onclick="window.location.href='product_detail.html?id=${productId}'" style="cursor: pointer; padding: 0; overflow: hidden;">
                         ${imageHtml}
                         <div style="padding: 1.5rem;">
-                            <h3 style="font-size: 1rem; color: #666; margin-bottom: 0.5rem;">${product.brand}</h3>
-                            <h4 style="font-size: 1.1rem; margin-bottom: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${product.model_name}</h4>
+                            <h3 style="font-size: 1rem; color: #666; margin-bottom: 0.5rem;">${brandName}</h3>
+                            <h4 style="font-size: 1.1rem; margin-bottom: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${productName}</h4>
                         </div>
                     </div>
                 `}).join('');
@@ -115,70 +275,83 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Brand Data Mapping
     const brandData = {
-        'INKEL': { icon: '🎧', desc: '대한민국 대표 음향 가전 브랜드' },
-        'IRIVER': { icon: '🔊', desc: '라이프스타일 오디오 & 모바일 액세서리' },
-        'MobiFren': { icon: '📱', desc: '프리미엄 블루투스 이어폰 & 케이스' },
-        'Elargo': { icon: '💄', desc: '자연주의 뷰티 & 코스메틱' },
-        'Swisswin': { icon: '🎒', desc: '글로벌 기능성 가방 브랜드' },
-        'LG Electronics': { icon: '📺', desc: '스마트 라이프를 위한 가전' },
-        'Yamaha': { icon: '🎹', desc: '감동을 전하는 사운드' },
-        'SOUL': { icon: '🎵', desc: '파워풀한 사운드 퍼포먼스' }
+        'RIUM Beauty': { icon: '💄', desc: 'Premium K-Beauty Selection' },
+        'Nature Food': { icon: '🥗', desc: 'Healthy & Organic Foods' },
+        'Modern Living': { icon: '🛋️', desc: 'Sensible Living Items' },
+        'Pure Skin': { icon: '🧴', desc: 'Natural Skincare' },
+        'Fresh Table': { icon: '🍽️', desc: 'Fresh Ingredients' },
+        'Cozy Home': { icon: '🏠', desc: 'Comfortable Home Decor' }
     };
 
     async function fetchAndRenderBrands() {
         try {
-            const res = await fetch(`${API_BASE_URL}/api/products/brands`);
-            if (res.ok) {
-                const data = await res.json();
-                const brands = data.brands;
+            // For RIUM, we might not have a backend yet, so let's use static brands for now
+            // or we can try to fetch but fallback gracefully.
+            // Since we are mocking, let's just render static brands if fetch fails or returns empty.
 
-                if (brands.length === 0) {
-                    brandList.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">등록된 브랜드가 없습니다.</p>';
-                    return;
-                }
+            // Mock Brands for RIUM
+            const brands = Object.keys(brandData);
 
-                brandList.innerHTML = brands.map(brandName => {
-                    const info = brandData[brandName] || { icon: '📦', desc: 'Global Brand' };
-                    return `
-                    <div class="brand-card">
-                        <div class="brand-icon">${info.icon}</div>
-                        <h3>${brandName}</h3>
-                        <p>${info.desc}</p>
-                    </div>
-                `}).join('');
-            } else {
-                brandList.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">브랜드 목록을 불러올 수 없습니다.</p>';
-            }
+            brandList.innerHTML = brands.map(brandName => {
+                const info = brandData[brandName];
+                return `
+                <div class="brand-card">
+                    <div class="brand-icon">${info.icon}</div>
+                    <h3>${brandName}</h3>
+                    <p>${info.desc}</p>
+                </div>
+            `}).join('');
+
         } catch (error) {
             console.error('Fetch brands error:', error);
             brandList.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">브랜드 목록을 불러오는 중 오류가 발생했습니다.</p>';
         }
     }
 
-    // Category Constants (Synced with SCM)
+    // Mock Notices Data
+    const mockNotices = [
+        { id: 1, title: '[공지] RIUM 온라인 스토어 그랜드 오픈 안내', date: '2025-01-15' },
+        { id: 2, title: '[이벤트] 신규 가입 회원 10% 할인 쿠폰 증정', date: '2025-01-20' },
+        { id: 3, title: '[배송] 설 연휴 배송 마감 및 재개 안내', date: '2025-02-01' },
+        { id: 4, title: '[뉴스] RIUM, 2025 라이프스타일 트렌드 발표', date: '2025-02-10' }
+    ];
+
+    async function fetchAndRenderNotices() {
+        const noticeList = document.getElementById('notice-list');
+        if (!noticeList) return;
+
+        try {
+            // Simulate API delay
+            // const response = await fetch(`${API_BASE_URL}/api/notices`);
+            // const notices = await response.json();
+
+            // Use mock data for now
+            const notices = mockNotices;
+
+            noticeList.innerHTML = notices.map(notice => `
+                <div class="notice-item">
+                    <span class="notice-date">${notice.date}</span>
+                    <a href="#" class="notice-title">${notice.title}</a>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Failed to fetch notices:', error);
+            noticeList.innerHTML = '<p style="text-align: center; color: #666;">공지사항을 불러올 수 없습니다.</p>';
+        }
+    }
+
+    // Category Constants (Synced with RIUM)
     const CATEGORY_ORDER = [
-        'Audio',
-        'Premium Audio',
-        'Mobile',
         'Beauty',
         'Food',
         'Living',
-        'GIFT SET',
-        'Travel',
-        'Kitchen',
         'Other'
     ];
 
     const CATEGORY_COLORS = {
-        'Audio': '#007bff',          // Blue
-        'Premium Audio': '#6610f2',  // Indigo
-        'Mobile': '#fd7e14',         // Orange
         'Beauty': '#e83e8c',         // Pink
-        'Food': '#dc3545',           // Red
-        'Living': '#28a745',         // Green
-        'GIFT SET': '#20c997',       // Teal
-        'Travel': '#17a2b8',         // Cyan
-        'Kitchen': '#ffc107',        // Yellow
+        'Food': '#ffc107',           // Amber/Yellow
+        'Living': '#20c997',         // Teal
         'Other': '#6c757d'           // Gray
     };
 
@@ -223,17 +396,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 // Create buttons: All + Dynamic Categories
-                let buttonsHtml = `<button class="category-btn active" data-category="All" style="background-color: #333; color: white; border-color: #333;">All</button>`;
+                // Note: In the new sidebar layout, we might want to append to the list instead of replacing buttons.
+                // For now, let's assume the HTML structure is static or we update the list items.
 
-                categories.forEach(cat => {
-                    const color = CATEGORY_COLORS[cat.name] || '#6c757d';
-                    // Initially inactive, so white background with colored border/text
-                    // We will handle active state in the click listener or via inline style if we want them always colored
-                    // Let's make them colored outline by default, and filled when active
-                    buttonsHtml += `<button class="category-btn" data-category="${cat.name}" data-color="${color}" style="border-color: ${color}; color: ${color};">${cat.name}</button>`;
-                });
+                // If we want to dynamically render sidebar links:
+                const sidebarList = document.querySelector('.category-list');
+                if (sidebarList) {
+                    let listHtml = `<li class="category-item"><span class="category-link active" data-category="All">All Products</span></li>`;
 
-                categoryContainer.innerHTML = buttonsHtml;
+                    categories.forEach(cat => {
+                        listHtml += `<li class="category-item"><span class="category-link" data-category="${cat.name}">${cat.name}</span></li>`;
+                    });
+
+                    sidebarList.innerHTML = listHtml;
+                }
 
                 // Re-attach event listeners
                 attachCategoryListeners();
@@ -241,42 +417,31 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Failed to fetch categories:', error);
             // Fallback to existing hardcoded buttons if fetch fails (or do nothing if they are already there)
+            attachCategoryListeners(); // Attach listeners to static HTML if fetch fails
         }
     }
 
     function attachCategoryListeners() {
-        const categoryBtns = document.querySelectorAll('.category-btn');
-        categoryBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // Remove active class from all and reset styles
-                categoryBtns.forEach(b => {
-                    b.classList.remove('active');
-                    const color = b.getAttribute('data-color');
-                    if (color) {
-                        b.style.backgroundColor = 'white';
-                        b.style.color = color;
-                    } else {
-                        // For 'All' button
-                        b.style.backgroundColor = 'white';
-                        b.style.color = '#333';
-                    }
-                });
+        // Target both old buttons (if any) and new sidebar links
+        const categoryLinks = document.querySelectorAll('.category-btn, .category-link');
 
-                // Add active class to clicked and apply active styles
+        categoryLinks.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all
+                categoryLinks.forEach(b => b.classList.remove('active'));
+
+                // Add active class to clicked
                 btn.classList.add('active');
-                const color = btn.getAttribute('data-color');
-                if (color) {
-                    btn.style.backgroundColor = color;
-                    btn.style.color = 'white';
-                } else {
-                    // For 'All' button
-                    btn.style.backgroundColor = '#333';
-                    btn.style.color = 'white';
-                }
 
                 const category = btn.getAttribute('data-category');
                 activeCategory = category;
                 renderFilteredProducts(category);
+
+                // Update result count text
+                const resultCount = document.querySelector('.result-count');
+                if (resultCount) {
+                    resultCount.textContent = category === 'All' ? 'Showing all products' : `Showing ${category} products`;
+                }
             });
         });
     }
@@ -287,17 +452,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch(`${API_BASE_URL}/api/products?sort=display_order`);
             if (res.ok) {
                 const data = await res.json();
-                // Map SCM data to Homepage format
+                // Map SCM data to Homepage format (Backend returns camelCase via Prisma)
                 fetchedProducts = data.products.map(p => {
                     return {
                         id: p.id,
                         brand: p.brand,
-                        model: p.model_name,
+                        model: p.modelNo || p.name, // Prisma uses modelNo or name
                         description: p.description,
-                        price: Number(p.b2b_price),
-                        category: p.category_name || 'Other',
-                        image: p.image_url,
-                        detailUrl: p.detail_url
+                        price: Number(p.price), // Prisma uses price
+                        category: p.category?.name || 'Other', // Prisma returns category object
+                        image: p.imageUrl, // Prisma uses imageUrl
+                        detailUrl: p.detailUrl // Prisma uses detailUrl
                     };
                 });
             } else {
@@ -306,6 +471,63 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.warn('Failed to fetch from SCM API, using static data:', error);
             // Fallback to static products if defined
+            // Mock Product Data (Enhanced for RIUM Plan)
+            const mockProducts = [
+                {
+                    id: 1,
+                    brand: 'Wizard',
+                    name: 'Smart Air Conditioner',
+                    price: 450000,
+                    category: 'PB Brand (Wizard)',
+                    image: 'https://images.unsplash.com/photo-1614630687884-699709d22445?q=80&w=1974&auto=format&fit=crop',
+                    isNew: true
+                },
+                {
+                    id: 2,
+                    brand: 'Wizard',
+                    name: 'Premium Bluetooth Speaker',
+                    price: 120000,
+                    category: 'PB Brand (Wizard)',
+                    image: 'https://images.unsplash.com/photo-1545459720-aacaf5090834?q=80&w=1935&auto=format&fit=crop',
+                    isNew: false
+                },
+                {
+                    id: 3,
+                    brand: 'Glasster',
+                    name: 'Glass Food Container Set',
+                    price: 35000,
+                    category: 'Sourcing Brand',
+                    image: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?q=80&w=2071&auto=format&fit=crop',
+                    isNew: true
+                },
+                {
+                    id: 4,
+                    brand: 'Lebod',
+                    name: 'Ergonomic Office Chair',
+                    price: 280000,
+                    category: 'Sourcing Brand',
+                    image: 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?q=80&w=2070&auto=format&fit=crop',
+                    isNew: false
+                },
+                {
+                    id: 5,
+                    brand: 'Seasonal',
+                    name: 'Portable Mini Fan (Summer)',
+                    price: 15000,
+                    category: 'Seasonal',
+                    image: 'https://images.unsplash.com/photo-1618941716939-553df9c62e23?q=80&w=2070&auto=format&fit=crop',
+                    isNew: true
+                },
+                {
+                    id: 6,
+                    brand: 'Seasonal',
+                    name: 'Electric Heater (Winter)',
+                    price: 55000,
+                    category: 'Seasonal',
+                    image: 'https://images.unsplash.com/photo-1565691083753-4b68468c46e1?q=80&w=2070&auto=format&fit=crop',
+                    isNew: false
+                }
+            ];
             if (typeof products !== 'undefined') {
                 fetchedProducts = products;
             }
@@ -348,10 +570,6 @@ document.addEventListener('DOMContentLoaded', () => {
         `}).join('');
     }
 
-    if (productGrid) {
-        initProducts();
-    }
-
     // Product Detail Page Logic
     const detailContainer = document.getElementById('product-detail-container');
     if (detailContainer) {
@@ -367,12 +585,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchProductDetail(id) {
         try {
-            // Create a timeout promise
+            // Define timeout promise
             const timeout = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('Request timed out')), 5000)
             );
 
-            // Race fetch against timeout
             const res = await Promise.race([
                 fetch(`${API_BASE_URL}/api/products/${id}`),
                 timeout
@@ -412,50 +629,93 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderProductDetail(product) {
         // Normalize properties (API returns snake_case, static data returns camelCase)
-        const imageUrl = getImageUrl(product.image_url || product.image);
-        const detailUrl = product.detail_url || product.detailUrl;
-        const modelName = product.model_name || product.model;
+        // Secure & Resize Main Image (800px)
+        const imageUrl = getSecureImageUrl(product.imageUrl || product.image_url || product.image, 800);
+        const detailUrl = product.detailUrl || product.detail_url;
 
-        const isEmoji = !imageUrl.includes('/') && !imageUrl.includes('.');
-        const imageHtml = isEmoji
-            ? `<div style="font-size: 10rem; text-align: center; background: #f8f9fa; padding: 2rem; border-radius: 8px;">${imageUrl}</div>`
-            : `<img src="${imageUrl}" alt="${modelName}" style="width: 100%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin: 0 auto;">`;
+        // Correct Mapping per User Request:
+        // H1 (Title) -> model_name (Real Name). If "No Name", show empty.
+        const rawName = product.model_name || product.name || product.product_name || '';
+        const productName = (rawName === 'No Name') ? '' : rawName;
 
+        // Subtitle (Model Code) -> model_no
+        const modelName = product.model_no || product.modelNo || product.model || ''; // e.g. DA311
+
+        const brandName = product.brand || 'Brand';
+        const categoryName = product.category_name || product.category?.name || 'Category';
+
+        const imageHtml = `<img src="${imageUrl}" alt="${modelName}" style="width: 100%; max-width: 600px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin: 0 auto; display: block;">`;
+
+        // Process Detail Content (Secure images inside HTML)
         let detailContentHtml = '';
         if (detailUrl) {
-            // Check if it contains HTML tags (specifically img)
-            if (detailUrl.trim().match(/<img/i) || detailUrl.includes('<img')) {
-                detailContentHtml = `<div class="product-detail-content">${detailUrl}</div>`;
+            // Helper to replace http images in HTML string with proxy
+            const secureHtml = (html) => {
+                return html.replace(/src=["'](http:\/\/[^"']+)["']/g, (match, p1) => {
+                    return `src="${getSecureImageUrl(p1)}"`;
+                });
+            };
+
+            if (detailUrl.trim().startsWith('<')) {
+                // HTML Content
+                detailContentHtml = `<div class="product-detail-content" style="text-align: center; display: flex; flex-direction: column; align-items: center; width: 100%;">${secureHtml(detailUrl)}</div>`;
             } else {
-                detailContentHtml = `<div class="product-detail-content"><img src="${detailUrl}" alt="Detail"></div>`;
+                // Image URL
+                detailContentHtml = `<div class="product-detail-content" style="text-align: center; width: 100%;"><img src="${getSecureImageUrl(detailUrl)}" alt="Detail" style="max-width: 100%; margin: 0 auto; display: block;"></div>`;
             }
         }
 
-        const detailImageHtml = detailContentHtml
+        const detailSectionHtml = detailContentHtml
             ? `<div style="margin-top: 60px; border-top: 1px solid #eee; padding-top: 40px;">
-                 <h3 style="font-size: 1.5rem; margin-bottom: 20px; border-left: 4px solid var(--primary-color); padding-left: 10px;">상세 정보</h3>
+                 <h3 style="font-size: 1.5rem; margin-bottom: 30px; text-align: center; color: #333;">상세 정보</h3>
                  ${detailContentHtml}
                </div>`
             : '';
 
-        detailContainer.innerHTML = `
-            <div class="product-detail-wrapper" style="max-width: 800px; margin: 0 auto;">
-                <div style="text-align: center;">
-                    ${imageHtml}
-                </div>
-                <div style="padding: 20px; text-align: center;">
-                    <span style="background: #f0f0f0; padding: 5px 10px; border-radius: 20px; font-size: 0.9rem; color: #666;">${product.category_name || product.category}</span>
-                    <h2 style="font-size: 2rem; margin: 10px 0 20px; color: #333;">${product.brand}</h2>
-                    <h1 style="font-size: 1.5rem; margin-bottom: 20px; font-weight: normal; color: #555;">${modelName}</h1>
-                    <p style="font-size: 1.1rem; line-height: 1.6; color: #666; margin-bottom: 30px; word-break: keep-all;">${product.description}</p>
-                    
-                    <div style="margin-top: 30px;">
-                        <button onclick="history.back()" style="padding: 12px 30px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem;">목록으로</button>
+        const detailContainer = document.getElementById('product-detail-container');
+        if (detailContainer) {
+            // Sticky Back Button (Top 90px to clear fixed header)
+            const stickyHeaderHtml = `
+            <div style="position: sticky; top: 90px; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 0; border-bottom: 1px solid #eee; z-index: 100; margin-bottom: 30px; margin-top: -20px;">
+                 <div style="max-width: 1000px; margin: 0 auto; text-align: center;">
+                       <button id="btnBackToList" style="padding: 10px 40px; background: #333; color: white; border: none; border-radius: 30px; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                           <i class="fas fa-list"></i> 목록으로 돌아가기
+                       </button>
+                 </div>
+            </div>`;
+
+            detailContainer.innerHTML = `
+                ${stickyHeaderHtml}
+                <div class="product-detail-wrapper" style="max-width: 1000px; margin: 0 auto;">
+                    <div style="text-align: center; margin-bottom: 2rem;">
+                        ${imageHtml}
+                    </div>
+                    <div style="padding: 20px; text-align: center; max-width: 800px; margin: 0 auto;">
+                        <span style="background: #f0f0f0; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; color: #666; display: inline-block; margin-bottom: 1rem;">${categoryName}</span>
+                        <h2 style="font-size: 1.5rem; color: var(--primary-color); margin-bottom: 0.5rem; font-weight: 600;">${brandName}</h2>
+                        <h1 style="font-size: 2.2rem; margin-bottom: 1rem; font-weight: 700; color: #333;">${productName}</h1>
+                        <p style="font-size: 1.1rem; color: #888; margin-bottom: 2rem;">${modelName}</p>
+                        
+                        <p style="font-size: 1.1rem; line-height: 1.8; color: #555; margin-bottom: 30px; word-break: keep-all;">${product.description || ''}</p>
+                        
+                        <div style="margin-top: 40px;">
+                        </div>
                     </div>
                 </div>
-            </div>
-            ${detailImageHtml}
-        `;
+                ${detailSectionHtml}
+            `;
+
+            const btn = document.getElementById('btnBackToList');
+            if (btn) {
+                btn.onclick = () => {
+                    if (document.referrer && document.referrer.includes('products.html')) {
+                        history.back();
+                    } else {
+                        window.location.href = 'products.html';
+                    }
+                };
+            }
+        }
     }
 
     // Smooth Scroll for Anchor Links

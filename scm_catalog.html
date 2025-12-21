@@ -506,7 +506,7 @@
                 <i class="fas fa-book-open"></i>
                 <span>상품<br>카탈로그</span>
             </a>
-            <a href="scm_quote.html" class="scm-menu-item">
+            <a href="scm_proposal_history.html" class="scm-menu-item">
                 <i class="fas fa-file-invoice-dollar"></i>
                 <span>견적/발주<br>관리</span>
             </a>
@@ -554,7 +554,7 @@
                 </div>
             </div>
             <div class="scm-header-actions">
-                <div class="scm-icon-btn" onclick="location.href='scm_quote.html'" title="견적함">
+                <div class="scm-icon-btn" onclick="location.href='scm_proposal_history.html'" title="견적함">
                     <i class="fas fa-file-invoice-dollar"></i>
                     <span class="scm-badge" id="proposal-count" style="display: none;">0</span>
                 </div>
@@ -1130,13 +1130,17 @@
     <script>
         // Check User Role
         document.addEventListener('DOMContentLoaded', () => {
-            const userStr = localStorage.getItem('scm_user');
+            const userStr = localStorage.getItem('scm_user') || localStorage.getItem('user');
             if (userStr) {
-                const user = JSON.parse(userStr);
-                // If Admin, show Admin Mode button
-                if (user.role === 'ADMIN') {
-                    const btn = document.getElementById('btnAdminMode');
-                    if (btn) btn.style.display = 'flex';
+                try {
+                    const user = JSON.parse(userStr);
+                    // If Admin, show Admin Mode button (Case insensitive)
+                    if (user.role && user.role.toUpperCase() === 'ADMIN') {
+                        const btn = document.getElementById('btnAdminMode');
+                        if (btn) btn.style.display = 'flex';
+                    }
+                } catch (e) {
+                    console.error('User parse error', e);
                 }
             }
         });

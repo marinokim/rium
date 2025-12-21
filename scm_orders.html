@@ -506,15 +506,12 @@
                                 ? 'http://localhost:5003'
                                 : 'https://rium-scm-backend.onrender.com';
 
-                            // Determine Endpoint
-                            const urlParams = new URLSearchParams(window.location.search);
-                            const mode = urlParams.get('mode');
-
-                            // Strictly enforce 'my' mode if param exists
-                            const endpoint = (mode === 'my') ? '/api/proposals/my' : (isAdmin ? '/api/proposals/all' : '/api/proposals/my');
+                            // Endpoint - Strictly Admin View
+                            // No user-mode injection here. User view is handled by scm_proposal_history.html.
+                            const endpoint = '/api/proposals/all';
 
                             // Debug log
-                            console.log('Mode:', mode, 'IsAdmin:', isAdmin, 'Endpoint:', endpoint);
+                            console.log('Admin Order View Loaded', endpoint);
 
                             const res = await fetch(`${API_BASE}${endpoint}`, {
                                 headers: { 'Authorization': `Bearer ${token}` }
@@ -529,7 +526,7 @@
                                     return;
                                 }
 
-                                tbody.innerHTML = list.map(item => {
+                                tbody.innerHTML = list.map((item, index) => {
                                     const date = new Date(item.created_at).toLocaleDateString();
 
                                     // Safe Parse Items
@@ -546,21 +543,24 @@
                                     }
 
                                     // Calculate Total Amount & Qty
-                                    // Assuming items have supplyPrice (B2B) or we use quantity
                                     const totalQty = items.reduce((sum, i) => sum + (parseInt(i.quantity) || 0), 0);
-                                    // Total amount calculation depends on item data structure from Catalog
-                                    // Catalog sends: productId, quantity. Wait, it doesn't send price?
-                                    // Ah, createProposal in catalog sends { productId, quantity }.
-                                    // It does NOT send price snapshot.
-                                    // So to show price, we'd need to fetch product info or rely on what's saved?
-                                    // Proposal History only saves what we sent: { items: [...] }.
-                                    // If we didn't save price, we can't show it easily without re-fetching.
-                                    // For now, let's show "미정" (Pending) or calculate if data available.
-                                    // Refinement: Ideally Proposal History should snapshot price.
-                                    // But for now, let's just show headers.
 
-                                    // Product Prep
+                                    // Product Prep for Display
                                     const firstItem = items[0] || {};
+                                    // Logic for Title: Name + '외 N개'
+                                    const pName = firstItem.productName || firstItem.name || firstItem.modelName || '상품';
+                                    const extraCount = items.length - 1;
+                                    const displayTitle = extraCount > 0 ? `${pName} 외 ${extraCount}건` : pName;
+
+                                    // If old data (no productName saved), fallback to item.title (Proposal - Date)
+                                    // Actually item.title is what DB serves as 'title'. 
+                                    // If we want to override it with contents, we use displayTitle.
+                                    // Let's use displayTitle if pName looks valid (not '상품' or if we have >1 items).
+                                    // Or simply always use displayTitle if item.title looks generic?
+                                    // Let's prefer displayTitle as it is freshly calculated from content.
+
+                                    const finalTitle = (pName !== '상품' || extraCount > 0) ? displayTitle : item.title;
+
                                     const clientName = item.company_name || (user.company_name || '나');
                                     const proposalId = item.id;
 
@@ -574,7 +574,7 @@
                                                     <div style="width: 40px; height: 40px; background: #eee; border-radius: 4px; overflow: hidden;">
                                                         <img src="${firstItem.imageUrl || firstItem.image_url || 'https://via.placeholder.com/40'}" style="width: 100%; height: 100%; object-fit: cover;">
                                                     </div>
-                                                    <span>${item.title}</span>
+                                                    <span>${finalTitle}</span>
                                                 </div>
                                             </td>
                                             <td>${totalQty}</td>
@@ -723,325 +723,10 @@
                     return;
                 }
 
-                const workbook = new ExcelJS.Workbook();
-                const worksheet = workbook.addWorksheet('제안서');
-
-                // Define columns (Match Arontec)
-                worksheet.columns = [
-                    { header: '순번', key: 'no', width: 5 },
-                    { header: '품절여부', key: 'status', width: 10 },
-                    { header: '고유번호', key: 'id', width: 10 },
-                    { header: '상품명', key: 'name', width: 40 },
-                    { header: '상품이미지', key: 'image', width: 20 },
-                    { header: '모델명', key: 'model', width: 15 },
-                    { header: '옵션', key: 'option', width: 10 },
-                    { header: '설명', key: 'desc', width: 40 },
-                    { header: '제조원', key: 'manufacturer', width: 15 },
-                    { header: '원산지', key: 'origin', width: 10 },
-                    { header: '카톤입수량', key: 'cartonQty', width: 10 },
-                    { header: '기본수량', key: 'defaultQty', width: 10 },
-                    { header: '소비자가', key: 'consumerPrice', width: 12 },
-                    { header: '공급가(부가세포함)', key: 'supplyPrice', width: 15 },
-                    { header: '개별배송비(부가세포함)', key: 'shipping', width: 15 },
-                    { header: '대표이미지', key: 'imageUrl', width: 30 },
-                    { header: '상세이미지', key: 'detailUrl', width: 30 },
-                    { header: '비고', key: 'remarks', width: 20 },
-                ];
-
-                // Insert Title Row
-                worksheet.insertRow(1, []);
-                worksheet.mergeCells('A1:C1');
-                worksheet.mergeCells('D1:R1');
-
-                const titleCell = worksheet.getCell('A1');
-                titleCell.value = 'RIUM';
-                titleCell.font = { name: 'Arial', size: 20, bold: true, color: { argb: '003366' } };
-                titleCell.alignment = { vertical: 'middle', horizontal: 'left' };
-
-                const warningCell = worksheet.getCell('D1');
-                warningCell.value = '■ 당사가 운영하는 모든 상품은 폐쇄몰을 제외한 온라인 판매를 금하며, 판매 시 상품 공급이 중단됩니다.';
-                warningCell.font = { name: 'Malgun Gothic', size: 12, bold: true, color: { argb: 'FF0000' } };
-                warningCell.alignment = { vertical: 'middle', horizontal: 'left' };
-
-                worksheet.getRow(1).height = 30;
-
-                // Style Header (Row 2)
-                const headerRow = worksheet.getRow(2);
-                headerRow.font = { bold: true };
-                headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'CCE5FF' } };
-                headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
-
-                // Processing Items
-                let items = [];
-                if (prop.items && prop.items.length > 0) {
-                    items = prop.items;
-                } else {
-                    // Legacy Single Item
-                    items = [{
-                        productId: prop.id.split('-').pop(),
-                        name: prop.product.name,
-                        image: prop.product.image,
-                        price: parseInt(prop.amount.replace(/[^0-9]/g, ''))
-                    }];
-                }
-
-                // Add Data Rows
-                for (let i = 0; i < items.length; i++) {
-                    const item = items[i];
-                    const row = worksheet.getRow(i + 3);
-
-                    row.values = {
-                        no: i + 1,
-                        status: '',
-                        id: item.productId,
-                        name: item.name,
-                        image: '',
-                        model: item.model || '-',
-                        option: '',
-                        desc: item.description || '',
-                        manufacturer: item.manufacturer || '',
-                        origin: item.origin || '상세페이지 참조',
-                        cartonQty: 1,
-                        defaultQty: 1,
-                        consumerPrice: item.price * 1.5,
-                        supplyPrice: item.price,
-                        shipping: 0,
-                        imageUrl: item.image || '',
-                        detailUrl: item.detailUrl || '',
-                        remarks: ''
-                    };
-
-                    row.height = 100; // Match Arontec
-                    row.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-
-                    if (item.image) {
-                        try {
-                            const proxyUrl = `${API_BASE}/api/quotes/proxy-image?url=${encodeURIComponent(item.image)}`;
-                            const token = localStorage.getItem('token');
-                            const imgRes = await fetch(proxyUrl, {
-                                headers: { 'Authorization': `Bearer ${token}` }
-                            });
-
-                            if (imgRes.ok) {
-                                const imgBuffer = await imgRes.arrayBuffer(); // Renamed for safety
-                                const extension = item.image.toLowerCase().endsWith('.png') ? 'png' : 'jpeg';
-
-                                const imageId = workbook.addImage({
-                                    buffer: imgBuffer,
-                                    extension: extension,
-                                });
-
-                                worksheet.addImage(imageId, {
-                                    tl: { col: 4, row: i + 2 }, // Column E
-                                    br: { col: 5, row: i + 3 },
-                                    editAs: 'oneCell'
-                                });
-                            }
-                        } catch (err) {
-                            console.warn('Image embed failed', err);
-                            row.getCell(5).value = '이미지 실패';
-                        }
-                    }
-                }
-
-                // Save
-                const buffer = await workbook.xlsx.writeBuffer();
-                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-                const link = document.createElement('a');
-                link.href = window.URL.createObjectURL(blob);
-                link.download = `Quote_${prop.id}.xlsx`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-
             } catch (e) {
-                console.error('Local Excel Error', e);
-                alert('엑셀 생성 중 오류가 발생했습니다.');
+                console.error(e);
             }
         }
-
-        function viewProposalMock(proposalId) {
-            const proposals = JSON.parse(localStorage.getItem('scm_proposals') || '[]');
-            const prop = proposals.find(p => p.id === proposalId);
-            if (!prop) return;
-
-            // Simple Alert for now or create a Modal? User asked for "Check and Download".
-            // A modal is better.
-            const modal = document.createElement('div');
-            modal.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;
-             `;
-            modal.innerHTML = `
-                <div style="background: white; padding: 30px; border-radius: 8px; width: 600px; max-width: 90%;">
-                    <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 1.5rem; border-bottom: 2px solid #333; padding-bottom: 10px;">
-                        제안서 상세 정보
-                        <button onclick="this.closest('div').parentElement.remove()" style="float: right; border: none; background: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
-                    </h2>
-                    <div style="display: grid; grid-template-columns: 100px 1fr; gap: 15px; margin-bottom: 20px;">
-                        <div style="font-weight: bold;">제안번호</div><div>${prop.id}</div>
-                        <div style="font-weight: bold;">일자</div><div>${prop.date}</div>
-                        <div style="font-weight: bold;">고객사</div><div>${prop.client}</div>
-                        <div style="font-weight: bold;">상품명</div><div>${prop.product.name}</div>
-                        <div style="font-weight: bold;">금액</div><div>${prop.amount}</div>
-                    </div>
-                    <div style="text-align: right; margin-top: 20px;">
-                        <button class="scm-btn" onclick="downloadMockExcel('${prop.id}')" style="background: #217346; color: white;">
-                            <i class="fas fa-file-excel"></i> 엑셀 다운로드
-                        </button>
-                    </div>
-                </div>
-             `;
-            document.body.appendChild(modal);
-        }
-
-        // Delete Logic
-        async function deleteSelectedProposals() {
-            const checks = document.querySelectorAll('tbody input[type="checkbox"]:checked');
-            if (checks.length === 0) {
-                alert('삭제할 항목을 선택해주세요.');
-                return;
-            }
-
-            if (!confirm(`${checks.length}개의 항목을 삭제하시겠습니까?`)) return;
-
-            const serverIds = [];
-            const localIds = [];
-
-            checks.forEach(chk => {
-                const id = chk.getAttribute('data-id');
-                if (id) {
-                    if (id.startsWith('PROP-')) localIds.push(id);
-                    else serverIds.push(id);
-                }
-            });
-
-            // 1. Delete Local
-            if (localIds.length > 0) {
-                let proposals = JSON.parse(localStorage.getItem('scm_proposals') || '[]');
-                proposals = proposals.filter(p => !localIds.includes(p.id));
-                localStorage.setItem('scm_proposals', JSON.stringify(proposals));
-            }
-
-            // 2. Delete Server
-            if (serverIds.length > 0) {
-                try {
-                    const res = await apiFetch('/api/quotes', {
-                        method: 'DELETE',
-                        body: JSON.stringify({ ids: serverIds })
-                    });
-                } catch (e) {
-                    console.error(e);
-                    alert('일부 서버 데이터 삭제 실패');
-                }
-            }
-
-            alert('삭제되었습니다.');
-            location.reload();
-        }
-
-        // Select All Logic
-        function toggleAll(source) {
-            const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
-            checkboxes.forEach(chk => chk.checked = source.checked);
-        }
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Update Delete Button Handler
-            const deleteBtn = document.querySelector('.scm-btn[style*="color: #d32f2f"]'); // Find by style for robustness
-            if (deleteBtn) {
-                deleteBtn.onclick = deleteSelectedProposals;
-            }
-
-            // Update Select All Checkbox
-            const headerCheckbox = document.querySelector('thead input[type="checkbox"]');
-            if (headerCheckbox) {
-                headerCheckbox.onclick = function () { toggleAll(this); };
-            }
-
-            const tbody = document.querySelector('tbody');
-
-            // 1. Try API Data
-            try {
-                const data = await apiFetch('/api/quotes');
-                const quotes = data.quotes || [];
-
-                if (quotes.length > 0) {
-                    quotes.forEach(quote => {
-                        const firstItem = quote.items[0];
-                        const productImg = firstItem?.product?.imageUrl || 'https://via.placeholder.com/40';
-                        const productName = firstItem?.product?.name || `Bundle (${quote.items.length})`;
-
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td><input type="checkbox" data-id="${quote.id}"></td>
-                            <td>${quote.quoteNumber}</td>
-                            <td>${new Date(quote.createdAt).toISOString().split('T')[0]}</td>
-                            <td>
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <img src="${productImg}"
-                                        style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
-                                    <span>${productName}</span>
-                                </div>
-                            </td>
-                            <td>${quote.items.reduce((sum, i) => sum + i.quantity, 0)}</td>
-                            <td>${quote.userId} (Client)</td>
-                            <td>${quote.totalAmount.toLocaleString()}원</td>
-                            <td><span class="scm-status status-new" style="background: #e3f2fd; color: #1565c0;">${quote.status}</span></td>
-                            <td>
-                                <button class="scm-btn scm-btn-outline" style="padding: 2px 8px; font-size: 0.8rem;">제안서 보기</button>
-                                <button class="scm-btn scm-btn-outline" style="padding: 2px 8px; font-size: 0.8rem; margin-left: 5px;" 
-                                        onclick="downloadExcel(${quote.id}, '${quote.quoteNumber}')" title="Excel Download">
-                                    <i class="fas fa-file-excel"></i>
-                                </button>
-                            </td>
-                        `;
-                        // Insert at top
-                        if (tbody.firstChild) tbody.insertBefore(row, tbody.firstChild);
-                        else tbody.appendChild(row);
-                    });
-                    // Fall through to merge
-                }
-            } catch (err) {
-                console.log('API Fetch failed', err);
-            }
-
-            // 2. LocalStorage Data (Mock/Fallback)
-            const proposals = JSON.parse(localStorage.getItem('scm_proposals') || '[]');
-            proposals.forEach(prop => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><input type="checkbox" data-id="${prop.id}"></td>
-                    <td>${prop.id}</td>
-                    <td>${prop.date}</td>
-                    <td>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <img src="${prop.product.image}"
-                                style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
-                            <span>${prop.product.name}</span>
-                        </div>
-                    </td>
-                    <td>${prop.qty}</td>
-                    <td>${prop.client}</td>
-                    <td>${prop.amount}</td>
-                    <td><span class="scm-status status-new" style="background: #e3f2fd; color: #1565c0;">제안중</span></td>
-                    <td>
-                        <button class="scm-btn scm-btn-outline" style="padding: 2px 8px; font-size: 0.8rem;" 
-                                onclick="viewProposalMock('${prop.id}')">제안서 보기</button>
-                        <button class="scm-btn scm-btn-outline" style="padding: 2px 8px; font-size: 0.8rem; margin-left: 5px;" 
-                                onclick="downloadMockExcel('${prop.id}')" title="Excel Download">
-                             <i class="fas fa-file-excel"></i>
-                        </button>
-                    </td>
-                `;
-                if (tbody.firstChild) {
-                    tbody.insertBefore(row, tbody.firstChild);
-                } else {
-                    tbody.appendChild(row);
-                }
-            });
-        });
     </script>
 </body>
 
