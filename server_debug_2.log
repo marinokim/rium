@@ -1,0 +1,25 @@
+✅ Database connected at: 2025-12-20T14:17:05.936Z
+❌ Migration error: error: column "remarks" does not exist
+    at /Users/lab/Desktop/Worktemp/rium-homepage/scm-backend/node_modules/pg/lib/client.js:545:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async runMigrations (file:///Users/lab/Desktop/Worktemp/rium-homepage/scm-backend/migrations.js:124:13) {
+  length: 108,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '759',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3657',
+  routine: 'errorMissingColumn'
+}
+🚀 Server running on http://0.0.0.0:5002
+📅 Server started at 2025-12-20T14:17:06.234Z

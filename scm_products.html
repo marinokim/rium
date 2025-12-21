@@ -1497,56 +1497,100 @@
             // Clean content
             content.innerHTML = '';
 
-            // Header (Back Button + Title)
+            // Header (Back Button)
             content.innerHTML += `
                 <div style="position: sticky; top: 0; background: white; padding: 15px; border-bottom: 1px solid #eee; display: flex; align-items: center; z-index: 10;">
                     <button class="scm-btn btn-gray" onclick="closeDetailView()" style="margin-right: 20px;">
                         <i class="fas fa-arrow-left"></i> 목록으로 돌아가기
                     </button>
-                    <h2 style="margin: 0; font-size: 1.2rem;">${product.brand ? '[' + product.brand + '] ' : ''}${product.model_name} <span style="font-size: 0.9rem; color: #666; font-weight: normal;">(${product.model_no || '-'})</span></h2>
+                    <div style="font-weight: bold; color: #888;">상품 상세 미리보기</div>
                 </div>
             `;
 
-            // Main Image Area
-            content.innerHTML += `
-                <div style="padding: 20px; text-align: center; border-bottom: 10px solid #f7fafc;">
-                    <h3 style="font-size: 1rem; color: #4a5568; margin-bottom: 10px;">대표 이미지</h3>
-                    <img src="${product.image_url}" style="max-width: 300px; max-height: 300px; object-fit: contain; border: 1px solid #eee;">
-                </div>
-            `;
+            // Prep Data
+            const price = Number(product.b2b_price || 0);
+            const consumer = Number(product.consumer_price || 0);
+            const isTaxFree = product.is_tax_free;
 
-            // Detail Content Area
+            // Shipping Text
+            const shipFee = Number(product.shipping_fee || 0);
+            const shipIndiv = Number(product.shipping_fee_individual || 0);
+            const shipCarton = Number(product.shipping_fee_carton || 0);
+            let shippingText = `기본: ${shipFee.toLocaleString()}원`;
+            if (shipIndiv > 0) shippingText += ` / 개별: ${shipIndiv.toLocaleString()}원`;
+            if (shipCarton > 0) shippingText += ` / 카톤: ${shipCarton.toLocaleString()}원`;
+            if (isTaxFree) shippingText += ' (면세)';
+
+            // Detail Content
             let detailHtml = '';
-            if (!product.detail_url) {
+            const detailUrl = product.detail_url;
+            if (!detailUrl) {
                 detailHtml = '<div style="padding: 50px; text-align: center; color: #aaa;">상세 페이지 정보가 없습니다.</div>';
-            } else if (product.detail_url.trim().startsWith('<')) {
-                // Assuming HTML content
-                detailHtml = `<div style="max-width: 860px; margin: 0 auto;">${product.detail_url}</div>`;
+            } else if (detailUrl.trim().startsWith('<')) {
+                detailHtml = `<div style="max-width: 860px; margin: 0 auto;">${detailUrl}</div>`;
             } else {
-                // Assuming URL (Image or Page)
-                // Split by comma if multiple images (just in case) or render single image
-                detailHtml = `<img src="${product.detail_url}" style="width: 100%; max-width: 860px; display: block; margin: 0 auto;">`;
+                detailHtml = `<img src="${detailUrl}" style="width: 100%; max-width: 860px; display: block; margin: 0 auto;">`;
             }
 
+            // Grid Structure
             content.innerHTML += `
-                <div style="padding: 20px; background: white; min-height: 500px;">
-                    <h3 style="font-size: 1rem; color: #4a5568; margin-bottom: 15px; text-align: center;">상세 페이지</h3>
-                    ${detailHtml}
+                <div style="padding: 40px;">
+                    <div class="product-detail-grid">
+                        <!-- Left: Image -->
+                        <div class="product-image-area">
+                            <img src="${product.image_url}" onerror="this.src='https://via.placeholder.com/500?text=No+Image'">
+                        </div>
+
+                        <!-- Right: Info -->
+                        <div class="product-info-area">
+                            <span class="brand-badge">${product.brand || 'No Brand'}</span>
+                            <h1>${product.brand ? '[' + product.brand + '] ' : ''}${product.model_name}</h1>
+                            <p style="color: #888; margin-bottom: 1rem;">Model: ${product.model_no || '-'}</p>
+
+                            <div class="price-section">
+                                <div class="price-row">
+                                    <span class="price-label">소비자가</span>
+                                    <span class="price-value">₩${consumer.toLocaleString()}</span>
+                                </div>
+                                <div class="price-row">
+                                    <span class="price-label">공급가 (B2B)</span>
+                                    <span class="b2b-price-value">₩${price.toLocaleString()}</span>
+                                </div>
+                            </div>
+
+                            <div style="line-height: 1.6; color: #555; margin-bottom: 2rem;">
+                                ${product.product_options || '상품 설명/옵션 정보가 없습니다.'}
+                            </div>
+
+                            <table class="specs-table">
+                                <tr><th>카테고리</th><td>${product.category_name || '-'}</td></tr>
+                                <tr><th>브랜드</th><td>${product.brand || '-'}</td></tr>
+                                <tr><th>제조사</th><td>${product.manufacturer || '-'}</td></tr>
+                                <tr><th>원산지</th><td>${product.origin || '-'}</td></tr>
+                                <tr><th>배송비</th><td>${shippingText}</td></tr>
+                                <tr><th>재고상태</th><td>${product.stock_quantity > 0 ? '주문 가능' : '품절 (재고 0)'}</td></tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Bottom: Detail Images -->
+                    <div class="detail-image-section">
+                        <h3 style="font-size: 1.2rem; margin-bottom: 1.5rem; color: #333;">상세 정보</h3>
+                        <div id="detailImageContainer">
+                            ${detailHtml}
+                        </div>
+                    </div>
                 </div>
             `;
 
             overlay.style.display = 'block';
-            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            document.body.style.overflow = 'hidden';
         };
 
         const closeDetailView = () => {
             document.getElementById('detailViewOverlay').style.display = 'none';
             document.body.style.overflow = 'auto';
         };
-
-
-        // Debug Function
-        // Debug Function
         window.inspectData = async () => {
             try {
                 const cats = await apiFetch('/api/categories');
