@@ -936,6 +936,7 @@
             const scrollPos = document.querySelector('.scm-content').scrollTop;
             sessionStorage.setItem('catalogScrollPos', scrollPos);
             sessionStorage.setItem('catalogCategoryId', currentCategoryId);
+            sessionStorage.setItem('catalogCategorySlug', currentCategorySlug); // New: Save Slug
             sessionStorage.setItem('catalogSearchQuery', currentSearchQuery);
 
             location.href = `scm_product_detail.html?id=${productId}`;
@@ -1152,14 +1153,15 @@
             }
         }
 
-        // generateExcelProposal removed (Legacy fallback)
-
         document.addEventListener('DOMContentLoaded', async () => {
             // Restore state if available
             const savedCategory = sessionStorage.getItem('catalogCategoryId');
+            const savedSlug = sessionStorage.getItem('catalogCategorySlug'); // New: Restore Slug
             const savedSearch = sessionStorage.getItem('catalogSearchQuery');
 
             if (savedCategory) currentCategoryId = savedCategory;
+            if (savedSlug) currentCategorySlug = savedSlug; // Restore Slug
+
             if (savedSearch) {
                 currentSearchQuery = savedSearch;
                 document.getElementById('searchInput').value = savedSearch;
@@ -1173,6 +1175,10 @@
                 if (btn) {
                     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
+                    // Ensure style matches active
+                    const color = btn.dataset.color || '#333';
+                    btn.style.backgroundColor = color;
+                    btn.style.color = 'white';
                 }
             }
 
@@ -1182,8 +1188,6 @@
             const savedScroll = sessionStorage.getItem('catalogScrollPos');
             if (savedScroll) {
                 document.querySelector('.scm-content').scrollTop = savedScroll;
-                // Clear it after use? Or keep it? Usually good to clear if navigating away elsewhere, but fine to keep for now.
-                // sessionStorage.removeItem('catalogScrollPos'); 
             }
         });
     </script>
