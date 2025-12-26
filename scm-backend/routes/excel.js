@@ -450,6 +450,96 @@ router.post('/update-source', upload.single('file'), (req, res) => {
     }
 })
 
+// Export All Products to Excel
+router.get('/download', async (req, res) => {
+    try {
+        // Fetch All Products with Category Name
+        const { rows } = await pool.query(`
+            SELECT p.*, c.name as category_name 
+            FROM products p 
+            LEFT JOIN categories c ON p.category_id = c.id 
+            ORDER BY p.id ASC
+        `)
+
+        const workbook = new ExcelJS.Workbook()
+        const worksheet = workbook.addWorksheet('Products')
+
+        // Define Columns matching Upload Format
+        worksheet.columns = [
+            { header: 'ID', key: 'id', width: 10 },
+            { header: '카테고리', key: 'category', width: 15 },
+            { header: '브랜드', key: 'brand', width: 15 },
+            { header: '모델명', key: 'modelName', width: 30 },
+            { header: '모델번호', key: 'modelNo', width: 20 },
+            { header: '상세설명', key: 'description', width: 40 },
+            { header: '소비자가', key: 'consumerPrice', width: 12 },
+            { header: '공급가', key: 'supplyPrice', width: 12 },
+            { header: 'B2B가', key: 'b2bPrice', width: 12 },
+            { header: '재고', key: 'stock', width: 10 },
+            { header: '이미지URL', key: 'imageUrl', width: 40 },
+            { header: '상세페이지URL', key: 'detailUrl', width: 40 },
+            { header: '제조사', key: 'manufacturer', width: 15 },
+            { header: '원산지', key: 'origin', width: 10 },
+            { header: '배송비', key: 'shippingFee', width: 10 },
+            { header: '개별배송비', key: 'shippingFeeIndividual', width: 12 },
+            { header: '카톤배송비', key: 'shippingFeeCarton', width: 12 },
+            { header: '카톤수량', key: 'quantityPerCarton', width: 10 },
+            { header: '제품규격', key: 'productSpec', width: 20 },
+            { header: '옵션', key: 'productOptions', width: 20 },
+            { header: '면세여부', key: 'isTaxFree', width: 10 },
+            { header: '비고', key: 'remarks', width: 20 }
+        ]
+
+        // Header Style
+        const headerRow = worksheet.getRow(1)
+        headerRow.font = { bold: true }
+        headerRow.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFEEEEEE' }
+        }
+
+        // Add Data
+        rows.forEach(p => {
+            worksheet.addRow({
+                id: p.id,
+                category: p.category_name || '',
+                brand: p.brand || '',
+                modelName: p.model_name || '',
+                modelNo: p.model_no || '',
+                description: p.description || '',
+                consumerPrice: p.consumer_price || 0,
+                supplyPrice: p.supply_price || 0,
+                b2bPrice: p.b2b_price || 0,
+                stock: p.stock_quantity || 0,
+                imageUrl: p.image_url || '',
+                detailUrl: p.detail_url || '',
+                manufacturer: p.manufacturer || '',
+                origin: p.origin || '',
+                shippingFee: p.shipping_fee || 0,
+                shippingFeeIndividual: p.shipping_fee_individual || 0,
+                shippingFeeCarton: p.shipping_fee_carton || 0,
+                quantityPerCarton: p.quantity_per_carton || 1,
+                productSpec: p.product_spec || '',
+                productOptions: p.product_options || '',
+                isTaxFree: p.is_tax_free ? 'TRUE' : 'FALSE',
+                remarks: p.remarks || ''
+            })
+        })
+
+        // Response
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        res.setHeader('Content-Disposition', 'attachment; filename="All_Products.xlsx"')
+
+        await workbook.xlsx.write(res)
+        res.end()
+
+    } catch (error) {
+        console.error('Export Excel error:', error)
+        res.status(500).json({ error: 'Failed to generate Excel file' })
+    }
+})
+
 // Generate Excel Proposal (USING EXCELJS - Ported from Arontec-SCM Frontend Logic)
 router.post('/download/proposal', async (req, res) => {
     try {
